@@ -19,4 +19,6 @@ int main(void) {
       myDisplay.writeArray(i, interval, i%2);
     }   
   }
+  
+  return 0;
 }
