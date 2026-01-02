@@ -1,6 +1,6 @@
 #include <avr/pgmspace.h>
 
-const int16_t display[36][2] PROGMEM = { // [digit][gnd pin][vcc pin]
+const uint16_t display[36][2] PROGMEM = { // [digit][gnd pin][vcc pin]
   // for vcc pin:
   // -- ENTRY NO. -- | -- PIN --
   //       0               6
@@ -65,17 +65,3 @@ const int16_t display[36][2] PROGMEM = { // [digit][gnd pin][vcc pin]
   {0x0001, 0x0000}, // clock region
   {0x0408, 0x2040}  // nullDisplay
 };
-
-/*
-unoptimized int array:
-RAM:   [=         ]  11.0% (used 226 bytes from 2048 bytes)
-Flash: [==        ]  16.7% (used 5138 bytes from 30720 bytes)
-
-bool array:
-RAM:   [=         ]  11.0% (used 226 bytes from 2048 bytes)
-Flash: [=         ]  13.0% (used 4008 bytes from 30720 bytes)
-
-optimised int16_t array: (bit packed):
-RAM:   [=         ]  11.0% (used 226 bytes from 2048 bytes)
-Flash: [=         ]   9.2% (used 2822 bytes from 30720 bytes)
-*/
