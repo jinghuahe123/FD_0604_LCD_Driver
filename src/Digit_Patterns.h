@@ -1,6 +1,6 @@
 #include <avr/pgmspace.h>
 
-const uint16_t display[36][2] PROGMEM = { // [digit][gnd pin][vcc pin]
+const uint16_t display[36][2] PROGMEM = { // [digit][gnd pin]
   // for vcc pin:
   // -- ENTRY NO. -- | -- PIN --
   //       0               6
