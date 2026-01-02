@@ -78,11 +78,11 @@ void DisplayDriver::writePins(unsigned long interval, uint16_t* displayPins) {
  * @param clock       Toggle the clock LEDs. 
  */
 void DisplayDriver::writeArray(uint16_t number, unsigned long interval, bool clock) {
-  int arr[4] = {0};
+  uint16_t arr[4] = {0};
   uint16_t arr0[2], arr1[2], arr2[2], arr3[2], arr4[2], out[2] = {0};
   
   // Parse the number into the array
-  for (int i = 3; i >= 0; i--) {
+  for (int8_t i = 3; i >= 0; i--) {
     arr[i] = number % 10; // Extract the last digit
     number /= 10;         // Remove the last digit from the number
   }  
@@ -95,7 +95,7 @@ void DisplayDriver::writeArray(uint16_t number, unsigned long interval, bool clo
 
   if (clock) getDisplayDigit(34, arr4);
 
-  for (int i = 0; i < 2; i++) {
+  for (int8_t i = 0; i < 2; i++) {
     // Use bitwise OR to combine the values from all four arrays
     out[i] = arr0[i] | arr1[i] | arr2[i] | arr3[i] | arr4[i];
   }
@@ -116,7 +116,7 @@ void DisplayDriver::writeNull(unsigned long interval, bool clock) {
   getDisplayDigit(35, null_digits);
   if (clock) getDisplayDigit(34, clock_digits);
 
-  for (int i=0; i<2; i++) {
+  for (int8_t i=0; i<2; i++) {
     out[i] = null_digits[i] | clock_digits[i];
   }
 
