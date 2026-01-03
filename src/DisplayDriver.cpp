@@ -13,6 +13,12 @@ DisplayDriver::DisplayDriver(const uint8_t* gnds, const uint8_t* pins, bool npn_
   dataPin = pins[2];
   npn = npn_toggle;
 
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+  pinMode(gnd[0], OUTPUT);
+  pinMode(gnd[1], OUTPUT);
+
   clear();
 }
 
@@ -25,13 +31,8 @@ void DisplayDriver::getDisplayDigit(uint8_t digit, uint16_t (&output)[2]) {
  */
 void DisplayDriver::clear() {
   for (int i=0; i<2; i++) {
-    pinMode(gnd[i], OUTPUT);
     digitalWrite(gnd[i], HIGH);
   }
-
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
 }
 
 /**
