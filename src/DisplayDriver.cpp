@@ -12,12 +12,27 @@ DisplayDriver::DisplayDriver(const uint8_t* gnds, const uint8_t* pins, bool npn_
   clockPin = pins[1];
   dataPin = pins[2];
   npn = npn_toggle;
+  wiring_style = NORMAL_WIRING;
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
   pinMode(gnd[0], OUTPUT);
   pinMode(gnd[1], OUTPUT);
+
+  clear();
+}
+
+DisplayDriver::DisplayDriver(const uint8_t* pins, bool npn_toggle) {
+  latchPin = pins[0];
+  clockPin = pins[1];
+  dataPin = pins[2];
+  npn = npn_toggle;
+  wiring_style = MINIMAL_WIRING;
+
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
 
   clear();
 }
@@ -41,8 +56,8 @@ void DisplayDriver::clear() {
  */
 void DisplayDriver::writeShiftRegister(uint16_t data) {
   digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, LSBFIRST, data);
-  shiftOut(dataPin, clockPin, LSBFIRST, data >> 8);
+  shiftOut(dataPin, clockPin, LSBFIRST, (uint8_t)data);
+  shiftOut(dataPin, clockPin, LSBFIRST, (uint8_t)(data >> 8));
   digitalWrite(latchPin, HIGH);
 }
 
@@ -60,15 +75,38 @@ void DisplayDriver::writePins(unsigned long interval, uint16_t* displayPins) {
 
     //clear();
 
-    digitalWrite(gnd[0], npn ? HIGH : LOW); // Invert GND output if NPN is connected.
-    digitalWrite(gnd[1], npn ? LOW : HIGH);
-    writeShiftRegister(displayPins[0]);
-    _delay_ms(MULTIPLEX_SPEED);
+    switch (wiring_style) {
+      case NORMAL_WIRING: {
+        digitalWrite(gnd[0], npn ? HIGH : LOW); // Invert GND output if NPN is connected.
+        digitalWrite(gnd[1], npn ? LOW : HIGH);
+        writeShiftRegister(displayPins[0]);
+        _delay_ms(MULTIPLEX_SPEED);
+        
+        digitalWrite(gnd[0], npn ? LOW : HIGH);
+        digitalWrite(gnd[1], npn ? HIGH : LOW);
+        writeShiftRegister(displayPins[1]);
+        _delay_ms(MULTIPLEX_SPEED);
+
+        break;
+      }
+      case MINIMAL_WIRING: {
+        uint16_t mask = (1 << 0) | (1 << 15);
+        uint16_t pattern = npn ? (1 << 0) : (1 << 15);
+
+        displayPins[0] = (displayPins[0] & ~mask) | pattern;
+        displayPins[1] = (displayPins[1] & ~mask) | (pattern ^ mask); // Invert pattern (gnd layout)
+
+        writeShiftRegister(displayPins[0]);
+        _delay_ms(MULTIPLEX_SPEED);
+        writeShiftRegister(displayPins[1]);
+        _delay_ms(MULTIPLEX_SPEED);
+
+        break;
+      }
+      default:
+        break;
+    }
     
-    digitalWrite(gnd[0], npn ? LOW : HIGH);
-    digitalWrite(gnd[1], npn ? HIGH : LOW);
-    writeShiftRegister(displayPins[1]);
-    _delay_ms(MULTIPLEX_SPEED);
   }
 }
 
