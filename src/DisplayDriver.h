@@ -22,14 +22,14 @@ class DisplayDriver {
         void writeShiftRegister(uint16_t data);
         void writePins(unsigned long interval, uint16_t* displayPins);
 
-
     public:
         DisplayDriver(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle);
         DisplayDriver(const uint8_t* pins, bool npn_toggle);
 
         void clear();
-        void writeArray(uint16_t number, unsigned long interval, bool clock);
-        void writeNull(unsigned long interval, bool clock);
+        void writeArray(uint16_t number, unsigned long interval, bool clock=true);
+        void writeNull(unsigned long interval, bool clock=true);
+
 };
 
 #endif
