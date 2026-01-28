@@ -1,12 +1,12 @@
-#include <DisplayDriver.h>
-#include <Digit_Patterns.h>
+#include <DisplayDriver_FD0604.hpp>
+#include <Digit_Patterns.hpp>
 
 /**
  * @param gnds        The GND pins to address.
  * @param vccs        The VCC pins to address.
  * @param npn         Toggle output polarity if the NPN-transistor is connected.
  */
-DisplayDriver::DisplayDriver(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle) {
+DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle) {
   gnd = gnds;
   latchPin = pins[0];
   clockPin = pins[1];
@@ -23,7 +23,11 @@ DisplayDriver::DisplayDriver(const uint8_t* gnds, const uint8_t* pins, bool npn_
   clear();
 }
 
-DisplayDriver::DisplayDriver(const uint8_t* pins, bool npn_toggle) {
+/**
+ * @param pins        The array of pins to address.
+ * @param npn         Toggle output polarity if the NPN-transistor is connected.
+ */
+DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle) {
   latchPin = pins[0];
   clockPin = pins[1];
   dataPin = pins[2];
@@ -40,13 +44,13 @@ DisplayDriver::DisplayDriver(const uint8_t* pins, bool npn_toggle) {
 /**
  * @details   Clears the display.
  */
-void DisplayDriver::clear() {
+void DisplayDriver_FD0604::clear() {
   for (int i=0; i<2; i++) {
     digitalWrite(gnd[i], HIGH);
   }
 }
 
-void DisplayDriver::getDisplayDigit(uint8_t digit, uint16_t (&output)[2]) {
+void DisplayDriver_FD0604::getDisplayDigit(uint8_t digit, uint16_t (&output)[2]) {
   memcpy_P(output, &display[digit], sizeof(display[digit]));
 }
 
@@ -56,7 +60,7 @@ void DisplayDriver::getDisplayDigit(uint8_t digit, uint16_t (&output)[2]) {
  * @param interval    The time the number should be displayed for.
  * @param clock       Toggle the clock LEDs. 
  */
-void DisplayDriver::writeArray(uint16_t number, unsigned long interval, bool clock) {
+void DisplayDriver_FD0604::writeArray(uint16_t number, unsigned long interval, bool clock) {
   uint16_t arr[4] = {0};
   uint16_t arr0[2], arr1[2], arr2[2], arr3[2], arr4[2], out[2] = {0};
   
@@ -79,7 +83,7 @@ void DisplayDriver::writeArray(uint16_t number, unsigned long interval, bool clo
     out[i] = arr0[i] | arr1[i] | arr2[i] | arr3[i] | arr4[i];
   }
 
-  DisplayDriver::writePins(interval, out);
+  DisplayDriver_FD0604::writePins(interval, out);
 }
 
 /**
@@ -87,7 +91,7 @@ void DisplayDriver::writeArray(uint16_t number, unsigned long interval, bool clo
  * @param interval    The time the number should be displayed for.
  * @param clock       Toggle the clock LEDs. 
  */
-void DisplayDriver::writeNull(unsigned long interval, bool clock) {
+void DisplayDriver_FD0604::writeNull(unsigned long interval, bool clock) {
   
 
   uint16_t null_digits[2], clock_digits[2], out[2];
@@ -99,7 +103,7 @@ void DisplayDriver::writeNull(unsigned long interval, bool clock) {
     out[i] = null_digits[i] | clock_digits[i];
   }
 
-  DisplayDriver::writePins(interval, out);
+  DisplayDriver_FD0604::writePins(interval, out);
 }
 
 /**
@@ -107,7 +111,7 @@ void DisplayDriver::writeNull(unsigned long interval, bool clock) {
  * @param interval      The time the number should be displayed for.
  * @param displayPins   The pointer array of to-display LED's on/off pins. 
  */
-void DisplayDriver::writePins(unsigned long interval, uint16_t* displayPins) {
+void DisplayDriver_FD0604::writePins(unsigned long interval, uint16_t* displayPins) {
   unsigned long currentMillis = millis();
   previousMillis = currentMillis;
   while (currentMillis - previousMillis <= interval) {
@@ -155,7 +159,7 @@ void DisplayDriver::writePins(unsigned long interval, uint16_t* displayPins) {
  * @details       Writes dual shift registers with display data
  * @param data    Entire two bytes of data for each ground pin. 
  */
-void DisplayDriver::writeShiftRegister(uint16_t data) {
+void DisplayDriver_FD0604::writeShiftRegister(uint16_t data) {
   digitalWrite(latchPin, LOW);
   shiftOut(dataPin, clockPin, LSBFIRST, (uint8_t)data);
   shiftOut(dataPin, clockPin, LSBFIRST, (uint8_t)(data >> 8));
