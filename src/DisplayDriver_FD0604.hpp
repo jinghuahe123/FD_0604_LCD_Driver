@@ -1,5 +1,5 @@
-#ifndef DISPLAY_DRIVER_H
-#define DISPLAY_DRIVER_H
+#ifndef DISPLAY_DRIVER_FD0604_H
+#define DISPLAY_DRIVER_FD0604_H
 
 #include <Arduino.h>
 
@@ -8,7 +8,7 @@
 #define NORMAL_WIRING 0
 #define MINIMAL_WIRING 1
 
-class DisplayDriver {
+class DisplayDriver_FD0604 {
     private:
         const uint8_t* gnd;
         uint8_t latchPin;
@@ -23,8 +23,8 @@ class DisplayDriver {
         void writePins(unsigned long interval, uint16_t* displayPins);
 
     public:
-        DisplayDriver(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle);
-        DisplayDriver(const uint8_t* pins, bool npn_toggle);
+        DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle);
+        DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle);
 
         void clear();
         void writeArray(uint16_t number, unsigned long interval, bool clock=true);
