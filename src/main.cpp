@@ -28,6 +28,10 @@ const int BASE_ADDR = 0; // EEPROM address to start writing writing from
 const int SLOT_SIZE = 6; // uint32_t for sequence number (for wear levelling) + uint16_t for number
 uint16_t number;
 
+unsigned long previousMillis = 0;
+const long interval = 100;
+int cycle_number = 0;
+
 #ifdef IS_ATTINY
   #include <SoftwareSerial.h>
 
@@ -42,7 +46,7 @@ uint16_t number;
 
   #define Serial mySerial
 #else
-  const uint8_t gnd[2] = {2, 3}; // gnd pins (first two pins of display) in order of connection
+  const uint8_t gnd[2] = {2, 3}; // first two pins of display in order of connection
   const uint8_t pins[3] = {6, 7, 8}; // order of latchpin, clockpin, datapin
 
   const int NUM_SLOTS = 170; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
@@ -81,6 +85,14 @@ bool checkIfNumeric(String string, int16_t &number) {
   return true;
 }
 
+void updateDisplay() {
+  PersistentStorageManager::writeData data = storageManager.writeData_uint16(number);
+  Serial.println(F("====================="));
+  Serial.print(F("Wrote Data: ")); Serial.println((number == 4000) ? "CYCLE" : String(number));
+  Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
+  Serial.print(F("EEPROM Address: 0x")); Serial.println(data.writeAddress, HEX);
+  Serial.println(F("====================="));
+}
 
 // int main(void) __attribute__((weak));
 int main(void) {
@@ -123,23 +135,38 @@ int main(void) {
         Serial.print(F(" of "));
         Serial.print(TOTAL_RAM);
         Serial.println(F(" bytes free."));
-      } else if (!checkIfNumeric(input, tempNumber)  || tempNumber >= 4000 || tempNumber < 0) {
+      } else if (input == "CYCLE") {
+        number = 4000;
+        cycle_number = 0;
+        updateDisplay();
+      } else if (!checkIfNumeric(input, tempNumber) || tempNumber > 3999 || tempNumber < 0) {
         Serial.print(F("Error parsing \'"));
         Serial.print(input);
         Serial.println(F("\'. Please make sure you have entered the correct format and is between 0 and 3999."));
       } else {
         number = tempNumber;
-        PersistentStorageManager::writeData data = storageManager.writeData_uint16(number);
-        Serial.println(F("====================="));
-        Serial.print(F("Wrote Data: ")); Serial.println(number);
-        Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
-        Serial.print(F("EEPROM Address: 0x")); Serial.println(data.writeAddress, HEX);
-        Serial.println(F("====================="));
-      }
-      
+        updateDisplay();
+      }      
     }
-    display.writeArray(number, 1);
+
+    if (number == 4000) {
+      unsigned long currentMillis = millis();
+
+      if (currentMillis - previousMillis > interval) {
+        previousMillis = currentMillis;
+        cycle_number = (cycle_number + 1) % 4000;
+      }
+
+      display.writeArray(cycle_number, 1);
+    } else {
+      display.writeArray(number, 1);
+    }
   }
   
   return 0;
 }
+
+
+// definitions:
+// 4000 - infinte cycle
+
