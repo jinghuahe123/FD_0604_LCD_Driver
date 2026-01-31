@@ -3,25 +3,72 @@
 #include <DisplayDriver_FD0604.hpp>
 #include <PersistentStorageManager.hpp>
 
-#define USE_MINIMAL_WIRING
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || \
+    defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || \
+    defined(__AVR_ATtiny2313__) || defined(__AVR_ATtiny4313__) || \
+    defined(__AVR_ATtiny26__) || defined(__AVR_ATtiny261__) || defined(__AVR_ATtiny461__) || defined(__AVR_ATtiny861__) || \
+    defined(__AVR_ATtiny43__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) || \
+    defined(__AVR_ATtiny48__) || defined(__AVR_ATtiny88__) || \
+    defined(__AVR_ATtiny13__) || defined(__AVR_ATtiny13A__) || \
+    defined(__AVR_ATtiny2313__) || defined(__AVR_ATtiny4313__) || \
+    defined(__AVR_ATtiny1634__) || \
+    defined(__AVR_ATtiny828__) || \
+    defined(__AVR_ATtiny441__) || defined(__AVR_ATtiny841__) || \
+    defined(__AVR_ATtiny204__) || defined(__AVR_ATtiny404__) || defined(__AVR_ATtiny804__) || defined(__AVR_ATtiny1604__) || \
+    defined(__AVR_ATtiny212__) || defined(__AVR_ATtiny412__) || defined(__AVR_ATtiny806__) || defined(__AVR_ATtiny1606__) || \
+    defined(__AVR_ATtiny416__) || defined(__AVR_ATtiny417__) || defined(__AVR_ATtiny816__) || defined(__AVR_ATtiny817__) || defined(__AVR_ATtiny1616__) || defined(__AVR_ATtiny3216__) || \
+    defined(__AVR_ATtiny1624__) || defined(__AVR_ATtiny1626__) || defined(__AVR_ATtiny1627__)
 
-const uint8_t gnd[2] = {2, 3}; // first two pins of display in order of connection
-const uint8_t pins[3] = {6, 7, 8}; // order of latchpin, clockpin, datapin
+  #define IS_ATTINY
+#endif
+
+#define USE_MINIMAL_WIRING
 
 const int BASE_ADDR = 0; // EEPROM address to start writing writing from
 const int SLOT_SIZE = 6; // uint32_t for sequence number (for wear levelling) + uint16_t for number
-const int NUM_SLOTS = 170; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
-
 uint16_t number;
 
-#ifdef USE_MINIMAL_WIRING
-DisplayDriver_FD0604 display(pins, true);
+#ifdef IS_ATTINY
+  #include <SoftwareSerial.h>
+
+  const uint8_t pins[3] = {0, 1, 2}; // order of latchpin, clockpin, datapin
+  const byte rxPin = 3;
+  const byte txPin = 4;
+
+  const int NUM_SLOTS = 85; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+
+  DisplayDriver_FD0604 display(pins, true);
+  SoftwareSerial mySerial(rxPin, txPin);
+
+  #define Serial mySerial
 #else
-DisplayDriver_FD0604 display(gnd, pins, true);
+  const uint8_t gnd[2] = {2, 3}; // gnd pins (first two pins of display) in order of connection
+  const uint8_t pins[3] = {6, 7, 8}; // order of latchpin, clockpin, datapin
+
+  const int NUM_SLOTS = 170; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+
+  #ifdef USE_MINIMAL_WIRING
+  DisplayDriver_FD0604 display(pins, true);
+  #else
+  DisplayDriver_FD0604 display(gnd, pins, true);
+  #endif
 #endif
 
 PersistentStorageManager storageManager(BASE_ADDR, SLOT_SIZE, NUM_SLOTS);
 
+
+// Calculate total RAM (AVR) or use manual define
+#if !defined(TOTAL_RAM) && defined(__AVR__)
+  const unsigned int TOTAL_RAM = RAMEND - RAMSTART + 1;
+#elif !defined(TOTAL_RAM)
+  const unsigned int TOTAL_RAM = 0; // Fallback
+#endif
+
+extern int __heap_start, *__brkval;
+int freeMemory(void) {
+    int v;
+    return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+}
 
 bool checkIfNumeric(String string, int16_t &number) {
   if (string.length() == 0) return false;
@@ -40,8 +87,13 @@ int main(void) {
   init();
   //initVariant();
 
-  Serial.begin(115200);
-  //display.clear();
+  #ifdef IS_ATTINY
+    pinMode(rxPin, INPUT);
+    pinMode(txPin, OUTPUT);
+    Serial.begin(9600);
+  #else
+    Serial.begin(115200);
+  #endif
 
   number = storageManager.readData_uint16();
 
@@ -49,21 +101,40 @@ int main(void) {
     if (Serial.available() > 0) {
       display.clear();
 
-      String input = Serial.readStringUntil('\n');
-      input.trim();
-      
+      #ifdef IS_ATTINY
+        String input;
+        unsigned long startTime = millis();
+
+        while (millis() - startTime < 1000) {
+          if (mySerial.available()) {
+            char c = mySerial.read();
+            if (c == '\n' || c == '\r') break;
+            input += c;
+          }
+        }
+      #else
+        String input = Serial.readStringUntil('\n');
+        input.trim();
+      #endif
+
       int16_t tempNumber;
-      if (!checkIfNumeric(input, tempNumber)  || tempNumber >= 4000 || tempNumber < 0) {
+      if (input == "MEM") {
+        Serial.print(freeMemory());
+        Serial.print(F(" of "));
+        Serial.print(TOTAL_RAM);
+        Serial.println(F(" bytes free."));
+      } else if (!checkIfNumeric(input, tempNumber)  || tempNumber >= 4000 || tempNumber < 0) {
         Serial.print(F("Error parsing \'"));
         Serial.print(input);
         Serial.println(F("\'. Please make sure you have entered the correct format and is between 0 and 3999."));
-        Serial.println();
       } else {
         number = tempNumber;
-        storageManager.writeData_uint16(number);
-        Serial.print(F("Now showing: "));
-        Serial.println(number);
-        Serial.println();
+        PersistentStorageManager::writeData data = storageManager.writeData_uint16(number);
+        Serial.println(F("====================="));
+        Serial.print(F("Wrote Data: ")); Serial.println(number);
+        Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
+        Serial.print(F("EEPROM Address: 0x")); Serial.println(data.writeAddress, HEX);
+        Serial.println(F("====================="));
       }
       
     }

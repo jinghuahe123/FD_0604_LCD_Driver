@@ -13,7 +13,12 @@ class PersistentStorageManager {
     public:
         PersistentStorageManager(const uint16_t &base_address, const uint8_t &slot_size, const uint16_t &num_slots);
 
-        void writeData_uint16(uint16_t value);
+        struct writeData {
+            uint16_t writeSlot;
+            uint16_t writeAddress;
+        };
+
+        writeData writeData_uint16(uint16_t value);
         uint16_t readData_uint16();
 
 

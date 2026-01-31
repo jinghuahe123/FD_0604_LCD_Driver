@@ -10,16 +10,23 @@ PersistentStorageManager::PersistentStorageManager(const uint16_t &base_address,
   SLOT_SIZE = slot_size;
   NUM_SLOTS = num_slots;
 
+  #if (NUM_SLOTS*SLOT_SIZE > E2END + 1)
+  #error Too much EEPROM space allocated for wear levelling.
+  #endif
+  /*
   if (NUM_SLOTS*SLOT_SIZE > EEPROM.length()) {
     Serial.println(F("Error: Too much EEPROM space allocated for wear levelling."));
     while (1);
-  }
+  }*/
 }
 
 /**
  * @param value                 The data to write to EEPROM.
+ * @return                      Debugging data about EEPROM write. 
  */
-void PersistentStorageManager::writeData_uint16(uint16_t value) {
+PersistentStorageManager::writeData PersistentStorageManager::writeData_uint16(uint16_t value) {
+  writeData data;
+
   uint32_t maxSequence = 0; 
   uint16_t newestSlot = -1; 
 
@@ -39,21 +46,15 @@ void PersistentStorageManager::writeData_uint16(uint16_t value) {
     }
   }
 
-  uint16_t writeSlot = (newestSlot + 1) % NUM_SLOTS;
-  uint16_t writeAddress = BASE_ADDR + writeSlot * SLOT_SIZE;
+  data.writeSlot = (newestSlot + 1) % NUM_SLOTS;
+  data.writeAddress = BASE_ADDR + data.writeSlot * SLOT_SIZE;
   
   uint32_t newSequence = (newestSlot == (uint8_t)-1) ? 1 : maxSequence + 1;
 
-  EEPROM.put(writeAddress, newSequence);
-  EEPROM.put(writeAddress + 4, value);
+  EEPROM.put(data.writeAddress, newSequence);
+  EEPROM.put(data.writeAddress + 4, value);
 
-  Serial.println(F("====================="));
-  Serial.print(F("Wrote Data: ")); Serial.println(value);
-  Serial.print(F("Written Slot: ")); Serial.println(writeSlot);
-  Serial.print(F("EEPROM Address: 0x")); Serial.println(writeAddress, HEX);
-  // Serial.print(F("Sequence Number: ")); Serial.println(newSeq);
-  Serial.println(F("====================="));
-  
+  return data;
 }
 
 /**
@@ -81,11 +82,12 @@ uint16_t PersistentStorageManager::readData_uint16() {
   uint16_t data;
   EEPROM.get(BASE_ADDR + newestSlot * SLOT_SIZE + 4, data);
 
+  /*
   Serial.println(F("====================="));
   Serial.print(F("Read Data: ")); Serial.println(data);
   Serial.print(F("Read Slot: ")); Serial.println(newestSlot);
   Serial.print(F("EEPROM Address: 0x")); Serial.println(BASE_ADDR + newestSlot * SLOT_SIZE, HEX);
   Serial.println(F("====================="));
-
+*/
   return data;
 }
