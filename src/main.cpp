@@ -89,7 +89,7 @@ bool checkIfNumeric(String string, int16_t &number) {
 void updateDisplay() {
   PersistentStorageManager::writtenData data = storageManager.writeData_uint16(number);
   Serial.println(F("====================="));
-  Serial.print(F("Wrote Data: ")); Serial.println((number == 4000) ? "CYCLE" : String(number));
+  Serial.print(F("Wrote Data: ")); Serial.println((number == 4000) ? F("CYCLE") : String(number));
   Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
   Serial.print(F("EEPROM Address: 0x")); Serial.println(data.writeAddress, HEX);
   Serial.println(F("====================="));
@@ -132,18 +132,28 @@ int main(void) {
 
       int16_t tempNumber;
       if (input == "MEM") {
-        Serial.print(freeMemory());
+        float percentFree;
+        uint16_t freeMem = freeMemory();
+        percentFree = 100.0f * static_cast<float>(freeMem) / TOTAL_RAM;
+
+        Serial.print(F("RAM: "));
+        Serial.print(freeMem);
         Serial.print(F(" of "));
         Serial.print(TOTAL_RAM);
-        Serial.println(F(" bytes free."));
+        Serial.print(F(" bytes free. ("));
+        Serial.print(percentFree);
+        Serial.println(F("%)"));
+
       } else if (input == "CYCLE") {
         number = CYCLE;
         cycle_number = 0;
         updateDisplay();
+
       } else if (!checkIfNumeric(input, tempNumber) || tempNumber > 3999 || tempNumber < 0) {
         Serial.print(F("Error parsing \'"));
         Serial.print(input);
         Serial.println(F("\'. Please make sure you have entered the correct format and is between 0 and 3999."));
+        
       } else {
         number = tempNumber;
         updateDisplay();
