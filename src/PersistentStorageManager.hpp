@@ -6,19 +6,19 @@
 
 class PersistentStorageManager {
     private:
-        uint16_t BASE_ADDR;
-        uint8_t SLOT_SIZE;
-        uint16_t NUM_SLOTS;
+        const uint16_t BASE_ADDR;
+        const uint8_t SLOT_SIZE;
+        const uint16_t NUM_SLOTS;
 
     public:
         PersistentStorageManager(const uint16_t &base_address, const uint8_t &slot_size, const uint16_t &num_slots);
 
-        struct writeData {
+        struct writtenData {
             uint16_t writeSlot;
             uint16_t writeAddress;
         };
 
-        writeData writeData_uint16(uint16_t value);
+        writtenData writeData_uint16(uint16_t value);
         uint16_t readData_uint16();
 
 

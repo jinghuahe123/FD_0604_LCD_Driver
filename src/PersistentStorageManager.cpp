@@ -5,10 +5,14 @@
  * @param slot_size             The size of each slot of data.
  * @param num_slots             The total number of slots to use for wear-levelling.
  */
-PersistentStorageManager::PersistentStorageManager(const uint16_t &base_address, const uint8_t &slot_size, const uint16_t &num_slots) {
+PersistentStorageManager::PersistentStorageManager(const uint16_t &base_address, const uint8_t &slot_size, const uint16_t &num_slots) :
+    BASE_ADDR(base_address), SLOT_SIZE(slot_size), NUM_SLOTS(num_slots) {
+
+  /*
   BASE_ADDR = base_address;
   SLOT_SIZE = slot_size;
   NUM_SLOTS = num_slots;
+*/
 
   #if (NUM_SLOTS*SLOT_SIZE > E2END + 1)
   #error Too much EEPROM space allocated for wear levelling.
@@ -24,8 +28,8 @@ PersistentStorageManager::PersistentStorageManager(const uint16_t &base_address,
  * @param value                 The data to write to EEPROM.
  * @return                      Debugging data about EEPROM write. 
  */
-PersistentStorageManager::writeData PersistentStorageManager::writeData_uint16(uint16_t value) {
-  writeData data;
+PersistentStorageManager::writtenData PersistentStorageManager::writeData_uint16(uint16_t value) {
+  writtenData data;
 
   uint32_t maxSequence = 0; 
   uint16_t newestSlot = -1; 

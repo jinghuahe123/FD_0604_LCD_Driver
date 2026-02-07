@@ -6,13 +6,17 @@
  * @param vccs        The VCC pins to address.
  * @param npn         Toggle output polarity if the NPN-transistor is connected.
  */
-DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle) {
+DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle) : 
+    gnd(gnds), latchPin(pins[0]), clockPin(pins[1]), dataPin(pins[2]), npn(npn_toggle), wiring_style(NORMAL_WIRING) {
+
+  /*
   gnd = gnds;
   latchPin = pins[0];
   clockPin = pins[1];
   dataPin = pins[2];
   npn = npn_toggle;
   wiring_style = NORMAL_WIRING;
+*/
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -27,12 +31,16 @@ DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* p
  * @param pins        The array of pins to address.
  * @param npn         Toggle output polarity if the NPN-transistor is connected.
  */
-DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle) {
+DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle) : 
+    latchPin(pins[0]), clockPin(pins[1]), dataPin(pins[2]), npn(npn_toggle), wiring_style(MINIMAL_WIRING) {
+
+  /*
   latchPin = pins[0];
   clockPin = pins[1];
   dataPin = pins[2];
   npn = npn_toggle;
   wiring_style = MINIMAL_WIRING;
+*/
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
