@@ -2,6 +2,7 @@
 #define DISPLAY_DRIVER_FD0604_H
 
 #include <Arduino.h>
+#include <util/delay.h>
 
 #define MULTIPLEX_SPEED 4
 
@@ -11,11 +12,12 @@
 class DisplayDriver_FD0604 {
     private:
         const uint8_t* gnd;
-        uint8_t latchPin;
-        uint8_t clockPin;
-        uint8_t dataPin;
-        bool npn;
-        uint8_t wiring_style;
+        const uint8_t latchPin;
+        const uint8_t clockPin;
+        const uint8_t dataPin;
+        const bool npn;
+        const uint8_t wiring_style;
+        
         unsigned long previousMillis = 0;
 
         void getDisplayDigit(uint8_t digit, uint16_t (&output)[2]);

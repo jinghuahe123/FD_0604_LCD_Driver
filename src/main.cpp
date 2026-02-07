@@ -21,6 +21,7 @@
 
   #define IS_ATTINY
 #endif
+#define CYCLE 4000
 
 #define USE_MINIMAL_WIRING
 
@@ -86,7 +87,7 @@ bool checkIfNumeric(String string, int16_t &number) {
 }
 
 void updateDisplay() {
-  PersistentStorageManager::writeData data = storageManager.writeData_uint16(number);
+  PersistentStorageManager::writtenData data = storageManager.writeData_uint16(number);
   Serial.println(F("====================="));
   Serial.print(F("Wrote Data: ")); Serial.println((number == 4000) ? "CYCLE" : String(number));
   Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
@@ -136,7 +137,7 @@ int main(void) {
         Serial.print(TOTAL_RAM);
         Serial.println(F(" bytes free."));
       } else if (input == "CYCLE") {
-        number = 4000;
+        number = CYCLE;
         cycle_number = 0;
         updateDisplay();
       } else if (!checkIfNumeric(input, tempNumber) || tempNumber > 3999 || tempNumber < 0) {
@@ -149,7 +150,7 @@ int main(void) {
       }      
     }
 
-    if (number == 4000) {
+    if (number == CYCLE) {
       unsigned long currentMillis = millis();
 
       if (currentMillis - previousMillis > interval) {
