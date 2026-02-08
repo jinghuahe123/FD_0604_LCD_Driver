@@ -23,6 +23,7 @@
 #endif
 #define OFF 4000
 #define CYCLE 4001
+#define NULL_DISP 4002
 
 #define USE_MINIMAL_WIRING
 
@@ -156,6 +157,10 @@ int main(void) {
         cycle_number = 0;
         updateDisplay();
 
+      } else if (input == "NULL") {
+        number = NULL_DISP;
+        updateDisplay();
+
       } else if (!checkIfNumeric(input, tempNumber) || tempNumber > 3999 || tempNumber < 0) {
         Serial.print(F("Error parsing \'"));
         Serial.print(input);
@@ -168,7 +173,7 @@ int main(void) {
     }
 
     if (number >= 0 && number <= 3999) {
-      display.writeArray(number, 1);
+      display.writeNumber(number, 1);
 
     } else if (number == CYCLE) {
       unsigned long currentMillis = millis();
@@ -178,7 +183,9 @@ int main(void) {
         cycle_number = (cycle_number + 1) % 4000;
       }
 
-      display.writeArray(cycle_number, 1);
+      display.writeNumber(cycle_number, 1);
+    } else if (number == NULL_DISP) {
+      display.writeNull(1);
     }
   }
   
@@ -189,4 +196,5 @@ int main(void) {
 // definitions:
 // 4000 - off
 // 4001 - infinte cycle
+// 4002 - null
 
