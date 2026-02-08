@@ -9,15 +9,6 @@
 DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle) : 
     gnd(gnds), latchPin(pins[0]), clockPin(pins[1]), dataPin(pins[2]), npn(npn_toggle), wiring_style(NORMAL_WIRING) {
 
-  /*
-  gnd = gnds;
-  latchPin = pins[0];
-  clockPin = pins[1];
-  dataPin = pins[2];
-  npn = npn_toggle;
-  wiring_style = NORMAL_WIRING;
-*/
-
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
@@ -33,14 +24,6 @@ DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* p
  */
 DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle) : 
     latchPin(pins[0]), clockPin(pins[1]), dataPin(pins[2]), npn(npn_toggle), wiring_style(MINIMAL_WIRING) {
-
-  /*
-  latchPin = pins[0];
-  clockPin = pins[1];
-  dataPin = pins[2];
-  npn = npn_toggle;
-  wiring_style = MINIMAL_WIRING;
-*/
 
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -72,10 +55,11 @@ void DisplayDriver_FD0604::getDisplayDigit(uint8_t digit, uint16_t (&output)[2])
 }
 
 /**
- * @details           Parses each individual display number together.
- * @param number      The desired display number.
- * @param interval    The time the number should be displayed for.
- * @param clock       Toggle the clock LEDs. 
+ * @details                 Parses each individual display number together.
+ * @param number            The desired display number.
+ * @param interval          The time the number should be displayed for.
+ * @param leading_zeroes    Toggles whether the display will show leading zeroes.
+ * @param clock             Toggle the clock LEDs. 
  */
 void DisplayDriver_FD0604::writeArray(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock) {
   uint16_t each_digit[4] = {0};
