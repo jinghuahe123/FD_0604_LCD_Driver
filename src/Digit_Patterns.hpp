@@ -1,6 +1,6 @@
 #include <avr/pgmspace.h>
 
-const uint16_t display[36][2] PROGMEM = { // [digit][gnd pin]
+const uint16_t number[34][2] PROGMEM = { // [digit][gnd pin]
   // for vcc pin:
   // -- ENTRY NO. -- | -- PIN --
   //       0               6
@@ -61,7 +61,9 @@ const uint16_t display[36][2] PROGMEM = { // [digit][gnd pin]
   {0x0000, 0x4800}, // number 1 in thousands digit
   {0x3000, 0x7000}, // number 2 in thousands digit
   {0x3000, 0x6800}, // number 3 in thousands digit
-  
+};
+
+const uint16_t special_character[2][2] PROGMEM {
   {0x0001, 0x0000}, // clock region
   {0x0408, 0x2040}  // nullDisplay
 };

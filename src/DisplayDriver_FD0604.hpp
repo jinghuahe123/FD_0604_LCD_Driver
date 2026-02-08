@@ -20,7 +20,9 @@ class DisplayDriver_FD0604 {
         
         unsigned long previousMillis = 0;
 
-        void getDisplayDigit(uint8_t digit, uint16_t (&output)[2]);
+        void getNumber(uint8_t index, uint16_t (&output)[2]);
+        void getSpecialChar(uint8_t index, uint16_t (&output)[2]);
+
         void writeShiftRegister(uint16_t data);
         void writePins(unsigned long interval, uint16_t* displayPins);
 
@@ -29,8 +31,8 @@ class DisplayDriver_FD0604 {
         DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle);
 
         void clear();
-        void writeArray(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
-        void writeNull(unsigned long interval, bool clock=true);
+        void writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
+        void writeNull(unsigned long interval, bool clock = false);
 
 };
 

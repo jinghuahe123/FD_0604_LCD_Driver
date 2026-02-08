@@ -50,8 +50,12 @@ void DisplayDriver_FD0604::clear() {
   }
 }
 
-void DisplayDriver_FD0604::getDisplayDigit(uint8_t digit, uint16_t (&output)[2]) {
-  memcpy_P(output, &display[digit], sizeof(display[digit]));
+void DisplayDriver_FD0604::getNumber(uint8_t index, uint16_t (&output)[2]) {
+  memcpy_P(output, &number[index], sizeof(number[index]));
+}
+
+void DisplayDriver_FD0604::getSpecialChar(uint8_t index, uint16_t (&output)[2]) {
+  memcpy_P(output, &special_character[index], sizeof(special_character[index]));
 }
 
 /**
@@ -61,7 +65,7 @@ void DisplayDriver_FD0604::getDisplayDigit(uint8_t digit, uint16_t (&output)[2])
  * @param leading_zeroes    Toggles whether the display will show leading zeroes.
  * @param clock             Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::writeArray(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock) {
+void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock) {
   uint16_t each_digit[4] = {0};
   uint16_t arr[5][2] = {0};
   uint16_t out[2] = {0};
@@ -83,10 +87,10 @@ void DisplayDriver_FD0604::writeArray(uint16_t number, unsigned long interval, b
       leading_digit = false;
     } 
     if (!leading_digit || leading_zeroes) {
-      getDisplayDigit(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+      getNumber(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
     }
   }
-  if (clock) getDisplayDigit(34, arr[4]);
+  if (clock) getSpecialChar(0, arr[4]);
 
   for (int8_t i = 0; i < 2; i++) {
     // Use bitwise OR to combine the values from all four arrays
@@ -106,8 +110,8 @@ void DisplayDriver_FD0604::writeNull(unsigned long interval, bool clock) {
 
   uint16_t null_digits[2], clock_digits[2], out[2];
   
-  getDisplayDigit(35, null_digits);
-  if (clock) getDisplayDigit(34, clock_digits);
+  getSpecialChar(1, null_digits);
+  if (clock) getSpecialChar(0, clock_digits);
 
   for (int8_t i=0; i<2; i++) {
     out[i] = null_digits[i] | clock_digits[i];
