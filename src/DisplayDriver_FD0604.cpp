@@ -1,5 +1,5 @@
-#include <DisplayDriver_FD0604.hpp>
-#include <Digit_Patterns.hpp>
+#include "DisplayDriver_FD0604.hpp"
+#include "Digit_Patterns.hpp"
 
 /**
  * @param gnds        The GND pins to address.
@@ -53,8 +53,17 @@ DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle)
  * @details   Clears the display.
  */
 void DisplayDriver_FD0604::clear() {
-  for (int i=0; i<2; i++) {
-    digitalWrite(gnd[i], HIGH);
+  switch (wiring_style) {
+    case NORMAL_WIRING :
+      for (int i=0; i<2; i++) {
+        digitalWrite(gnd[i], HIGH);
+      }
+      break;
+    
+    case MINIMAL_WIRING :
+      uint16_t pattern = (1 << 0) & (1 << 15);
+      writeShiftRegister(pattern);
+      break;
   }
 }
 
@@ -68,27 +77,36 @@ void DisplayDriver_FD0604::getDisplayDigit(uint8_t digit, uint16_t (&output)[2])
  * @param interval    The time the number should be displayed for.
  * @param clock       Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::writeArray(uint16_t number, unsigned long interval, bool clock) {
-  uint16_t arr[4] = {0};
-  uint16_t arr0[2], arr1[2], arr2[2], arr3[2], arr4[2], out[2] = {0};
+void DisplayDriver_FD0604::writeArray(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock) {
+  uint16_t each_digit[4] = {0};
+  uint16_t arr[5][2] = {0};
+  uint16_t out[2] = {0};
+  bool leading_digit = true;
   
   // Parse the number into the array
   for (int8_t i = 3; i >= 0; i--) {
-    arr[i] = number % 10; // Extract the last digit
+    each_digit[i] = number % 10; // Extract the last digit
     number /= 10;         // Remove the last digit from the number
   }  
 
   // Addition for confining to digit patterns array layout
-  getDisplayDigit(arr[0]+30, arr0);
-  getDisplayDigit(arr[1]+20, arr1);
-  getDisplayDigit(arr[2]+10, arr2);
-  getDisplayDigit(arr[3], arr3);
-
-  if (clock) getDisplayDigit(34, arr4);
+  //getDisplayDigit(each_digit[0]+30, arr[0]);
+  //getDisplayDigit(each_digit[1]+20, arr[1]);
+  //getDisplayDigit(each_digit[2]+10, arr[2]);
+  //getDisplayDigit(each_digit[3], arr[3]);
+  for (int8_t i=0; i<4; i++) {
+    if (leading_digit && each_digit[i] != 0) {
+      leading_digit = false;
+    } 
+    if (!leading_digit || leading_zeroes) {
+      getDisplayDigit(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+    }
+  }
+  if (clock) getDisplayDigit(34, arr[4]);
 
   for (int8_t i = 0; i < 2; i++) {
     // Use bitwise OR to combine the values from all four arrays
-    out[i] = arr0[i] | arr1[i] | arr2[i] | arr3[i] | arr4[i];
+    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
   }
 
   DisplayDriver_FD0604::writePins(interval, out);

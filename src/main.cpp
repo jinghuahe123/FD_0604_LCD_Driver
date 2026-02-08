@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#include <DisplayDriver_FD0604.hpp>
-#include <PersistentStorageManager.hpp>
+#include "DisplayDriver_FD0604.hpp"
+#include "PersistentStorageManager.hpp"
 
 #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || \
     defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || \
@@ -21,12 +21,14 @@
 
   #define IS_ATTINY
 #endif
-#define CYCLE 4000
+#define OFF 4000
+#define CYCLE 4001
 
 #define USE_MINIMAL_WIRING
 
 const int BASE_ADDR = 0; // EEPROM address to start writing writing from
 const int SLOT_SIZE = 6; // uint32_t for sequence number (for wear levelling) + uint16_t for number
+String input;
 uint16_t number;
 
 unsigned long previousMillis = 0;
@@ -89,7 +91,7 @@ bool checkIfNumeric(String string, int16_t &number) {
 void updateDisplay() {
   PersistentStorageManager::writtenData data = storageManager.writeData_uint16(number);
   Serial.println(F("====================="));
-  Serial.print(F("Wrote Data: ")); Serial.println((number == 4000) ? F("CYCLE") : String(number));
+  Serial.print(F("Wrote Data: ")); Serial.println((number <= 3999 && number >=0) ? String(number) : input); // Serial.println((number == 4000) ? F("CYCLE") : String(number));
   Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
   Serial.print(F("EEPROM Address: 0x")); Serial.println(data.writeAddress, HEX);
   Serial.println(F("====================="));
@@ -126,7 +128,7 @@ int main(void) {
           }
         }
       #else
-        String input = Serial.readStringUntil('\n');
+        input = Serial.readStringUntil('\n');
         input.trim();
       #endif
 
@@ -144,6 +146,11 @@ int main(void) {
         Serial.print(percentFree);
         Serial.println(F("%)"));
 
+      } else if (input == "OFF") {
+        display.clear();
+        number = OFF;
+        updateDisplay();
+
       } else if (input == "CYCLE") {
         number = CYCLE;
         cycle_number = 0;
@@ -153,14 +160,17 @@ int main(void) {
         Serial.print(F("Error parsing \'"));
         Serial.print(input);
         Serial.println(F("\'. Please make sure you have entered the correct format and is between 0 and 3999."));
-        
+
       } else {
         number = tempNumber;
         updateDisplay();
       }      
     }
 
-    if (number == CYCLE) {
+    if (number >= 0 && number <= 3999) {
+      display.writeArray(number, 1);
+
+    } else if (number == CYCLE) {
       unsigned long currentMillis = millis();
 
       if (currentMillis - previousMillis > interval) {
@@ -169,8 +179,6 @@ int main(void) {
       }
 
       display.writeArray(cycle_number, 1);
-    } else {
-      display.writeArray(number, 1);
     }
   }
   
@@ -179,5 +187,6 @@ int main(void) {
 
 
 // definitions:
-// 4000 - infinte cycle
+// 4000 - off
+// 4001 - infinte cycle
 

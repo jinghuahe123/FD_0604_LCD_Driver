@@ -29,7 +29,7 @@ class DisplayDriver_FD0604 {
         DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle);
 
         void clear();
-        void writeArray(uint16_t number, unsigned long interval, bool clock=true);
+        void writeArray(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
         void writeNull(unsigned long interval, bool clock=true);
 
 };
