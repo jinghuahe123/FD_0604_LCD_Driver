@@ -1,3 +1,9 @@
+/*
+MIT License
+Copyright (c) 2026 Jinghua He
+See LICENSE file in the project root for full license text.
+*/
+
 #ifndef DISPLAY_DRIVER_FD0604_H
 #define DISPLAY_DRIVER_FD0604_H
 
