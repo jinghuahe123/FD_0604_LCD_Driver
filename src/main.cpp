@@ -65,6 +65,28 @@ int cycle_number = 0;
 PersistentStorageManager storageManager(BASE_ADDR, SLOT_SIZE, NUM_SLOTS);
 
 
+void displayInit(DisplayDriver_FD0604& display, const int8_t initTime = 60) {
+  display.writeNull(initTime + 35);
+  display.writeNumber(1111, initTime, true, true);
+  display.writeNumber(2222, initTime, true, true);
+  display.writeNumber(3333, initTime, true, true);
+  display.writeNumber(444, initTime, true, true);
+  display.writeNumber(555, initTime, true, true);
+  display.writeNumber(666, initTime, true, true);
+  display.writeNumber(777, initTime, true, true);
+  display.writeNumber(888, initTime, true, true);
+  display.writeNumber(999, initTime, true, true);
+  display.writeNumber(000, initTime, true, true);
+  display.writeLetter("AAA", initTime, true);
+  display.writeLetter("BBB", initTime, true);
+  display.writeLetter("CCC", initTime, true);
+  display.writeLetter("DDD", initTime, true);
+  display.writeLetter("EEE", initTime, true);
+  display.writeLetter("FFF", initTime, true);
+  display.writeNull(initTime + 35);
+  display.clear();
+}
+
 // Calculate total RAM (AVR) or use manual define
 #if !defined(TOTAL_RAM) && defined(__AVR__)
   const unsigned int TOTAL_RAM = RAMEND - RAMSTART + 1;
@@ -111,6 +133,8 @@ int main(void) {
     Serial.begin(115200);
   #endif
 
+  //displayInit(display);
+
   number = storageManager.readData_uint16();
 
   for (;;) {
@@ -147,7 +171,10 @@ int main(void) {
         Serial.print(percentFree);
         Serial.println(F("%)"));
 
-      } else if (input == "OFF") {
+      } else if (input == "INIT") {
+        displayInit(display);
+      }
+      else if (input == "OFF") {
         display.clear();
         number = OFF;
         updateDisplay();

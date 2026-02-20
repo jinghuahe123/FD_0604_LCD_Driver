@@ -1,29 +1,28 @@
 #include <avr/pgmspace.h>
 
+// for vcc pin:
+// -- ENTRY NO. -- | -- PIN --
+//       0               6
+//       1               7
+//       2               8
+//       3               9
+//       4               10
+//       5               12
+//       6               13
+//       7               15
+//       8               16
+//       9               17
+//       10              18
+//       11              19
+//       12              20
+//       13              21
+//       14              30
+//
+// ref:
+//{0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14}
+//{6, 7, 8, 9,10,12,13,15,16,17,18,19,20,21,30}
+
 const uint16_t number[34][2] PROGMEM = { // [digit][gnd pin]
-  // for vcc pin:
-  // -- ENTRY NO. -- | -- PIN --
-  //       0               6
-  //       1               7
-  //       2               8
-  //       3               9
-  //       4               10
-  //       5               12
-  //       6               13
-  //       7               15
-  //       8               16
-  //       9               17
-  //       10              18
-  //       11              19
-  //       12              20
-  //       13              21
-  //       14              30
-  //
-  // ref:
-  //{0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14}
-  //{6, 7, 8, 9,10,12,13,15,16,17,18,19,20,21,30}
-
-
   {0x0016, 0x000E}, // number 0 in ones digit
   {0x0000, 0x000C}, // number 1 in ones digit
   {0x001C, 0x000A}, // number 2 in ones digit
@@ -61,6 +60,29 @@ const uint16_t number[34][2] PROGMEM = { // [digit][gnd pin]
   {0x0000, 0x4800}, // number 1 in thousands digit
   {0x3000, 0x7000}, // number 2 in thousands digit
   {0x3000, 0x6800}, // number 3 in thousands digit
+};
+
+const uint16_t letter[18][2] PROGMEM = {
+  {0x001A, 0x000E}, // A in ones digit
+  {0x001E, 0x0004}, // B in ones digit
+  {0x001C, 0x0000}, // C in ones digit
+  {0x001C, 0x000C}, // D in ones digit
+  {0x001E, 0x0002}, // E in ones digit
+  {0x001A, 0x0002}, // F in ones digit
+
+  {0x00E0, 0x00D0}, // A in tens digit
+  {0x0020, 0x00F0}, // B in tens digit
+  {0x0000, 0x0070}, // C in tens digit
+  {0x0060, 0x0070}, // D in tens digit
+  {0x0080, 0x00F0}, // E in tens digit
+  {0x0080, 0x00D0}, // F in tens digit
+
+  {0x0D00, 0x0700}, // A in hundreds digit
+  {0x0F00, 0x0200}, // B in hundreds digit
+  {0x0E00, 0x0000}, // C in hundreds digit
+  {0x0E00, 0x0600}, // D in hundreds digit
+  {0x0F00, 0x0100}, // E in hundreds digit
+  {0x0D00, 0x0100}, // F in hundreds digit
 };
 
 const uint16_t special_character[2][2] PROGMEM {

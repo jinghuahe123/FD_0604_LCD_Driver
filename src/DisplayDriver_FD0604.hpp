@@ -21,6 +21,7 @@ class DisplayDriver_FD0604 {
         unsigned long previousMillis = 0;
 
         void getNumber(uint8_t index, uint16_t (&output)[2]);
+        void getLetter(uint8_t index, uint16_t (&output)[2]);
         void getSpecialChar(uint8_t index, uint16_t (&output)[2]);
 
         void writeShiftRegister(uint16_t data);
@@ -32,7 +33,8 @@ class DisplayDriver_FD0604 {
 
         void clear();
         void writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
-        void writeNull(unsigned long interval, bool clock = false);
+        void writeLetter(String letters, unsigned long interval, bool clock = false);
+        void writeNull(unsigned long interval);
 
 };
 
