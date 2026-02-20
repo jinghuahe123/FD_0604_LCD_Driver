@@ -54,6 +54,10 @@ void DisplayDriver_FD0604::getNumber(uint8_t index, uint16_t (&output)[2]) {
   memcpy_P(output, &number[index], sizeof(number[index]));
 }
 
+void DisplayDriver_FD0604::getLetter(uint8_t index, uint16_t (&output)[2]) {
+  memcpy_P(output, &letter[index], sizeof(letter[index]));
+}
+
 void DisplayDriver_FD0604::getSpecialChar(uint8_t index, uint16_t (&output)[2]) {
   memcpy_P(output, &special_character[index], sizeof(special_character[index]));
 }
@@ -101,17 +105,50 @@ void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, 
 }
 
 /**
+ * @details                 Parses each individual display number together.
+ * @param letters           The desired display letters.
+ * @param interval          The time the number should be displayed for.
+ * @param clock             Toggle the clock LEDs. 
+ */
+void DisplayDriver_FD0604::writeLetter(String letters, unsigned long interval, bool clock) { // change to char array? OR limit to size 3
+  const String mask = "abcdef";
+  char each_character[4] = {0};
+  uint16_t arr[4][2] = {0};
+  uint16_t out[2] = {0};
+
+  if (letters.length() > 3) letters = letters.substring(0, 3);
+
+  letters.toLowerCase();
+  letters.toCharArray(each_character, sizeof(each_character));
+
+  for (uint8_t i=0; i<3; i++) {
+    if (i < letters.length()) {
+      int pos = mask.indexOf(each_character[i]);
+      if (pos != -1) getLetter(pos + 6*i, arr[i]);
+    }
+    // getLetter(mask.indexOf(each_character[i]) + 6*(2-i), arr[i]);
+  }
+  if (clock) getSpecialChar(0, arr[3]);
+
+  for (int8_t i = 0; i < 2; i++) {
+    // Use bitwise OR to combine the values from all arrays
+    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i];
+  }
+
+  DisplayDriver_FD0604::writePins(interval, out);
+}
+
+/**
  * @details           Parses the null display.
  * @param interval    The time the number should be displayed for.
  * @param clock       Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::writeNull(unsigned long interval, bool clock) {
-  
+void DisplayDriver_FD0604::writeNull(unsigned long interval) {
 
   uint16_t null_digits[2], clock_digits[2], out[2];
   
   getSpecialChar(1, null_digits);
-  if (clock) getSpecialChar(0, clock_digits);
+  getSpecialChar(0, clock_digits);
 
   for (int8_t i=0; i<2; i++) {
     out[i] = null_digits[i] | clock_digits[i];
