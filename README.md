@@ -2,6 +2,8 @@
 
 Driver Software to interface FD_06_04 LED Display with Arduino-compatible MCU boards
 
+This project is provided purely for educational purposes. Use at your own risk.
+
 ## Usage
 
 Upload program to arduino, and wire according to wiring diagram.
