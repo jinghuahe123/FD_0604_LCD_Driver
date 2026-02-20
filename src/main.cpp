@@ -1,3 +1,9 @@
+/*
+MIT License
+Copyright (c) 2026 Jinghua He
+See LICENSE file in the project root for full license text.
+*/
+
 #include <Arduino.h>
 
 #include "DisplayDriver_FD0604.hpp"
