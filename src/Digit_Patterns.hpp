@@ -1,3 +1,9 @@
+/*
+MIT License
+Copyright (c) 2026 Jinghua He
+See LICENSE file in the project root for full license text.
+*/
+
 #include <avr/pgmspace.h>
 
 const uint16_t display[36][2] PROGMEM = { // [digit][gnd pin]
