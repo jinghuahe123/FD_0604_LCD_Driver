@@ -2,58 +2,36 @@
 
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
+#include "configs.h"
 
-#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || \
-    defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || \
-    defined(__AVR_ATtiny2313__) || defined(__AVR_ATtiny4313__) || \
-    defined(__AVR_ATtiny26__) || defined(__AVR_ATtiny261__) || defined(__AVR_ATtiny461__) || defined(__AVR_ATtiny861__) || \
-    defined(__AVR_ATtiny43__) || defined(__AVR_ATtiny87__) || defined(__AVR_ATtiny167__) || \
-    defined(__AVR_ATtiny48__) || defined(__AVR_ATtiny88__) || \
-    defined(__AVR_ATtiny13__) || defined(__AVR_ATtiny13A__) || \
-    defined(__AVR_ATtiny2313__) || defined(__AVR_ATtiny4313__) || \
-    defined(__AVR_ATtiny1634__) || \
-    defined(__AVR_ATtiny828__) || \
-    defined(__AVR_ATtiny441__) || defined(__AVR_ATtiny841__) || \
-    defined(__AVR_ATtiny204__) || defined(__AVR_ATtiny404__) || defined(__AVR_ATtiny804__) || defined(__AVR_ATtiny1604__) || \
-    defined(__AVR_ATtiny212__) || defined(__AVR_ATtiny412__) || defined(__AVR_ATtiny806__) || defined(__AVR_ATtiny1606__) || \
-    defined(__AVR_ATtiny416__) || defined(__AVR_ATtiny417__) || defined(__AVR_ATtiny816__) || defined(__AVR_ATtiny817__) || defined(__AVR_ATtiny1616__) || defined(__AVR_ATtiny3216__) || \
-    defined(__AVR_ATtiny1624__) || defined(__AVR_ATtiny1626__) || defined(__AVR_ATtiny1627__)
+// ATTINY board definitions used to live here
 
-  #define IS_ATTINY
-#endif
 #define OFF 4000
 #define CYCLE 4001
 #define NULL_DISP 4002
+#ifndef IS_ATTINY
+  #define TEMP 4003
+#endif
 
-#define USE_MINIMAL_WIRING
-
-const int BASE_ADDR = 0; // EEPROM address to start writing writing from
-const int SLOT_SIZE = 6; // uint32_t for sequence number (for wear levelling) + uint16_t for number
-String input;
-uint16_t number;
+// Global Configs used to live here
 
 unsigned long previousMillis = 0;
-const long interval = 100;
+String input;
+uint16_t number;
 int cycle_number = 0;
 
 #ifdef IS_ATTINY
   #include <SoftwareSerial.h>
 
-  const uint8_t pins[3] = {0, 1, 2}; // order of latchpin, clockpin, datapin
-  const byte rxPin = 3;
-  const byte txPin = 4;
-
-  const int NUM_SLOTS = 85; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+  // ATTINY configurations used to live here
 
   DisplayDriver_FD0604 display(pins, true);
   SoftwareSerial mySerial(rxPin, txPin);
 
   #define Serial mySerial
 #else
-  const uint8_t gnd[2] = {2, 3}; // first two pins of display in order of connection
-  const uint8_t pins[3] = {6, 7, 8}; // order of latchpin, clockpin, datapin
 
-  const int NUM_SLOTS = 170; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+  // Generic configurations used to live here
 
   #ifdef USE_MINIMAL_WIRING
   DisplayDriver_FD0604 display(pins, true);
@@ -131,6 +109,13 @@ int main(void) {
     Serial.begin(9600);
   #else
     Serial.begin(115200);
+    analogReference(EXTERNAL);
+
+    #ifndef MODE_NO_SERIAL
+      Serial.begin(115200);
+      Serial.println(F("== FD-0604 LED Display Temperature Sensor =="));
+    #endif
+
   #endif
 
   //displayInit(display);
@@ -188,7 +173,15 @@ int main(void) {
         number = NULL_DISP;
         updateDisplay();
 
-      } else if (!checkIfNumeric(input, tempNumber) || tempNumber > 3999 || tempNumber < 0) {
+      } 
+      #ifndef IS_ATTINY
+        else if (input == "TEMP") {
+          number = TEMP;
+          updateDisplay();
+
+        }
+      #endif 
+      else if (!checkIfNumeric(input, tempNumber) || tempNumber > 3999 || tempNumber < 0) {
         Serial.print(F("Error parsing \'"));
         Serial.print(input);
         Serial.println(F("\'. Please make sure you have entered the correct format and is between 0 and 3999."));
@@ -205,7 +198,7 @@ int main(void) {
     } else if (number == CYCLE) {
       unsigned long currentMillis = millis();
 
-      if (currentMillis - previousMillis > interval) {
+      if (currentMillis - previousMillis > countingInterval) {
         previousMillis = currentMillis;
         cycle_number = (cycle_number + 1) % 4000;
       }
@@ -213,7 +206,30 @@ int main(void) {
       display.writeNumber(cycle_number, 1);
     } else if (number == NULL_DISP) {
       display.writeNull(1);
-    }
+    } 
+    #ifndef IS_ATTINY 
+      else if (number == TEMP) {
+        uint16_t displayTemp;
+        unsigned long currentMillis = millis();
+        if (currentMillis - previousMillis > temperatureUpdateInterval) {
+          previousMillis = currentMillis;
+          
+          uint16_t temperatureReading = analogRead(temperaturePin);
+
+          double tempK = log(resistorValue * (1024.0 / temperatureReading - 1));
+          tempK = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * tempK * tempK )) * tempK );
+          float tempC = tempK - 273.15;
+
+          #if !defined(IS_ATTINY) && !defined(MODE_NO_SERIAL)
+            Serial.print(F("Temperature: ")); Serial.print(tempC); Serial.println(F("*C"));
+          #endif
+
+          displayTemp = tempC * 100;
+        }
+
+        display.writeNumber(displayTemp, 1);
+      }
+    #endif
   }
   
   return 0;
@@ -224,4 +240,4 @@ int main(void) {
 // 4000 - off
 // 4001 - infinte cycle
 // 4002 - null
-
+// 4003 - temperature
