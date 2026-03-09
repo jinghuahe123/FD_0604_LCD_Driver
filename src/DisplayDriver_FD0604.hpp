@@ -32,7 +32,7 @@ class DisplayDriver_FD0604 {
         DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle);
 
         void clear();
-        void writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
+        void writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false, bool highValue = false);
         void writeLetter(String letters, unsigned long interval, bool clock = false);
         void writeNull(unsigned long interval);
 

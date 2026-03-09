@@ -1,5 +1,7 @@
 #include <avr/pgmspace.h>
 
+#include "board_configuration.h"
+
 // for vcc pin:
 // -- ENTRY NO. -- | -- PIN --
 //       0               6
@@ -62,6 +64,7 @@ const uint16_t number[34][2] PROGMEM = { // [digit][gnd pin]
   {0x3000, 0x6800}, // number 3 in thousands digit
 };
 
+#ifndef IS_ATTINY
 const uint16_t letter[18][2] PROGMEM = {
   {0x001A, 0x000E}, // A in ones digit
   {0x001E, 0x0004}, // B in ones digit
@@ -84,8 +87,10 @@ const uint16_t letter[18][2] PROGMEM = {
   {0x0F00, 0x0100}, // E in hundreds digit
   {0x0D00, 0x0100}, // F in hundreds digit
 };
+#endif
 
-const uint16_t special_character[2][2] PROGMEM {
+const uint16_t special_character[3][2] PROGMEM {
   {0x0001, 0x0000}, // clock region
-  {0x0408, 0x2040}  // nullDisplay
+  {0x0408, 0x2040}, // nullDisplay
+  {0x0000, 0x1800}  // highValue Symbol
 };

@@ -2,6 +2,7 @@
 
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
+#include "board_configuration.h"
 #include "configs.h"
 
 // ATTINY board definitions used to live here
@@ -42,7 +43,7 @@ int cycle_number = 0;
 
 PersistentStorageManager storageManager(BASE_ADDR, SLOT_SIZE, NUM_SLOTS);
 
-
+#ifndef IS_ATTINY
 void displayInit(DisplayDriver_FD0604& display, const int8_t initTime = 60) {
   display.writeNull(initTime + 35);
   display.writeNumber(1111, initTime, true, true);
@@ -64,6 +65,7 @@ void displayInit(DisplayDriver_FD0604& display, const int8_t initTime = 60) {
   display.writeNull(initTime + 35);
   display.clear();
 }
+#endif
 
 // Calculate total RAM (AVR) or use manual define
 #if !defined(TOTAL_RAM) && defined(__AVR__)
@@ -156,9 +158,12 @@ int main(void) {
         Serial.print(percentFree);
         Serial.println(F("%)"));
 
-      } else if (input == "INIT") {
-        displayInit(display);
-      }
+      } 
+      #ifndef IS_ATTINY
+        else if (input == "INIT") {
+          displayInit(display);
+        }
+      #endif
       else if (input == "OFF") {
         display.clear();
         number = OFF;
@@ -227,7 +232,14 @@ int main(void) {
           displayTemp = tempC * 100;
         }
 
-        display.writeNumber(displayTemp, 1);
+        if (displayTemp < 4000) {
+          display.writeNumber(displayTemp, 1);
+        } else if (displayTemp >= 4000 && displayTemp <= 6999) {
+          display.writeNumber(displayTemp - 4000, 1, 0, 0, 1);
+        } else {
+          display.writeNull(1);
+        }
+        
       }
     #endif
   }

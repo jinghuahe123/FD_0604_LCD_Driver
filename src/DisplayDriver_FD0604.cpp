@@ -1,5 +1,7 @@
 #include "DisplayDriver_FD0604.hpp"
+
 #include "Digit_Patterns.hpp"
+#include "board_configuration.h"
 
 /**
  * @param gnds        The GND pins to address.
@@ -54,9 +56,11 @@ void DisplayDriver_FD0604::getNumber(uint8_t index, uint16_t (&output)[2]) {
   memcpy_P(output, &number[index], sizeof(number[index]));
 }
 
+#ifndef IS_ATTINY
 void DisplayDriver_FD0604::getLetter(uint8_t index, uint16_t (&output)[2]) {
   memcpy_P(output, &letter[index], sizeof(letter[index]));
 }
+#endif
 
 void DisplayDriver_FD0604::getSpecialChar(uint8_t index, uint16_t (&output)[2]) {
   memcpy_P(output, &special_character[index], sizeof(special_character[index]));
@@ -69,9 +73,9 @@ void DisplayDriver_FD0604::getSpecialChar(uint8_t index, uint16_t (&output)[2]) 
  * @param leading_zeroes    Toggles whether the display will show leading zeroes.
  * @param clock             Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock) {
+void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock, bool highValue) {
   uint16_t each_digit[4] = {0};
-  uint16_t arr[5][2] = {0};
+  uint16_t arr[6][2] = {0};
   uint16_t out[2] = {0};
   bool leading_digit = true;
   
@@ -95,10 +99,11 @@ void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, 
     }
   }
   if (clock) getSpecialChar(0, arr[4]);
+  if (highValue) getSpecialChar(2, arr[5]);
 
   for (int8_t i = 0; i < 2; i++) {
     // Use bitwise OR to combine the values from all four arrays
-    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
+    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i] | arr[5][i];
   }
 
   DisplayDriver_FD0604::writePins(interval, out);
