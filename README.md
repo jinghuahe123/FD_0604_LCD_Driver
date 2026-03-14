@@ -31,4 +31,5 @@ Any number for the given ranges can be displayed on the screen:
 | HELP      | Shows the availabe commands page.                           |
 | INVERT    | Flips the screen orientation.                               |
 | MEM       | Prints to Serial the available free memory on MCU.          |
+| ERASE     | Erases previous displayed numbers' history.                 |
 

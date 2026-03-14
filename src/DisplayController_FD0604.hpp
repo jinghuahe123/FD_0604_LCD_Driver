@@ -77,6 +77,7 @@ private:
     void _handleMem();
     void _handleInit();
     void _handleInvert();
+    void _handleErase();
     void _handleOff();
     void _handleCycle();
     void _handleNull();

@@ -5,6 +5,7 @@ const char DisplayController_FD0604::_commandList[][8] PROGMEM = {
     "MEM", 
     "INIT", 
     "INVERT", 
+    "ERASE",
     "OFF", 
     "CYCLE", 
     "NULL", 
@@ -57,10 +58,11 @@ void DisplayController_FD0604::processInput(const String& input) {
             case 1: _handleMem();     break;
             case 2: _handleInit();    break;
             case 3: _handleInvert();  break;
-            case 4: _handleOff();     break;
-            case 5: _handleCycle();   break;
-            case 6: _handleNull();    break;
-            case 7: _handleTemp();    break;
+            case 4: _handleErase();   break;
+            case 5: _handleOff();     break;
+            case 6: _handleCycle();   break;
+            case 7: _handleNull();    break;
+            case 8: _handleTemp();    break;
             default: break;
         }
     } else {
@@ -110,8 +112,7 @@ void DisplayController_FD0604::getCommandFromFlash(uint8_t index, char* buffer, 
  * @return          Returns the index of the matching command. 
  */
 int8_t DisplayController_FD0604::_findCommandIndex(const String& input) {
-    uint8_t bufferSize = sizeof(_commandList[0]);
-    char buffer[bufferSize];
+    char buffer[sizeof(_commandList[0])];
     for (int8_t i = 0; i < _commandListSize; i++) {
         getCommandFromFlash(i, buffer, sizeof(buffer));
         if (input.equalsIgnoreCase(buffer)) {
@@ -285,6 +286,15 @@ void DisplayController_FD0604::_handleInvert() {
 
     Serial.print(F("Display Orientation set to: "));
     Serial.println((orientation) ? F("INVERTED. ") : F("NORMAL. "));
+}
+
+/**
+ * @details         Erases the EEPROM addresses containing previous number data.
+ */
+void DisplayController_FD0604::_handleErase() {
+    Serial.print(F("Erasing... "));
+    _storageManager.clearData();
+    Serial.println(F("Successfully erased previous history. "));
 }
 
 /**

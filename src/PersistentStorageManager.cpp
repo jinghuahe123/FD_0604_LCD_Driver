@@ -95,3 +95,9 @@ uint16_t PersistentStorageManager::readData_uint16() {
 */
   return data;
 }
+
+void PersistentStorageManager::clearData() {
+  for (int i = 0; i<SLOT_SIZE * NUM_SLOTS; i++) {
+    EEPROM.update(BASE_ADDR + i, 0xFF);
+  }
+}
