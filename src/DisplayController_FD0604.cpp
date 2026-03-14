@@ -98,7 +98,6 @@ void DisplayController_FD0604::updateDisplay() {
  */
 void DisplayController_FD0604::getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize) {
     if (index >= _commandListSize) {
-        //strcpy_P(buffer, PSTR(""));
         if (bufSize > 0) buffer[0] = '\0';
         return;
     }
