@@ -1,5 +1,19 @@
 #include "DisplayController_FD0604.hpp"
 
+const char DisplayController_FD0604::_commandList[][8] PROGMEM = { 
+    "HELP", 
+    "MEM", 
+    "INIT", 
+    "INVERT", 
+    "OFF", 
+    "CYCLE", 
+    "NULL", 
+    "TEMP" 
+};
+
+const uint8_t DisplayController_FD0604::_commandListSize = 
+    sizeof(DisplayController_FD0604::_commandList) / sizeof(DisplayController_FD0604::_commandList[0]);
+
 /**
  * @details         Create a DisplayController_FD0604 object.
  * @param disp      DisplayDriver_FD0604 object to pass.
@@ -79,6 +93,17 @@ void DisplayController_FD0604::updateDisplay() {
     }
 }
 
+/**
+ * @details         Gets an individual command into memory from a PROGMEM store. 
+ */
+void DisplayController_FD0604::getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize) {
+    if (index >= _commandListSize) {
+        //strcpy_P(buffer, PSTR(""));
+        if (bufSize > 0) buffer[0] = '\0';
+        return;
+    }
+    strlcpy_P(buffer, _commandList[index], bufSize);
+}
 
 /**
  * @details         Find the corresponding command from String input.
@@ -86,8 +111,11 @@ void DisplayController_FD0604::updateDisplay() {
  * @return          Returns the index of the matching command. 
  */
 int8_t DisplayController_FD0604::_findCommandIndex(const String& input) {
-    for (int8_t i = 0; i < 8; i++) {
-        if (input.equalsIgnoreCase(_commandList[i])) {
+    uint8_t bufferSize = sizeof(_commandList[0]);
+    char buffer[bufferSize];
+    for (int8_t i = 0; i < _commandListSize; i++) {
+        getCommandFromFlash(i, buffer, sizeof(buffer));
+        if (input.equalsIgnoreCase(buffer)) {
             return i; // Return the index of the matching command
         }
     }

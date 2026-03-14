@@ -63,16 +63,9 @@ private:
     
     void init();
 
-    const char* const _commandList[8] = { 
-        "HELP", 
-        "MEM", 
-        "INIT", 
-        "INVERT", 
-        "OFF", 
-        "CYCLE", 
-        "NULL", 
-        "TEMP" 
-    };
+    static const uint8_t _commandListSize;
+    static const char _commandList[][8] PROGMEM;
+    void getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize);
     int8_t _findCommandIndex(const String& input);
 
     void _updateDisplay();
