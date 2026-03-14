@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
+#include <StandardCplusplus.h>
+#include <vector>
 
 class PersistentStorageManager {
     private:
@@ -18,10 +20,22 @@ class PersistentStorageManager {
             uint16_t writeAddress;
         };
 
+        struct StorageEntry {
+            uint16_t address;
+            uint32_t sequence;
+            int16_t value;
+        };
+
+        uint16_t getBaseAddr();
+        uint8_t getSlotSize();
+        uint16_t getNumSlots();
+
         writtenData writeData_uint16(uint16_t value);
         uint16_t readData_uint16();
 
         void clearData();
+        uint16_t getLastEntries(uint8_t count, std::vector<StorageEntry>& entries);
+
 };
 
 #endif

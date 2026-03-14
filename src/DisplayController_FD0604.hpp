@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
+//#include <StandardCplusplus.h>
+//#include <iomanip>
+//#include <serstream>
 
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
@@ -16,6 +19,10 @@
 // predefine classes used
 class DisplayDriver_FD0604;
 class PersistentStorageManager;
+
+//namespace std {
+//    extern ohserialstream cout;
+//}
 
 class DisplayController_FD0604 {
 public:
@@ -66,6 +73,7 @@ private:
     static const char _commandList[][8] PROGMEM;
     void getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize);
     int8_t _findCommandIndex(const String& input);
+    String getValueDisplay(uint16_t value);
 
     void _updateDisplay();
     void _displayInit(int8_t initTime = 60);
@@ -78,6 +86,7 @@ private:
     void _handleInit();
     void _handleInvert();
     void _handleErase();
+    void _handleHistory();
     void _handleOff();
     void _handleCycle();
     void _handleNull();
