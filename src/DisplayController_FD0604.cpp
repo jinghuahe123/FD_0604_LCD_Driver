@@ -1,11 +1,16 @@
 #include "DisplayController_FD0604.hpp"
 
+//namespace std {
+//    ohserialstream cout(Serial);
+//}
+
 const char DisplayController_FD0604::_commandList[][8] PROGMEM = { 
     "HELP", 
     "MEM", 
     "INIT", 
     "INVERT", 
     "ERASE",
+    "HISTORY",
     "OFF", 
     "CYCLE", 
     "NULL", 
@@ -59,10 +64,11 @@ void DisplayController_FD0604::processInput(const String& input) {
             case 2: _handleInit();    break;
             case 3: _handleInvert();  break;
             case 4: _handleErase();   break;
-            case 5: _handleOff();     break;
-            case 6: _handleCycle();   break;
-            case 7: _handleNull();    break;
-            case 8: _handleTemp();    break;
+            case 5: _handleHistory(); break;
+            case 6: _handleOff();     break;
+            case 7: _handleCycle();   break;
+            case 8: _handleNull();    break;
+            case 9: _handleTemp();    break;
             default: break;
         }
     } else {
@@ -123,6 +129,20 @@ int8_t DisplayController_FD0604::_findCommandIndex(const String& input) {
 }
 
 /**
+ * @details         Helper function for parsing special display states.
+ * @return          Return String of special display state. 
+ */
+String DisplayController_FD0604::getValueDisplay(uint16_t value) {
+  switch(value) {
+    case OFF:     return F("OFF");
+    case CYCLE:   return F("CYCLE");
+    case NULL_DISP: return F("NULL_DISP");
+    case TEMP:    return F("TEMP");
+    default:      return String(value);
+  }
+}
+
+/**
  * @details         Displays the available display commands to Serial. 
  */
 void DisplayController_FD0604::_showAvailableCommands() {
@@ -145,6 +165,8 @@ void DisplayController_FD0604::_showAvailableCommands() {
     Serial.println(F("HELP     -  Shows this help page.                                                      "));
     Serial.println(F("INVERT   -  Flips the screen orientation.                                              "));
     Serial.println(F("MEM      -  Prints to Serial the available free memory on the MCU.                     "));
+    Serial.println(F("ERASE    -  Erases previously displayed number history.                                "));
+    Serial.println(F("HISTORY  -  Prints to Serial the last 10 numbers displayed.                            "));
 
     Serial.println(F("======================================================================================="));
     _delay_ms(3);
@@ -295,6 +317,68 @@ void DisplayController_FD0604::_handleErase() {
     Serial.print(F("Erasing... "));
     _storageManager.clearData();
     Serial.println(F("Successfully erased previous history. "));
+}
+
+/**
+ * @details         Handles displaying EEPROM history. 
+ */
+void DisplayController_FD0604::_handleHistory() {
+    Serial.println(F("=============================================================="));
+    Serial.println(F("                     EEPROM STORAGE HISTORY                    "));
+    Serial.println(F("=============================================================="));
+    Serial.printf("Base Address: 0x%04x\n", (unsigned)_storageManager.getBaseAddr());
+    //Serial.print(F("Base Address: 0x"));
+    //Serial.println(_storageManager.getBaseAddr(), HEX);
+    Serial.print(F("Total Slots: "));
+    Serial.println(_storageManager.getNumSlots());
+    Serial.println(F("--------------------------------------------------------------"));
+    std::vector<PersistentStorageManager::StorageEntry> entries;
+    uint16_t uninitialised = _storageManager.getLastEntries(10, entries);
+
+    if (uninitialised != 0xFFFFFFFF) {
+        for(size_t i = 0; i < entries.size(); i++) {
+
+            Serial.printf(
+                "[%04u] Address: 0x%04x | Slot: %010lu | Value: %s\n",
+                (unsigned)(i + 1),
+                (unsigned)entries[i].address,
+                (unsigned long)entries[i].sequence,
+                getValueDisplay(entries[i].value).c_str()
+            );
+
+
+            /*
+            std::cout << "["
+                << std::setw(4) << std::setfill('0') << i+1
+                << "] Address: 0x"
+                << std::hex << std::setw(4) << std::setfill('0') << entries[i].address
+                << " | Slot: "
+                << std::setw(10) << std::setfill('0') << entries[i].address
+                << " | Value: "
+                << getValueDisplay(entries[i].value) << std::endl;
+
+            Serial.print(F("["));
+            //Serial.print(i + 1);
+            std::cout << std::setw(4) << std::setfill('0') << i+1;
+            Serial.print(F("] Address: 0x"));
+            //Serial.print(entries[i].address, HEX);
+            std::cout << std::hex << std::setw(4) << std::setfill('0') << entries[i].address;
+            Serial.print(F(" | Slot: "));
+            //Serial.print(entries[i].sequence);
+            std::cout << std::setw(10) << std::setfill('0') << entries[i].address;
+            Serial.print(F(" | Value: "));
+            Serial.println(getValueDisplay(entries[i].value));*/
+        }
+        Serial.println(F("--------------------------------------------------------------"));
+        Serial.print(F("Total entries searched: "));
+        Serial.println(entries.size());
+        Serial.print(F("Empty entries searched: "));
+        Serial.println(uninitialised);
+    } else {
+        Serial.println(F("No data found in storage."));
+    }
+
+    Serial.println(F("=============================================================="));
 }
 
 /**
