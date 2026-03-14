@@ -21,7 +21,7 @@ class PersistentStorageManager {
         writtenData writeData_uint16(uint16_t value);
         uint16_t readData_uint16();
 
-
+        void clearData();
 };
 
 #endif
