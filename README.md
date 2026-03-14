@@ -1,6 +1,6 @@
 # FD_0604_LCD_Driver
 
-Driver Software to interface FD_06_04 LED Display with Arduino-compatible MCU boards
+Driver Software to interface FD_0604 LED Display with Arduino-compatible MCU boards
 
 This project is provided purely for educational purposes only. Use at your own risk.
 
@@ -19,7 +19,7 @@ Any number for the given ranges can be displayed on the screen:
 | Argument  | Description                                                               |
 | --------- | ------------------------------------------------------------------------- |
 | TEMP      | Turns the display into a thermometer using thermosistor attached.         |
-| CYCLE     | Cycles continuously 0~3999 / 0~999 with 100ms delay between numbers.      |
+| CYCLE     | Cycles continuously 0-3999 / 0-999 with 100ms delay between numbers.      |
 | INIT      | Flashes all possible digits and letters once.                             |
 | NULL      | Shows --:-- on the display.                                               |
 | OFF       | Turns off the display.                                                    |
