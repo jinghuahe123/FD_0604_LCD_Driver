@@ -1,7 +1,5 @@
 #include "DisplayDriver_FD0604.hpp"
-
 #include "Digit_Patterns.hpp"
-#include "board_configuration.h"
 
 /**
  * @param gnds        The GND pins to address.
@@ -34,6 +32,28 @@ DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle)
   clear();
 }
 
+void DisplayDriver_FD0604::setDisplayOrientation(bool orientation) {
+  displayOrientation = orientation;
+}
+
+void DisplayDriver_FD0604::flipDisplayOrientation() {
+  displayOrientation = !displayOrientation;
+}
+
+bool DisplayDriver_FD0604::getDisplayOrientation() {
+  return displayOrientation;
+}
+
+void DisplayDriver_FD0604::checkClock(boolean& clock, uint16_t (&arr)[2]) {
+  if (clock)  {
+    if (displayOrientation == NORMAL_DISPLAY) {
+      getSpecialChar(0, arr);
+    } else {
+      getSpecialCharUpsideDown(0, arr);
+    }
+  }
+}
+
 /**
  * @details   Clears the display.
  */
@@ -52,20 +72,6 @@ void DisplayDriver_FD0604::clear() {
   }
 }
 
-void DisplayDriver_FD0604::getNumber(uint8_t index, uint16_t (&output)[2]) {
-  memcpy_P(output, &number[index], sizeof(number[index]));
-}
-
-#ifndef IS_ATTINY
-void DisplayDriver_FD0604::getLetter(uint8_t index, uint16_t (&output)[2]) {
-  memcpy_P(output, &letter[index], sizeof(letter[index]));
-}
-#endif
-
-void DisplayDriver_FD0604::getSpecialChar(uint8_t index, uint16_t (&output)[2]) {
-  memcpy_P(output, &special_character[index], sizeof(special_character[index]));
-}
-
 /**
  * @details                 Parses each individual display number together.
  * @param number            The desired display number.
@@ -73,9 +79,9 @@ void DisplayDriver_FD0604::getSpecialChar(uint8_t index, uint16_t (&output)[2]) 
  * @param leading_zeroes    Toggles whether the display will show leading zeroes.
  * @param clock             Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock, bool highValue) {
+void DisplayDriver_FD0604::showNumber(uint16_t number, unsigned long interval, bool leading_zeroes, bool clock) { 
   uint16_t each_digit[4] = {0};
-  uint16_t arr[6][2] = {0};
+  uint16_t arr[5][2] = {0};
   uint16_t out[2] = {0};
   bool leading_digit = true;
   
@@ -95,18 +101,22 @@ void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, 
       leading_digit = false;
     } 
     if (!leading_digit || leading_zeroes) {
-      getNumber(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+      if (displayOrientation == NORMAL_DISPLAY) {
+        getNumber(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+      } else {
+        getNumberUpsideDown(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+      }
     }
   }
-  if (clock) getSpecialChar(0, arr[4]);
-  if (highValue) getSpecialChar(2, arr[5]);
+
+  checkClock(clock, arr[4]);
 
   for (int8_t i = 0; i < 2; i++) {
     // Use bitwise OR to combine the values from all four arrays
-    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i] | arr[5][i];
+    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
   }
 
-  DisplayDriver_FD0604::writePins(interval, out);
+  writePins(interval, out);
 }
 
 /**
@@ -114,52 +124,146 @@ void DisplayDriver_FD0604::writeNumber(uint16_t number, unsigned long interval, 
  * @param letters           The desired display letters.
  * @param interval          The time the number should be displayed for.
  * @param clock             Toggle the clock LEDs. 
+ * @note                    DEPRECATED
  */
-void DisplayDriver_FD0604::writeLetter(String letters, unsigned long interval, bool clock) { // change to char array? OR limit to size 3
+void DisplayDriver_FD0604::showLetter(String letters, unsigned long interval, bool clock) { // change to char array? OR limit to size 3
   const String mask = "abcdef";
-  char each_character[4] = {0};
-  uint16_t arr[4][2] = {0};
+  char each_character[5] = {0}; // extra byte required for /n character
+  uint16_t arr[5][2] = {0};
   uint16_t out[2] = {0};
 
-  if (letters.length() > 3) letters = letters.substring(0, 3);
+  if (letters.length() > 4) letters = letters.substring(0, 4);
 
   letters.toLowerCase();
   letters.toCharArray(each_character, sizeof(each_character));
 
-  for (uint8_t i=0; i<3; i++) {
+  for (uint8_t i=0; i<4; i++) {
     if (i < letters.length()) {
       int pos = mask.indexOf(each_character[i]);
-      if (pos != -1) getLetter(pos + 6*i, arr[i]);
+      if (pos != -1) {
+        if (displayOrientation == NORMAL_DISPLAY) {
+          getLetter(pos + 6*(3-i), arr[i]);
+        } else {
+          getLetterUpsideDown(pos + 6*(3-i), arr[i]);
+        }
+      }
     }
     // getLetter(mask.indexOf(each_character[i]) + 6*(2-i), arr[i]);
   }
-  if (clock) getSpecialChar(0, arr[3]);
+
+  checkClock(clock, arr[4]);
 
   for (int8_t i = 0; i < 2; i++) {
     // Use bitwise OR to combine the values from all arrays
-    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i];
+    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
   }
 
-  DisplayDriver_FD0604::writePins(interval, out);
+  writePins(interval, out);
 }
+
+/**
+ * @details                 Parses each individual display sequence together.
+ * @param letters           The desired display sequence.
+ * @param interval          The time the number should be displayed for.
+ * @param clock             Toggle the clock LEDs. 
+ */
+void DisplayDriver_FD0604::showDisplay(String to_display, unsigned long interval, bool leading_zeroes, bool clock) {
+  char digits[4] = {' ', ' ', ' ', ' '};
+
+  uint8_t length = to_display.length();
+  uint8_t startPosition = 4 - length;
+
+  for (uint8_t i=0; i<length && i<4; i++) {
+    digits[startPosition + i] = to_display.charAt(i);
+  }  
+
+  charShowDisplay(digits, interval, leading_zeroes, clock);
+}
+
+/**
+ * @details                 Parses each individual display sequence together.
+ * @param letters           The desired display sequence.
+ * @param interval          The time the number should be displayed for.
+ * @param clock             Toggle the clock LEDs. 
+ */
+void DisplayDriver_FD0604::charShowDisplay(char (&digits)[4], unsigned long interval, bool leading_zeroes, bool clock) {
+  uint16_t arr[5][2] = {0};
+  uint16_t out[2] = {0};
+  bool leading_digit = true;
+
+  for (int i=0; i<4; i++) {
+    if (isdigit(digits[i])) {
+      uint8_t number = digits[i] - '0';
+
+      if (leading_digit && number != 0) {
+        leading_digit = false;
+      } 
+      if (!leading_digit || leading_zeroes) {
+        if (displayOrientation == NORMAL_DISPLAY) {
+          getNumber(number + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+        } else {
+          getNumberUpsideDown(number + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+        }
+      }
+    } else if (!isdigit(digits[i]) && digits[i] != ' ') {
+      leading_digit = false;
+      digits[i] = tolower(digits[i]);
+      const String mask = "abcdef";
+
+      int pos = mask.indexOf(digits[i]);
+      if (pos != -1) {
+        if (displayOrientation == NORMAL_DISPLAY) {
+          getLetter(pos + 6*(3-i), arr[i]);
+        } else {
+          getLetterUpsideDown(pos + 6*(3-i), arr[i]);
+        }
+      } else if (digits[i] == 'o' && i == 3) {
+
+        // FIX THIS BIT
+        // what to fix, still need fixing?
+        
+        if (displayOrientation == NORMAL_DISPLAY) {
+          getSpecialChar(3, arr[i]);
+        } else {
+          getSpecialCharUpsideDown(3, arr[i]);
+        }
+      }
+    }
+  }
+
+  checkClock(clock, arr[4]);
+
+  for (int8_t i = 0; i < 2; i++) {
+    // Use bitwise OR to combine the values from all four arrays
+    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
+  }
+
+  writePins(interval, out);
+}
+
 
 /**
  * @details           Parses the null display.
  * @param interval    The time the number should be displayed for.
  * @param clock       Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::writeNull(unsigned long interval) {
+void DisplayDriver_FD0604::showNull(unsigned long interval) {
 
   uint16_t null_digits[2], clock_digits[2], out[2];
   
-  getSpecialChar(1, null_digits);
-  getSpecialChar(0, clock_digits);
+  if (displayOrientation == NORMAL_DISPLAY) {
+    getSpecialChar(1, null_digits);
+    getSpecialChar(0, clock_digits);
+  } else {
+    getSpecialCharUpsideDown(1, null_digits);
+    getSpecialCharUpsideDown(0, clock_digits);
+  }
 
   for (int8_t i=0; i<2; i++) {
     out[i] = null_digits[i] | clock_digits[i];
   }
 
-  DisplayDriver_FD0604::writePins(interval, out);
+  writePins(interval, out);
 }
 
 /**
@@ -167,7 +271,7 @@ void DisplayDriver_FD0604::writeNull(unsigned long interval) {
  * @param interval      The time the number should be displayed for.
  * @param displayPins   The pointer array of to-display LED's on/off pins. 
  */
-void DisplayDriver_FD0604::writePins(unsigned long interval, uint16_t* displayPins) {
+void DisplayDriver_FD0604::writePins(unsigned long &interval, uint16_t* displayPins) {
   unsigned long currentMillis = millis();
   previousMillis = currentMillis;
   while (currentMillis - previousMillis <= interval) {
