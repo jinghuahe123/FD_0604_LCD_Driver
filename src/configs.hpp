@@ -1,7 +1,6 @@
 #include "DisplayController_FD0604.hpp"
 
 #define USE_MINIMAL_WIRING
-//#define MODE_NO_SERIAL
 
 DisplayController_FD0604::DisplayController_FD0604_Parameters displayParameters = {
     100,        // number of ms to delay between counting intervals
@@ -12,7 +11,6 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters displayParameters 
     0,          // enable serial output for temperature sensor
 
     E2END       // last EEPROM address for storing display orientation data
-    
 };
 
 

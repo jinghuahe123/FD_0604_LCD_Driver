@@ -59,7 +59,6 @@ private:
     uint16_t _cycle_number = 0;
     String _input = "";
     unsigned long previousMillis = 0;
-    //int8_t cmdIndex;
     
     void init();
 
