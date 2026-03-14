@@ -33,7 +33,3 @@ Any number for the given ranges can be displayed on the screen:
 | MEM       | Prints to Serial the available free memory on MCU.          |
 | ERASE     | Erases previously displayed number history.                 |
 | HISTORY   | Prints to Serial the last 10 numbers displayed.             |
-
-### TODO:
-
-- allow persistentstoragemanager to write more than one kind of data (uint16_t & uint32_t, etc)
