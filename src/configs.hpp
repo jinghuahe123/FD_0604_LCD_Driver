@@ -10,7 +10,8 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters displayParameters 
     250,        // temperature sensor update interval
     0,          // enable serial output for temperature sensor
 
-    E2END       // last EEPROM address for storing display orientation data
+    E2END,       // last EEPROM address for storing display orientation data
+    64           // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
 };
 
 

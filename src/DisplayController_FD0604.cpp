@@ -331,43 +331,22 @@ void DisplayController_FD0604::_handleHistory() {
     //Serial.println(_storageManager.getBaseAddr(), HEX);
     Serial.print(F("Total Slots: "));
     Serial.println(_storageManager.getNumSlots());
+    Serial.print(F("Display Orientation: "));
+    Serial.println((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
     Serial.println(F("--------------------------------------------------------------"));
     std::vector<PersistentStorageManager::StorageEntry> entries;
-    uint16_t uninitialised = _storageManager.getLastEntries(10, entries);
+    uint16_t uninitialised = _storageManager.getLastEntries(_params.numHistory, entries);
 
     if (uninitialised != 0xFFFFFFFF) {
         for(size_t i = 0; i < entries.size(); i++) {
 
             Serial.printf(
-                "[%04u] Address: 0x%04x | Slot: %010lu | Value: %s\n",
+                "[%04u] Address: 0x%04x | Sequence: %010lu | Value: %s\n",
                 (unsigned)(i + 1),
                 (unsigned)entries[i].address,
                 (unsigned long)entries[i].sequence,
                 getValueDisplay(entries[i].value).c_str()
             );
-
-
-            /*
-            std::cout << "["
-                << std::setw(4) << std::setfill('0') << i+1
-                << "] Address: 0x"
-                << std::hex << std::setw(4) << std::setfill('0') << entries[i].address
-                << " | Slot: "
-                << std::setw(10) << std::setfill('0') << entries[i].address
-                << " | Value: "
-                << getValueDisplay(entries[i].value) << std::endl;
-
-            Serial.print(F("["));
-            //Serial.print(i + 1);
-            std::cout << std::setw(4) << std::setfill('0') << i+1;
-            Serial.print(F("] Address: 0x"));
-            //Serial.print(entries[i].address, HEX);
-            std::cout << std::hex << std::setw(4) << std::setfill('0') << entries[i].address;
-            Serial.print(F(" | Slot: "));
-            //Serial.print(entries[i].sequence);
-            std::cout << std::setw(10) << std::setfill('0') << entries[i].address;
-            Serial.print(F(" | Value: "));
-            Serial.println(getValueDisplay(entries[i].value));*/
         }
         Serial.println(F("--------------------------------------------------------------"));
         Serial.print(F("Total entries searched: "));

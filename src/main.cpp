@@ -22,7 +22,8 @@ int main(void) {
   init();
   //initVariant();
 
-  Serial.begin(115200);
+  //Serial.begin(115200);
+  Serial.begin(1000000);
   analogReference(EXTERNAL);
 
   displayController._showAvailableCommands();
