@@ -39,7 +39,8 @@ public:
         const unsigned long temperatureUpdateInterval;
         const bool serial_enabled;
         //const int NUM_SLOTS; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
-        const int displayOrientationAddress; // last EEPROM address for storing display orientation data
+        const uint16_t displayOrientationAddress; // last EEPROM address for storing display orientation data
+        const uint16_t numHistory;
         
     };
 

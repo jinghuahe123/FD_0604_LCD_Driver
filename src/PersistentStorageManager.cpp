@@ -46,19 +46,23 @@ PersistentStorageManager::writtenData PersistentStorageManager::writeData_uint16
   writtenData data;
 
   uint32_t maxSequence = 0; 
-  uint16_t newestSlot = -1; 
+  int16_t newestSlot = -1; 
 
   for(uint16_t i=0; i<NUM_SLOTS; i++) {
     uint16_t address = BASE_ADDR + i * SLOT_SIZE;
     uint32_t sequence = 0;
     
+    /*
     for(int8_t j=0; j<4; j++) {
       uint8_t b = EEPROM.read(address + j);
       if(b == 0xFF && j == 0) break;
       ((uint8_t*)&sequence)[j] = b;
-    }
+    }*/
+    //uint32_t sequence;
+    EEPROM.get(address, sequence);
+    if (sequence == 0xFFFFFFFF) continue;  // empty slot
 
-    if(sequence != 0xFFFFFFFF && (newestSlot == (uint8_t)-1 || sequence > maxSequence)) {
+    if(sequence != 0xFFFFFFFF && (newestSlot == (uint8_t)-1 || sequence >= maxSequence)) {
       maxSequence = sequence;
       newestSlot = i;
     }
@@ -80,7 +84,7 @@ PersistentStorageManager::writtenData PersistentStorageManager::writeData_uint16
  */
 uint16_t PersistentStorageManager::readData_uint16() {
   uint32_t maxSequence = 0;
-  uint16_t newestSlot = -1;
+  int16_t newestSlot = -1;
 
   for(uint16_t i=0; i<NUM_SLOTS; i++) {
     uint16_t address = BASE_ADDR + i * SLOT_SIZE;
@@ -95,7 +99,7 @@ uint16_t PersistentStorageManager::readData_uint16() {
     }
   }
 
-  if(newestSlot == (uint8_t)-1) return 0;
+  if(newestSlot == (int8_t)-1) return 0;
 
   uint16_t data;
   EEPROM.get(BASE_ADDR + newestSlot * SLOT_SIZE + 4, data);
@@ -151,10 +155,12 @@ uint16_t PersistentStorageManager::getLastEntries(uint8_t count, std::vector<Sto
     return 0xFFFF; // No valid data found
   }
 
+  int16_t tempBaseAddr = BASE_ADDR;
   for (int8_t i=count-1; i>=0; i--) {
     StorageEntry entry;
-    uint16_t localAddress = latestAddress - i * SLOT_SIZE;
-    if (localAddress < BASE_ADDR) localAddress = BASE_ADDR + NUM_SLOTS * SLOT_SIZE - localAddress;
+    int16_t localAddress = latestAddress - i * SLOT_SIZE;
+    //if (localAddress < tempBaseAddr) localAddress = tempBaseAddr + NUM_SLOTS * SLOT_SIZE - (tempBaseAddr-localAddress);
+    if (localAddress < tempBaseAddr) localAddress += NUM_SLOTS * SLOT_SIZE;
 
     
     EEPROM.get(localAddress, entry.sequence);
