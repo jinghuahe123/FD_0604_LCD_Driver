@@ -32,4 +32,4 @@ Any number for the given ranges can be displayed on the screen:
 | INVERT    | Flips the screen orientation.                               |
 | MEM       | Prints to Serial the available free memory on MCU.          |
 | ERASE     | Erases previously displayed number history.                 |
-| HISTORY   | Prints to Serial the last 10 numbers displayed.             |
+| HISTORY   | Prints to Serial the last 64 numbers displayed.             |
