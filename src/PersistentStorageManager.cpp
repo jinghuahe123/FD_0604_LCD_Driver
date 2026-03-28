@@ -129,8 +129,9 @@ void PersistentStorageManager::clearData() {
  * @param entries           Vector of structs to put the history into.
  * @return                  Number of uninitialised cells found. 
  */
-uint16_t PersistentStorageManager::getLastEntries(uint8_t count, std::vector<StorageEntry>& entries) {
+uint16_t PersistentStorageManager::getLastEntries(uint8_t count, StorageEntry* entries, uint16_t entriesMax) {
   uint16_t uninitialised = 0;
+  uint16_t entryNumber = 0;
   
   // First pass: find the maximum sequence number
   uint32_t maxSequence = 0;
@@ -171,7 +172,13 @@ uint16_t PersistentStorageManager::getLastEntries(uint8_t count, std::vector<Sto
 
     entry.address = localAddress;
     EEPROM.get(localAddress+4, entry.value);
-    entries.push_back(entry);
+    if (entryNumber < entriesMax) {
+      entries[entryNumber] = entry;
+      entryNumber++;
+    } else {
+      return uninitialised;
+    }
+    //entries.push_back(entry);
   }
   
   return uninitialised;

@@ -7,13 +7,12 @@
 
 String input;
 
-#ifdef USE_MINIMAL_WIRING
-DisplayDriver_FD0604 display(pins, true);
+#ifdef PORTMANIP
+DisplayDriver_FD0604 display(minimalPortDisplay);
 #else
-DisplayDriver_FD0604 display(gnd, pins, true);
+DisplayDriver_FD0604 display(minimalDisplay);
 #endif
 PersistentStorageManager storageManager(BASE_ADDR, SLOT_SIZE, NUM_SLOTS);
-
 DisplayController_FD0604 displayController(display, storageManager, displayParameters);
 
 
