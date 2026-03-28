@@ -323,8 +323,11 @@ void DisplayController_FD0604::_handleErase() {
  * @details         Handles displaying EEPROM history. 
  */
 void DisplayController_FD0604::_handleHistory() {
+    PersistentStorageManager::StorageEntry entries[_params.numHistory];
+    //std::vector<PersistentStorageManager::StorageEntry> entries;
+
     Serial.println(F("=============================================================="));
-    Serial.println(F("                     EEPROM STORAGE HISTORY                    "));
+    Serial.println(F("                     EEPROM STORAGE HISTORY                   "));
     Serial.println(F("=============================================================="));
     Serial.printf("Base Address: 0x%04x\n", (unsigned)_storageManager.getBaseAddr());
     //Serial.print(F("Base Address: 0x"));
@@ -333,12 +336,12 @@ void DisplayController_FD0604::_handleHistory() {
     Serial.println(_storageManager.getNumSlots());
     Serial.print(F("Display Orientation: "));
     Serial.println((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
+    _handleMem();
     Serial.println(F("--------------------------------------------------------------"));
-    std::vector<PersistentStorageManager::StorageEntry> entries;
-    uint16_t uninitialised = _storageManager.getLastEntries(_params.numHistory, entries);
+    uint16_t uninitialised = _storageManager.getLastEntries(_params.numHistory, entries, _params.numHistory);
 
     if (uninitialised != 0xFFFFFFFF) {
-        for(size_t i = 0; i < entries.size(); i++) {
+        for(size_t i = 0; i < _params.numHistory; i++) {
 
             Serial.printf(
                 "[%04u] Address: 0x%04x | Sequence: %010lu | Value: %s\n",
@@ -350,7 +353,7 @@ void DisplayController_FD0604::_handleHistory() {
         }
         Serial.println(F("--------------------------------------------------------------"));
         Serial.print(F("Total entries searched: "));
-        Serial.println(entries.size());
+        Serial.println(_params.numHistory - uninitialised);
         Serial.print(F("Empty entries searched: "));
         Serial.println(uninitialised);
     } else {
@@ -358,6 +361,8 @@ void DisplayController_FD0604::_handleHistory() {
     }
 
     Serial.println(F("=============================================================="));
+
+    //entries.clear();
 }
 
 /**

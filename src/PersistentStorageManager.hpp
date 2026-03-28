@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
-#include <StandardCplusplus.h>
-#include <vector>
+//#include <StandardCplusplus.h>
+//#include <vector>
 
 class PersistentStorageManager {
     private:
@@ -34,7 +34,7 @@ class PersistentStorageManager {
         uint16_t readData_uint16();
 
         void clearData();
-        uint16_t getLastEntries(uint8_t count, std::vector<StorageEntry>& entries);
+        uint16_t getLastEntries(uint8_t count, StorageEntry* entries, uint16_t entriesMax);
 
 };
 

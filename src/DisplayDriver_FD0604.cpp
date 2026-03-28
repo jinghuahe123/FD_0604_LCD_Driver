@@ -1,36 +1,45 @@
 #include "DisplayDriver_FD0604.hpp"
 #include "Digit_Patterns.hpp"
 
-/**
- * @param gnds        The GND pins to address.
- * @param vccs        The VCC pins to address.
- * @param npn         Toggle output polarity if the NPN-transistor is connected.
- */
-DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* gnds, const uint8_t* pins, bool npn_toggle) : 
-    gnd(gnds), latchPin(pins[0]), clockPin(pins[1]), dataPin(pins[2]), npn(npn_toggle), wiring_style(NORMAL_WIRING) {
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParams& params) : 
+    _params(&params), _params_minimal(nullptr), _params_directport(nullptr), _params_directport_minimal(nullptr), _pinConfig(NORMAL_WIRING)  {
+  
+  pinMode(_params->latchPin, OUTPUT);
+  pinMode(_params->clockPin, OUTPUT);
+  pinMode(_params->dataPin, OUTPUT);
 
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  pinMode(gnd[0], OUTPUT);
-  pinMode(gnd[1], OUTPUT);
-
-  clear();
+  pinMode(_params->gnd0, OUTPUT);
+  pinMode(_params->gnd1, OUTPUT);
 }
 
-/**
- * @param pins        The array of pins to address.
- * @param npn         Toggle output polarity if the NPN-transistor is connected.
- */
-DisplayDriver_FD0604::DisplayDriver_FD0604(const uint8_t* pins, bool npn_toggle) : 
-    latchPin(pins[0]), clockPin(pins[1]), dataPin(pins[2]), npn(npn_toggle), wiring_style(MINIMAL_WIRING) {
-
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-
-  clear();
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParams_MinimalWiring& params) : 
+    _params(nullptr), _params_minimal(&params), _params_directport(nullptr), _params_directport_minimal(nullptr), _pinConfig(MINIMAL_WIRING)  {
+  
+  pinMode(_params_minimal->latchPin, OUTPUT);
+  pinMode(_params_minimal->clockPin, OUTPUT);
+  pinMode(_params_minimal->dataPin, OUTPUT);
 }
+
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParams_DIRECTPORT& params) : 
+    _params(nullptr), _params_minimal(nullptr), _params_directport(&params), _params_directport_minimal(nullptr), _pinConfig(NORMAL_WIRING_DIRECTPORT)  {
+  
+  *(_params_directport->DDRx_latchPin) |= (1 << _params_directport->PIN_latchPin);
+	*(_params_directport->DDRx_clockPin) |= (1 << _params_directport->PIN_clockPin);
+	*(_params_directport->DDRx_dataPin) |= (1 << _params_directport->PIN_dataPin);
+
+  *(_params_directport->DDRx_GND1) |= (1 << _params_directport->PIN_GND1);
+	*(_params_directport->DDRx_GND2) |= (1 << _params_directport->PIN_GND2);
+}
+
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& params) : 
+    _params(nullptr), _params_minimal(nullptr), _params_directport(nullptr), _params_directport_minimal(&params), _pinConfig(MINIMAL_WIRING_DIRECTPORT)  {
+  
+  *(_params_directport_minimal->DDRx_latchPin) |= (1 << _params_directport_minimal->PIN_latchPin);
+	*(_params_directport_minimal->DDRx_clockPin) |= (1 << _params_directport_minimal->PIN_clockPin);
+	*(_params_directport_minimal->DDRx_dataPin) |= (1 << _params_directport_minimal->PIN_dataPin);
+}
+
+
 
 void DisplayDriver_FD0604::setDisplayOrientation(bool orientation) {
   displayOrientation = orientation;
@@ -58,17 +67,30 @@ void DisplayDriver_FD0604::checkClock(boolean& clock, uint16_t (&arr)[2]) {
  * @details   Clears the display.
  */
 void DisplayDriver_FD0604::clear() {
-  switch (wiring_style) {
-    case NORMAL_WIRING :
-      for (int i=0; i<2; i++) {
-        digitalWrite(gnd[i], HIGH);
-      }
+  switch (_pinConfig) {
+    case NORMAL_WIRING:  {
+      digitalWrite(_params->gnd0, HIGH);
+      digitalWrite(_params->gnd1, HIGH);
       break;
+    }
     
-    case MINIMAL_WIRING :
+    case MINIMAL_WIRING: {
       uint16_t pattern = (1 << 0) & (1 << 15);
       writeShiftRegister(pattern);
       break;
+    }
+
+    case NORMAL_WIRING_DIRECTPORT: {
+      *(_params_directport->PORTx_GND1) |= (1 << _params_directport->PIN_GND1);
+		  *(_params_directport->PORTx_GND2) |= (1 << _params_directport->PIN_GND2);
+      break;
+    }
+      
+    case MINIMAL_WIRING_DIRECTPORT: {
+      uint16_t pattern = (1 << 0) & (1 << 15);
+      writeShiftRegister(pattern);
+      break;
+    }
   }
 }
 
@@ -279,16 +301,15 @@ void DisplayDriver_FD0604::writePins(unsigned long &interval, uint16_t* displayP
     currentMillis = millis();
 
     //clear();
-
-    switch (wiring_style) {
+    switch (_pinConfig) {
       case NORMAL_WIRING: {
-        digitalWrite(gnd[0], npn ? HIGH : LOW); // Invert GND output if NPN is connected.
-        digitalWrite(gnd[1], npn ? LOW : HIGH);
+        digitalWrite(_params->gnd0, _params->npn_transistor_enable ? HIGH : LOW); // Invert GND output if NPN is connected.
+        digitalWrite(_params->gnd1, _params->npn_transistor_enable ? LOW : HIGH);
         writeShiftRegister(displayPins[0]);
         _delay_ms(MULTIPLEX_SPEED);
         
-        digitalWrite(gnd[0], npn ? LOW : HIGH);
-        digitalWrite(gnd[1], npn ? HIGH : LOW);
+        digitalWrite(_params->gnd0, _params->npn_transistor_enable ? LOW : HIGH);
+        digitalWrite(_params->gnd1, _params->npn_transistor_enable ? HIGH : LOW);
         writeShiftRegister(displayPins[1]);
         _delay_ms(MULTIPLEX_SPEED);
 
@@ -296,7 +317,7 @@ void DisplayDriver_FD0604::writePins(unsigned long &interval, uint16_t* displayP
       }
       case MINIMAL_WIRING: {
         uint16_t mask = (1 << 0) | (1 << 15);
-        uint16_t pattern = npn ? (1 << 0) : (1 << 15);
+        uint16_t pattern = _params_minimal->npn_transistor_enable ? (1 << 0) : (1 << 15);
 
         displayPins[0] = (displayPins[0] & ~mask) | pattern;
         displayPins[1] = (displayPins[1] & ~mask) | (pattern ^ mask); // Invert pattern (gnd layout)
@@ -308,8 +329,43 @@ void DisplayDriver_FD0604::writePins(unsigned long &interval, uint16_t* displayP
 
         break;
       }
-      default:
+      case NORMAL_WIRING_DIRECTPORT: {
+        if (_params_directport->npn_transistor_enable) {
+				  *_params_directport->PORTx_GND1 |= (1 << _params_directport->PIN_GND1);
+				  *_params_directport->PORTx_GND2 &= ~(1 << _params_directport->PIN_GND2);
+				} else {
+				  *_params_directport->PORTx_GND1 &= ~(1 << _params_directport->PIN_GND1);
+				  *_params_directport->PORTx_GND2 |= (1 << _params_directport->PIN_GND2);
+			  }
+			  writeShiftRegister(displayPins[0]);
+			  _delay_ms(MULTIPLEX_SPEED);
+
+			  if (_params_directport->npn_transistor_enable) {
+				  *_params_directport->PORTx_GND1 &= ~(1 << _params_directport->PIN_GND1);
+				  *_params_directport->PORTx_GND2 |= (1 << _params_directport->PIN_GND2);
+				} else {
+				  *_params_directport->PORTx_GND1 |= (1 << _params_directport->PIN_GND1);
+				  *_params_directport->PORTx_GND2 &= ~(1 << _params_directport->PIN_GND2);
+			  }
+			  writeShiftRegister(displayPins[1]);
+			  _delay_ms(MULTIPLEX_SPEED);
+
         break;
+      }
+      case MINIMAL_WIRING_DIRECTPORT: {
+        uint16_t mask = (1 << 0) | (1 << 15);
+        uint16_t pattern = _params_directport_minimal->npn_transistor_enable ? (1 << 0) : (1 << 15);
+
+        displayPins[0] = (displayPins[0] & ~mask) | pattern;
+        displayPins[1] = (displayPins[1] & ~mask) | (pattern ^ mask); // Invert pattern (gnd layout)
+
+        writeShiftRegister(displayPins[0]);
+        _delay_ms(MULTIPLEX_SPEED);
+        writeShiftRegister(displayPins[1]);
+        _delay_ms(MULTIPLEX_SPEED);
+
+        break;
+      }
     }
     
   }
@@ -320,8 +376,84 @@ void DisplayDriver_FD0604::writePins(unsigned long &interval, uint16_t* displayP
  * @param data    Entire two bytes of data for each ground pin. 
  */
 void DisplayDriver_FD0604::writeShiftRegister(uint16_t data) {
-  digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, LSBFIRST, (uint8_t)data);
-  shiftOut(dataPin, clockPin, LSBFIRST, (uint8_t)(data >> 8));
-  digitalWrite(latchPin, HIGH);
+  switch (_pinConfig) {
+  case NORMAL_WIRING:
+    digitalWrite(_params->latchPin, LOW);
+    shiftOutLSBFirst((uint8_t)data);
+    shiftOutLSBFirst((uint8_t)(data >> 8));
+    digitalWrite(_params->latchPin, HIGH);
+    break;
+
+  case MINIMAL_WIRING:
+    digitalWrite(_params_minimal->latchPin, LOW);
+    shiftOutLSBFirst((uint8_t)data);
+    shiftOutLSBFirst((uint8_t)(data >> 8));
+    digitalWrite(_params_minimal->latchPin, HIGH);
+    break;
+
+  case NORMAL_WIRING_DIRECTPORT:
+    *(_params_directport->PORTx_latchPin) &= ~(1 << _params_directport->PIN_latchPin);
+    shiftOutLSBFirst((uint8_t)data);
+    shiftOutLSBFirst((uint8_t)(data >> 8));
+    *(_params_directport->PORTx_latchPin) |= (1 << _params_directport->PIN_latchPin);
+    break;
+
+  case MINIMAL_WIRING_DIRECTPORT:
+    *(_params_directport_minimal->PORTx_latchPin) &= ~(1 << _params_directport_minimal->PIN_latchPin);
+    shiftOutLSBFirst((uint8_t)data);
+    shiftOutLSBFirst((uint8_t)(data >> 8));
+    *(_params_directport_minimal->PORTx_latchPin) |= (1 << _params_directport_minimal->PIN_latchPin);
+    break;
+  }
 }
+
+
+void DisplayDriver_FD0604::shiftOutLSBFirst(uint8_t val) {
+	for (uint8_t i=0; i<8; i++) {
+    switch (_pinConfig) {
+      case NORMAL_WIRING: {
+        digitalWrite(_params->dataPin, val & 1);
+        val >>= 1;
+        digitalWrite(_params->clockPin, HIGH);
+        digitalWrite(_params->clockPin, LOW);
+        break;
+      }
+
+      case MINIMAL_WIRING: {
+        digitalWrite(_params_minimal->dataPin, val & 1);
+        val >>= 1;
+        digitalWrite(_params_minimal->clockPin, HIGH);
+        digitalWrite(_params_minimal->clockPin, LOW);
+        break;
+      }
+
+      case NORMAL_WIRING_DIRECTPORT: { 
+        if (val & 1) {
+          *(_params_directport->PORTx_dataPin) |= (1 << _params_directport->PIN_dataPin);
+        } else {
+          *(_params_directport->PORTx_dataPin) &= ~(1 << _params_directport->PIN_dataPin);
+        }
+        val >>= 1;
+
+        *(_params_directport->PORTx_clockPin) |= (1 << _params_directport->PIN_clockPin);
+        *(_params_directport->PORTx_clockPin) &= ~(1 << _params_directport->PIN_clockPin);
+        break;
+      }
+
+      case MINIMAL_WIRING_DIRECTPORT: { 
+        if (val & 1) {
+          *(_params_directport_minimal->PORTx_dataPin) |= (1 << _params_directport_minimal->PIN_dataPin);
+        } else {
+          *(_params_directport_minimal->PORTx_dataPin) &= ~(1 << _params_directport_minimal->PIN_dataPin);
+        }
+        val >>= 1;
+
+        *(_params_directport_minimal->PORTx_clockPin) |= (1 << _params_directport_minimal->PIN_clockPin);
+        *(_params_directport_minimal->PORTx_clockPin) &= ~(1 << _params_directport_minimal->PIN_clockPin);
+        break;
+      }
+      shiftOut(1,1,1,1);
+    }
+	}
+}
+
