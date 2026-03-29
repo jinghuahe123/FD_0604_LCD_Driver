@@ -32,11 +32,14 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters displayParameters 
 
     A7,         // temperature sensor  pin
     10000.0,    // temperature sensor accompanying resistor
-    250,        // temperature sensor update interval
+    256,        // temperature sensor update interval
     0,          // enable serial output for temperature sensor
 
-    E2END,       // last EEPROM address for storing display orientation data
-    128          // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
+    A6,         // raw input pin
+    196,        // raw input update interval
+
+    E2END,      // last EEPROM address for storing display orientation data
+    128         // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
 };
 
 

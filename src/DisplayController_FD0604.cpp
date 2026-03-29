@@ -14,7 +14,8 @@ const char DisplayController_FD0604::_commandList[][8] PROGMEM = {
     "OFF", 
     "CYCLE", 
     "NULL", 
-    "TEMP" 
+    "TEMP",
+    "RAW", 
 };
 
 const uint8_t DisplayController_FD0604::_commandListSize = 
@@ -31,6 +32,33 @@ DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604& disp, P
         _storageManager(pStore),
         _params(params)
 {
+    if (_params.temperaturePin != A6 && _params.temperaturePin != A7) pinMode(_params.temperaturePin, INPUT);
+    if (_params.rawInputPin != A6 && _params.rawInputPin != A7) pinMode(_params.rawInputPin, INPUT);
+
+    switch (_params.temperaturePin) {
+        case A0: temperaturePinAlias = "A0"; break;
+        case A1: temperaturePinAlias = "A1"; break;
+        case A2: temperaturePinAlias = "A2"; break;
+        case A3: temperaturePinAlias = "A3"; break;
+        case A4: temperaturePinAlias = "A4"; break;
+        case A5: temperaturePinAlias = "A5"; break;
+        case A6: temperaturePinAlias = "A6"; break;
+        case A7: temperaturePinAlias = "A7"; break;
+        default: break;
+    }
+
+    switch (_params.rawInputPin) {
+        case A0: rawInputPinAlias = "A0"; break;
+        case A1: rawInputPinAlias = "A1"; break;
+        case A2: rawInputPinAlias = "A2"; break;
+        case A3: rawInputPinAlias = "A3"; break;
+        case A4: rawInputPinAlias = "A4"; break;
+        case A5: rawInputPinAlias = "A5"; break;
+        case A6: rawInputPinAlias = "A6"; break;
+        case A7: rawInputPinAlias = "A7"; break;
+        default: break;
+    }
+
     init();
 }
 
@@ -59,17 +87,18 @@ void DisplayController_FD0604::processInput(const String& input) {
     // process as a switch statement and then pass to individual functions rather than as a continuous if statement
     if (cmdIndex != -1) {
         switch (cmdIndex) {
-            case 0: _handleHelp();    break;
-            case 1: _handleMem();     break;
-            case 2: _handleInit();    break;
-            case 3: _handleInvert();  break;
-            case 4: _handleErase();   break;
-            case 5: _handleHistory(); break;
-            case 6: _handleOff();     break;
-            case 7: _handleCycle();   break;
-            case 8: _handleNull();    break;
-            case 9: _handleTemp();    break;
-            default: break;
+            case 0:     _handleHelp();      break;
+            case 1:     _handleMem();       break;
+            case 2:     _handleInit();      break;
+            case 3:     _handleInvert();    break;
+            case 4:     _handleErase();     break;
+            case 5:     _handleHistory();   break;
+            case 6:     _handleOff();       break;
+            case 7:     _handleCycle();     break;
+            case 8:     _handleNull();      break;
+            case 9:     _handleTemp();      break;
+            case 10:    _handleRAWInput();  break;
+            default:                        break;
         }
     } else {
         // Not a command, try to parse as a number
@@ -94,6 +123,7 @@ void DisplayController_FD0604::updateDisplay() {
             case -2: _displayCycle();    break;
             case -3: _displayNull();     break;
             case -4: _displayTemp();     break;
+            case -5: _displayRAWInput(); break;
             default: break;
         }
     } else {
@@ -148,13 +178,14 @@ String DisplayController_FD0604::getValueDisplay(uint16_t value) {
 void DisplayController_FD0604::_showAvailableCommands() {
     Serial.println(F("================================= FD-0604 LED Display ================================="));
     Serial.println(F("Enter any number to display on the screen:                                             "));
-    Serial.println(F("- 0000~3999 with normal orientation                                                    "));
-    Serial.println(F("- 000~999 with inverted orientation                                                    "));
+    Serial.println(F("- 0000~3999 with normal orientation.                                                   "));
+    Serial.println(F("- 000~999 with inverted orientation.                                                   "));
     //Serial.println(F("Letters are supported as a 4-digit sequence of A-F.                                    "));
     Serial.println();
 
     Serial.println(F("Alternative available commands:                                                        "));
-    Serial.println(F("TEMP     -  Turns the display into a thermometer using thermosistor attached.          "));
+    Serial.print(F("TEMP     -  Turns the display into a thermometer using thermosistor attached on pin ")); Serial.print(temperaturePinAlias); Serial.println(F(". "));
+    Serial.print(F("RAW      -  Shows RAW input value on pin ")); Serial.print(rawInputPinAlias); Serial.println(F(". CAUTION: analogReference may be set! "));
     Serial.println(F("CYCLE    -  Cycles continuously 0~3999 / 0~999 with 100ms delay between numbers.       "));
     Serial.println(F("INIT     -  Flashes all possible digits and letters once.                              "));
     Serial.println(F("NULL     -  Shows --:-- on the display.                                                "));
@@ -400,6 +431,14 @@ void DisplayController_FD0604::_handleTemp() {
     _updateDisplay();
 }
 
+void DisplayController_FD0604::_handleRAWInput() {
+    _number = RAWINPUT;
+    _updateDisplay();
+}
+
+
+
+
 /**
  * @details         Shows the OFF display.
  */
@@ -467,4 +506,17 @@ void DisplayController_FD0604::_displayTemp() {
 
         _display.showDisplay(output, 1);
     } 
+}
+
+void DisplayController_FD0604::_displayRAWInput() {
+    uint16_t value;
+
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis > _params.rawInputUpdateInterval) {
+        previousMillis = currentMillis;
+
+        value = analogRead(_params.rawInputPin);
+    }
+
+    _display.showNumber(value, 1);
 }
