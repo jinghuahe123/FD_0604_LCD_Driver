@@ -24,20 +24,6 @@ PersistentStorageManager::PersistentStorageManager(const uint16_t &base_address,
   }*/
 }
 
-
-uint16_t PersistentStorageManager::getBaseAddr() {
-  return BASE_ADDR;
-}
-
-uint8_t PersistentStorageManager::getSlotSize() {
-  return SLOT_SIZE;
-}
-
-uint16_t PersistentStorageManager::getNumSlots() {
-  return NUM_SLOTS;
-}
-
-
 /**
  * @param value                 The data to write to EEPROM.
  * @return                      Debugging data about EEPROM write. 
