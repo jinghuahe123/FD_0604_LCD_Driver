@@ -4,7 +4,7 @@ Driver Software to interface FD_0604 LED Display with Arduino-compatible MCU boa
 
 NOTE: Whilst the code should work on all AVR boards, only the NANO (ATMEGA328P) has been explicitly tested. 
 
-This project is provided purely for educational purposes only. Use at your own risk.
+**This software is distributed ‘as-is’ and without any warranty, whether express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non‑infringement. The developers shall not be held liable for any claim, damages, or other liability arising from the use of this software.**
 
 ## Usage
 
