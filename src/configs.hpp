@@ -3,27 +3,27 @@
 #define PORTMANIP
 
 DisplayDriver_FD0604::DriverParams_MinimalWiring minimalDisplay = {
-    1,
+    1,          // transistor enabled
 
-    6,
-    7,
-    8
+    6,          // arduino latchpin
+    7,          // arduino clockpin
+    8           // arduino datapin
 };
 
 DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring minimalPortDisplay = {
-    1,
+    1,          // transistor enabled
 	
-	&DDRD,
-	&PORTD,
-	6,
+	&DDRD,      // latchpin DDRx register
+	&PORTD,     // latchpin PORTx register
+	6,          // latchpin physical pin (on register)
 	
-	&DDRD,
-	&PORTD,
-	7,
+	&DDRD,      // clockpin DDRx register
+	&PORTD,     // clockpin PORTx register
+	7,          // clockpin physical pin (on register)
 	
-	&DDRB,
-	&PORTB,
-	0,
+	&DDRB,      // datapin DDRx register
+	&PORTB,     // datapin PORTx register
+	0,          // datapin physical pin (on register)
 };
 
 
@@ -42,8 +42,7 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters displayParameters 
 
 const uint16_t BASE_ADDR = 0;            // EEPROM address to start writing writing from
 const uint8_t SLOT_SIZE = 6;            // uint32_t for sequence number (for wear levelling) + uint16_t for number
+const uint16_t NUM_SLOTS = 170;          // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
 //const uint8_t gnd[2] = {2, 3};      // first two pins of display in order of connection
 //const uint8_t pins[3] = {6, 7, 8};  // order of latchpin, clockpin, datapin
-
-const uint16_t NUM_SLOTS = 170;          // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
