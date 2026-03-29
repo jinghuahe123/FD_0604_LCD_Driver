@@ -164,11 +164,12 @@ int8_t DisplayController_FD0604::_findCommandIndex(const String& input) {
  */
 String DisplayController_FD0604::getValueDisplay(uint16_t value) {
   switch(value) {
-    case OFF:     return F("OFF");
-    case CYCLE:   return F("CYCLE");
-    case NULL_DISP: return F("NULL_DISP");
-    case TEMP:    return F("TEMP");
-    default:      return String(value);
+    case OFF:           return F("OFF");
+    case CYCLE:         return F("CYCLE");
+    case NULL_DISP:     return F("NULL_DISP");
+    case TEMP:          return F("TEMP");
+    case RAWINPUT:      return F("RAW");
+    default:            return String(value);
   }
 }
 
@@ -218,6 +219,7 @@ void DisplayController_FD0604::_updateDisplay() {
     Serial.print(F("Wrote Data: ")); Serial.println((_number > 0) ? String(_number) : _input);
     Serial.print(F("Written Slot: ")); Serial.println(data.writeSlot);
     Serial.print(F("EEPROM Address: 0x")); Serial.println(data.writeAddress, HEX);
+    if (_number == RAWINPUT) Serial.println(F("CAUTION: analogReference may be set! "));
     Serial.println(F("====================="));
 }
 
