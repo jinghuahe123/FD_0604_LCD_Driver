@@ -32,39 +32,43 @@ const uint8_t DisplayController_FD0604::_commandListSize =
     sizeof(DisplayController_FD0604::_commandList) / sizeof(DisplayController_FD0604::_commandList[0]);
 
 /**
- * @details         Create a DisplayController_FD0604 object.
- * @param disp      DisplayDriver_FD0604 object to pass.
- * @param pStore    PersistentStorageManager object to pass.
- * @param params    Object parameters struct to pass.
- */ /*
-DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604& disp, PersistentStorageManager& pStore, DisplayController_FD0604_Parameters& params) : 
-        _display(disp),
-        _storageManager(pStore),
-        _params(params)
-{
-    
-
-    init();
-}*/
-
+ * @details                 Create a DisplayController_FD0604 object.
+ * @param driverParams      DisplayDriver_FD0604 params to pass.
+ * @param params            Controller-specific parameters struct to pass.
+ */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params) : 
         _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(0) {
 
     _init();
 }
 
+/**
+ * @details                 Create a DisplayController_FD0604 object.
+ * @param driverParams      DisplayDriver_FD0604 params to pass.
+ * @param params            Controller-specific parameters struct to pass.
+ */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params) : 
         _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(1) {
 
     _init();
 }
 
+/**
+ * @details                 Create a DisplayController_FD0604 object.
+ * @param driverParams      DisplayDriver_FD0604 params to pass.
+ * @param params            Controller-specific parameters struct to pass.
+ */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params) : 
         _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(1), minimal_pin_flag(0) {
 
     _init();
 }
 
+/**
+ * @details                 Create a DisplayController_FD0604 object.
+ * @param driverParams      DisplayDriver_FD0604 params to pass.
+ * @param params            Controller-specific parameters struct to pass.
+ */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params) : 
         _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(1), minimal_pin_flag(1) {
 
@@ -243,6 +247,9 @@ void DisplayController_FD0604::showAvailableCommands() {
     Serial.println();
 }
 
+/**
+ * @details         Displays a hardware report of configs to Serial. 
+ */
 void DisplayController_FD0604::showInfo() {
     Serial.println(F("========================== FD-0604 LED Display HARDWARE INFO =========================="));
     
@@ -277,7 +284,9 @@ void DisplayController_FD0604::showInfo() {
     Serial.println();
 }
 
-
+/**
+ * @details         Clears the display. 
+ */
 void DisplayController_FD0604::clear() {
     _display.clear();
 }
@@ -576,11 +585,6 @@ void DisplayController_FD0604::_displayTemp() {
         }
 
         displayTemp = tempC * 100; // 2 virtual decimal places
-        
-        //if (display.getDisplayOrientation() == FLIPPED_DISPLAY) {
-        //  displayTemp = displayTemp / 10; // truncates to only 1 virtual decimal place
-        //  displayTemp = displayTemp * 10;
-        //}
     }
 
     if ((displayTemp < 4000 && _display.getDisplayOrientation() == NORMAL_DISPLAY)) {
@@ -594,6 +598,9 @@ void DisplayController_FD0604::_displayTemp() {
     } 
 }
 
+/**
+ * @details         Shows the RAW Analog Input on Display. 
+ */
 void DisplayController_FD0604::_displayRAWInput() {
     uint16_t value;
 
