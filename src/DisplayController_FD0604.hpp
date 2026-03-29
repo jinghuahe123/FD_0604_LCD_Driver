@@ -12,10 +12,10 @@
 #include "PersistentStorageManager.hpp"
 
 // special display states
-#define OFF         -1 //4000
-#define CYCLE       -2 //4001
-#define NULL_DISP   -3 //4002
-#define TEMP        -4 //4003
+#define OFF         -1 
+#define CYCLE       -2 
+#define NULL_DISP   -3
+#define TEMP        -4 
 #define RAWINPUT    -5
 
 // predefine classes used
@@ -48,7 +48,6 @@ public:
         
     };
 
-    //DisplayController_FD0604(DisplayDriver_FD0604& disp, PersistentStorageManager& pStore, DisplayController_FD0604_Parameters& params);
     DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params);
     DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params);
     DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params);
