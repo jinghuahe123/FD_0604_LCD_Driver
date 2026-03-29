@@ -68,6 +68,13 @@ PersistentStorageManager::writtenData PersistentStorageManager::writeData_uint16
     }
   }
 
+  if (value == readData_uint16()) {
+    data.writeSlot = newestSlot;
+    data.writeAddress = BASE_ADDR + newestSlot * SLOT_SIZE;
+
+    return data;
+  }
+
   data.writeSlot = (newestSlot + 1) % NUM_SLOTS;
   data.writeAddress = BASE_ADDR + data.writeSlot * SLOT_SIZE;
   
