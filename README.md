@@ -1,6 +1,8 @@
 # FD_0604_LCD_Driver
 
-Driver Software to interface FD_0604 LED Display with Arduino-compatible MCU boards
+Driver Software to interface FD_0604 LED Display with Arduino-compatible MCU boards.
+
+NOTE: Whilst the code should work on all AVR boards, only the NANO (ATMEGA328P) has been explicitly tested. 
 
 This project is provided purely for educational purposes only. Use at your own risk.
 
@@ -34,4 +36,7 @@ Any number for the given ranges can be displayed on the screen:
 | ERASE     | Erases previously displayed number history.                 |
 | HISTORY   | Prints to Serial the last 64 numbers displayed.             |
 
-Whilst the code should work on all AVR boards, only the NANO (ATMEGA328P) has been explicitly tested. 
+**TODO / IMPROVEMENTS**
+
+- User updatable hardware parameters
+- EEPROM class writes more than one data type
