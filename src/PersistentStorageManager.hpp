@@ -26,10 +26,6 @@ class PersistentStorageManager {
             int16_t value;
         };
 
-        uint16_t getBaseAddr();
-        uint8_t getSlotSize();
-        uint16_t getNumSlots();
-
         writtenData writeData_uint16(uint16_t value);
         uint16_t readData_uint16();
 

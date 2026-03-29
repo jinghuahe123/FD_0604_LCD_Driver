@@ -276,7 +276,7 @@ void DisplayController_FD0604::showInfo() {
     Serial.println();
 
     // == EEPROM ==
-    Serial.print(F("EEPROM Base Address:                            ")); Serial.println(_params.BASE_ADDR, HEX);
+    Serial.print(F("EEPROM Base Address:                            0x")); Serial.printf("%04x\n", (unsigned)_params.BASE_ADDR);
     Serial.print(F("EEPROM Wear Levelling Slots:                    ")); Serial.println(_params.NUM_SLOTS);
 
     Serial.println(F("======================================================================================="));
@@ -456,11 +456,11 @@ void DisplayController_FD0604::_handleHistory() {
     Serial.println(F("=============================================================="));
     Serial.println(F("                     EEPROM STORAGE HISTORY                   "));
     Serial.println(F("=============================================================="));
-    Serial.printf("Base Address: 0x%04x\n", (unsigned)_storageManager.getBaseAddr());
+    Serial.printf("Base Address: 0x%04x\n", (unsigned)_params.BASE_ADDR);
     //Serial.print(F("Base Address: 0x"));
     //Serial.println(_storageManager.getBaseAddr(), HEX);
     Serial.print(F("Total Slots: "));
-    Serial.println(_storageManager.getNumSlots());
+    Serial.println(_params.NUM_SLOTS);
     Serial.print(F("Display Orientation: "));
     Serial.println((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
     _handleMem();
