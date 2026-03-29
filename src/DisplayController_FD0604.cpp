@@ -260,6 +260,7 @@ void DisplayController_FD0604::showInfo() {
     Serial.print(F("Minimal Pin Configuration:                      ")); Serial.println((minimal_pin_flag) ? F("Enabled") : F("Disabled"));
     Serial.print(F("Fast Mulitplex:                                 ")); Serial.println((register_manipulation_flag) ? F("Enabled") : F("Disabled"));
     Serial.print(F("Transistor Driver Circuit:                      ")); Serial.println((transistor_enabled_flag) ? F("Enabled") : F("Disabled"));
+    Serial.print(F("Display Orientation:                            ")); Serial.println((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
     Serial.print(F("Cycle Function Interval Time:                   ")); Serial.print(_params.countingInterval); Serial.println(F("ms"));
     Serial.println();
 
@@ -456,7 +457,7 @@ void DisplayController_FD0604::_handleHistory() {
     Serial.println(F("=============================================================="));
     Serial.println(F("                     EEPROM STORAGE HISTORY                   "));
     Serial.println(F("=============================================================="));
-    Serial.printf("Base Address: 0x%04x\n", (unsigned)_params.BASE_ADDR);
+    Serial.print(F("Base Address: 0x")); Serial.printf("%04x\n", (unsigned)_params.BASE_ADDR);
     //Serial.print(F("Base Address: 0x"));
     //Serial.println(_storageManager.getBaseAddr(), HEX);
     Serial.print(F("Total Slots: "));
@@ -470,13 +471,22 @@ void DisplayController_FD0604::_handleHistory() {
     if (uninitialised != 0xFFFFFFFF) {
         for(size_t i = 0; i < _params.numHistory; i++) {
 
+            Serial.print(F("["));
+            Serial.printf("%04u", (unsigned)i);
+            Serial.print(F("] Address: 0x"));
+            Serial.printf("%04x", (unsigned)entries[i].address);
+            Serial.print(F(" | Sequence: "));
+            Serial.printf("%010lu", (unsigned long)entries[i].sequence);
+            Serial.print(F(" | Value: "));
+            Serial.printf("%s\n", getValueDisplay(entries[i].value).c_str());
+            /*
             Serial.printf(
                 "[%04u] Address: 0x%04x | Sequence: %010lu | Value: %s\n",
                 (unsigned)(i),
                 (unsigned)entries[i].address,
                 (unsigned long)entries[i].sequence,
                 getValueDisplay(entries[i].value).c_str()
-            );
+            );*/
         }
         Serial.println(F("--------------------------------------------------------------"));
         Serial.print(F("Total entries searched: "));
