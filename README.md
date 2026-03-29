@@ -28,13 +28,14 @@ Any number for the given ranges can be displayed on the screen:
 
 **Configuration Commands**
 
-| Argument  | Description                                                 |
-| --------- | ----------------------------------------------------------- |
-| HELP      | Shows the availabe commands page.                           |
-| INVERT    | Flips the screen orientation.                               |
-| MEM       | Prints to Serial the available free memory on MCU.          |
-| ERASE     | Erases previously displayed number history.                 |
-| HISTORY   | Prints to Serial the last 64 numbers displayed.             |
+| Argument  | Description                                                       |
+| --------- | ----------------------------------------------------------------- |
+| HELP      | Shows the availabe commands page.                                 |
+| INFO      | Shows the hardware information and pin connections of the board.  | 
+| INVERT    | Flips the screen orientation.                                     |
+| MEM       | Prints to Serial the available free memory on MCU.                |
+| ERASE     | Erases previously displayed number history.                       |
+| HISTORY   | Prints to Serial the displayed number history.                    |
 
 **TODO / IMPROVEMENTS**
 
