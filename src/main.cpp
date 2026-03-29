@@ -7,13 +7,15 @@
 
 String input;
 
-#ifdef PORTMANIP
-DisplayDriver_FD0604 display(minimalPortDisplay);
-#else
-DisplayDriver_FD0604 display(minimalDisplay);
-#endif
-PersistentStorageManager storageManager(BASE_ADDR, SLOT_SIZE, NUM_SLOTS);
-DisplayController_FD0604 displayController(display, storageManager, displayParameters);
+//#ifdef PORTMANIP
+//DisplayDriver_FD0604 display(minimalPortDisplay);
+//#else
+//DisplayDriver_FD0604 display(minimalDisplay);
+//#endif
+//PersistentStorageManager storageManager(BASE_ADDR, SLOT_SIZE, NUM_SLOTS);
+//DisplayController_FD0604 displayController(display, storageManager, displayParameters);
+
+DisplayController_FD0604 displayController(minimalDisplayParams, controllerParams);
 
 
 // int main(void) __attribute__((weak));
@@ -25,11 +27,12 @@ int main(void) {
   Serial.begin(1000000);
   analogReference(EXTERNAL);
 
-  displayController._showAvailableCommands();
+  displayController.showInfo();
+  displayController.showAvailableCommands();
 
   for (;;) {
     if (Serial.available() > 0) {
-      display.clear();
+      displayController.clear();
 
       input = Serial.readStringUntil('\n');
       input.trim();

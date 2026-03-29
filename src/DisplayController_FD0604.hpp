@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
+#include <avr/pgmspace.h>
 //#include <StandardCplusplus.h>
 //#include <iomanip>
 //#include <serstream>
@@ -28,6 +29,10 @@ class PersistentStorageManager;
 class DisplayController_FD0604 {
 public:
     struct DisplayController_FD0604_Parameters {
+        const uint16_t BASE_ADDR;
+        const uint8_t SLOT_SIZE;
+        const uint16_t NUM_SLOTS;
+
         const unsigned long countingInterval;
 
         const uint8_t temperaturePin;
@@ -43,18 +48,28 @@ public:
         
     };
 
-    DisplayController_FD0604(DisplayDriver_FD0604& disp, PersistentStorageManager& pStore, DisplayController_FD0604_Parameters& params);
-
+    //DisplayController_FD0604(DisplayDriver_FD0604& disp, PersistentStorageManager& pStore, DisplayController_FD0604_Parameters& params);
+    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params);
+    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params);
+    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params);
+    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params);
     
     void updateDisplay();
     void processInput(const String& input);
-    void _showAvailableCommands();
+    void showAvailableCommands();
+    void showInfo();
+    void clear();
 
 private:
-    DisplayDriver_FD0604& _display;
-    PersistentStorageManager& _storageManager;
-    DisplayController_FD0604_Parameters _params;
+    static const char processor[] PROGMEM;
 
+    DisplayController_FD0604_Parameters _params;
+    DisplayDriver_FD0604 _display;
+    PersistentStorageManager _storageManager;
+    const bool transistor_enabled_flag;
+    const bool register_manipulation_flag;
+    const bool minimal_pin_flag;
+    
     // Calculate total RAM (AVR) or use manual define
     #if !defined(TOTAL_RAM) && defined(__AVR__)
     const unsigned int TOTAL_RAM = RAMEND - RAMSTART + 1;
@@ -70,11 +85,11 @@ private:
     const char* temperaturePinAlias = "  ";
     const char* rawInputPinAlias = "  ";
     
-    void init();
+    void _init();
 
     static const uint8_t _commandListSize;
     static const char _commandList[][8] PROGMEM;
-    void getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize);
+    void _getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize);
     int8_t _findCommandIndex(const String& input);
     String getValueDisplay(uint16_t value);
 
@@ -85,6 +100,7 @@ private:
     bool _parseAndSetNumber(const String& input);
 
     void _handleHelp();
+    void _handleInfo();
     void _handleMem();
     void _handleInit();
     void _handleInvert();
