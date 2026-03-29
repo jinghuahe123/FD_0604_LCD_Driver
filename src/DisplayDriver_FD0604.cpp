@@ -452,7 +452,6 @@ void DisplayDriver_FD0604::shiftOutLSBFirst(uint8_t val) {
         *(_params_directport_minimal->PORTx_clockPin) &= ~(1 << _params_directport_minimal->PIN_clockPin);
         break;
       }
-      shiftOut(1,1,1,1);
     }
 	}
 }

@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <util/delay.h>
 
-#define MULTIPLEX_SPEED             0
+#define MULTIPLEX_SPEED             1
 
 #define NORMAL_WIRING               0
 #define MINIMAL_WIRING              1
