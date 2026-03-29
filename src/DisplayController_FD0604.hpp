@@ -15,6 +15,7 @@
 #define CYCLE       -2 //4001
 #define NULL_DISP   -3 //4002
 #define TEMP        -4 //4003
+#define RAWINPUT    -5
 
 // predefine classes used
 class DisplayDriver_FD0604;
@@ -27,18 +28,16 @@ class PersistentStorageManager;
 class DisplayController_FD0604 {
 public:
     struct DisplayController_FD0604_Parameters {
-        //const int BASE_ADDR; // EEPROM address to start writing writing from
-        //const int SLOT_SIZE; // uint32_t for sequence number (for wear levelling) + uint16_t for number
-        //const uint8_t gnd[2]; // first two pins of display in order of connection
-        //const uint8_t pins[3]; // order of latchpin, clockpin, datapin
-
-        // local variables for class
         const unsigned long countingInterval;
+
         const uint8_t temperaturePin;
         const double resistorValue;
         const unsigned long temperatureUpdateInterval;
         const bool serial_enabled;
-        //const int NUM_SLOTS; // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+
+        const uint8_t rawInputPin;
+        const unsigned long rawInputUpdateInterval; 
+
         const uint16_t displayOrientationAddress; // last EEPROM address for storing display orientation data
         const uint16_t numHistory;
         
@@ -67,6 +66,9 @@ private:
     uint16_t _cycle_number = 0;
     String _input = "";
     unsigned long previousMillis = 0;
+
+    const char* temperaturePinAlias = "  ";
+    const char* rawInputPinAlias = "  ";
     
     void init();
 
@@ -92,11 +94,13 @@ private:
     void _handleCycle();
     void _handleNull();
     void _handleTemp();
+    void _handleRAWInput();
 
     void _displayOff();
     void _displayCycle();
     void _displayNull();
     void _displayTemp();
+    void _displayRAWInput();
 
 };
 

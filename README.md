@@ -33,3 +33,5 @@ Any number for the given ranges can be displayed on the screen:
 | MEM       | Prints to Serial the available free memory on MCU.          |
 | ERASE     | Erases previously displayed number history.                 |
 | HISTORY   | Prints to Serial the last 64 numbers displayed.             |
+
+Whilst the code should work on all AVR boards, only the NANO (ATMEGA328P) has been explicitly tested. 
