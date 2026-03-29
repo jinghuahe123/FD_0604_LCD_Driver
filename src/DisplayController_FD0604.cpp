@@ -166,7 +166,8 @@ void DisplayController_FD0604::_showAvailableCommands() {
     Serial.println(F("INVERT   -  Flips the screen orientation.                                              "));
     Serial.println(F("MEM      -  Prints to Serial the available free memory on the MCU.                     "));
     Serial.println(F("ERASE    -  Erases previously displayed number history.                                "));
-    Serial.println(F("HISTORY  -  Prints to Serial the last 10 numbers displayed.                            "));
+    Serial.print(F("HISTORY  -  Prints to Serial the last ")); Serial.print(_params.numHistory); Serial.println(F(" numbers displayed. "));
+    //    10 numbers displayed.                            "));
 
     Serial.println(F("======================================================================================="));
     _delay_ms(3);
@@ -345,7 +346,7 @@ void DisplayController_FD0604::_handleHistory() {
 
             Serial.printf(
                 "[%04u] Address: 0x%04x | Sequence: %010lu | Value: %s\n",
-                (unsigned)(i + 1),
+                (unsigned)(i),
                 (unsigned)entries[i].address,
                 (unsigned long)entries[i].sequence,
                 getValueDisplay(entries[i].value).c_str()
