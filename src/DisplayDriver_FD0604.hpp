@@ -119,7 +119,7 @@ class DisplayDriver_FD0604 {
 
         void charShowDisplay(char (&digits)[4], unsigned long interval,  bool leading_zeroes = false, bool clock = false);
 
-        void checkClock(boolean &clock, uint16_t (&arr)[2]);
+        void checkClock(bool &clock, uint16_t (&arr)[2]);
 
         void shiftOutLSBFirst(uint8_t val);
         void writeShiftRegister(uint16_t data);
