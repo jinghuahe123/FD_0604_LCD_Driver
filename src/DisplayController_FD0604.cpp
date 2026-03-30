@@ -462,6 +462,7 @@ void DisplayController_FD0604::_handleSettings() {
     Serial.println(F("[3] Set Temperature Refresh Interval Time. "));
     Serial.println(F("[4] Set RAW Input Refresh Interval Time. "));
     Serial.println(F("[5] Flip Display Orientation. "));
+    Serial.println(F("[6] Enable / Disable Temperature Serial Output. "));
     Serial.println(F("========================================================================================="));
 
     bool optionSelected = false;
@@ -481,7 +482,7 @@ void DisplayController_FD0604::_handleSettings() {
             } else if (!_checkIfNumeric(input, option)) {
                 Serial.println(F("Invalid Option. Please enter a number. "));
                 continue;
-            } else if (option < 1 || option > 5) {
+            } else if (option < 1 || option > 6) {
                 Serial.println(F("Invalid Number selected. "));
                 continue;
             }
@@ -491,11 +492,12 @@ void DisplayController_FD0604::_handleSettings() {
     }
 
     switch (option) {
-        case 1: _exitSettings();                return; break;
-        case 2: _updateCycleInterval();         return; break;
-        case 3: _updateTemperatureInterval();   return; break;
-        case 4: _updateRawInputInterval();      return; break;
-        case 5: _updateDisplayOrientation();    return; break;
+        case 1: _exitSettings();                    return; break;
+        case 2: _updateCycleInterval();             return; break;
+        case 3: _updateTemperatureInterval();       return; break;
+        case 4: _updateRawInputInterval();          return; break;
+        case 5: _updateDisplayOrientation();        return; break;
+        case 6: _updateTemperatureSerialOutput();   return; break;
         default: return; break;
     }
 }
@@ -654,10 +656,10 @@ void DisplayController_FD0604::_displayOff() {
  */
 void DisplayController_FD0604::_displayCycle() {
     unsigned long currentMillis = millis();
-    unsigned long countingInterval;
+    int16_t countingInterval;
     EEPROM.get(_params.countingIntervalAddress, countingInterval);
 
-    if (currentMillis - previousMillis > countingInterval) {
+    if (currentMillis - previousMillis > static_cast<unsigned long>(countingInterval)) {
         previousMillis = currentMillis;
         _cycle_number = (_display.getDisplayOrientation() ? ((_cycle_number + 1) % 1000) : (_cycle_number + 1) % 4000);
     }
@@ -681,13 +683,13 @@ void DisplayController_FD0604::_displayNull() {
  */
 void DisplayController_FD0604::_displayTemp() {
     uint16_t displayTemp;
-    unsigned long temperatureUpdateInterval;
+    int16_t temperatureUpdateInterval;
     bool serial_enabled;
     EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
     EEPROM.get(_params.temperatureSerialEnabledAddress, serial_enabled);
 
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis > temperatureUpdateInterval) {
+    if (currentMillis - previousMillis > static_cast<unsigned long>(temperatureUpdateInterval)) {
         previousMillis = currentMillis;
         
         uint16_t temperatureReading = analogRead(_params.temperaturePin);
@@ -719,11 +721,11 @@ void DisplayController_FD0604::_displayTemp() {
  */
 void DisplayController_FD0604::_displayRAWInput() {
     uint16_t value;
-    unsigned long rawInputUpdateInterval;
+    int16_t rawInputUpdateInterval;
     EEPROM.get(_params.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
 
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis > rawInputUpdateInterval) {
+    if (currentMillis - previousMillis > static_cast<unsigned long>(rawInputUpdateInterval)) {
         previousMillis = currentMillis;
 
         value = analogRead(_params.rawInputPin);
@@ -823,4 +825,16 @@ void DisplayController_FD0604::_updateDisplayOrientation() {
     _delay_ms(20);
     _exitSettings();
 }
+
+void DisplayController_FD0604::_updateTemperatureSerialOutput() {
+    bool tempOutput = !EEPROM.read(_params.temperatureSerialEnabledAddress);
+    EEPROM.update(_params.temperatureSerialEnabledAddress, tempOutput);
+
+    Serial.print(F("Temperature Serial Output set to: "));
+    Serial.println((tempOutput) ? F("Enabled. ") : F("Disabled. "));
+
+    _delay_ms(20);
+    _exitSettings();
+}
+
 
