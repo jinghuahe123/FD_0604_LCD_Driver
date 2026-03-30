@@ -56,6 +56,7 @@ public:
     
     void updateDisplay();
     void processInput(const String& input);
+    void processSecondaryInput(const String& input);
     void showAvailableCommands();
     void showInfo();
     void clear();
