@@ -40,5 +40,4 @@ Any number for the given ranges can be displayed on the screen:
 **TODO / IMPROVEMENTS**
 
 - EEPROM class writes more than one data type
-- EEPROM history fix - broken history on resetting eeprom
 - add EEPROM full erase (for in case of emergency reset)
