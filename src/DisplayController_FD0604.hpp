@@ -126,6 +126,7 @@ private:
     void _updateTemperatureInterval();
     void _updateRawInputInterval();
     void _updateDisplayOrientation();
+    void _updateTemperatureSerialOutput();
 
 };
 
