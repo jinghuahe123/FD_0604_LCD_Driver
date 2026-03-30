@@ -509,7 +509,7 @@ void DisplayController_FD0604::_handleErase() {
  * @details         Handles displaying EEPROM history. 
  */
 void DisplayController_FD0604::_handleHistory() {
-    PersistentStorageManager::StorageEntry entries[_params.numHistory];
+    PersistentStorageManager::StorageEntry entries[_params.numHistory] = {0};
     //std::vector<PersistentStorageManager::StorageEntry> entries;
 
     Serial.println(F("=============================================================="));
@@ -526,8 +526,8 @@ void DisplayController_FD0604::_handleHistory() {
     Serial.println(F("--------------------------------------------------------------"));
     uint16_t uninitialised = _storageManager.getLastEntries(_params.numHistory, entries, _params.numHistory);
 
-    if (uninitialised != 0xFFFFFFFF) {
-        for(size_t i = 0; i < _params.numHistory; i++) {
+    if (uninitialised != 0xFFFF) {
+        for(size_t i = 0; i < _params.numHistory - uninitialised; i++) {
 
             Serial.print(F("["));
             Serial.printf("%04u", (unsigned)i);
