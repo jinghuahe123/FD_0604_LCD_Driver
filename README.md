@@ -40,4 +40,3 @@ Any number for the given ranges can be displayed on the screen:
 **TODO / IMPROVEMENTS**
 
 - EEPROM class writes more than one data type
-- add EEPROM full erase (for in case of emergency reset)
