@@ -21,7 +21,8 @@ Any number for the given ranges can be displayed on the screen:
 | Argument  | Description                                                               |
 | --------- | ------------------------------------------------------------------------- |
 | TEMP      | Turns the display into a thermometer using thermosistor attached.         |
-| CYCLE     | Cycles continuously 0-3999 / 0-999 with 100ms delay between numbers.      |
+| RAW       | Shows RAW Input from an analog input.                                     |
+| CYCLE     | Cycles continuously from 0-3999 / 0-999.                                  |
 | INIT      | Flashes all possible digits and letters once.                             |
 | NULL      | Shows --:-- on the display.                                               |
 | OFF       | Turns off the display.                                                    |
@@ -32,12 +33,23 @@ Any number for the given ranges can be displayed on the screen:
 | --------- | ----------------------------------------------------------------- |
 | HELP      | Shows the availabe commands page.                                 |
 | INFO      | Shows the hardware information and pin connections of the board.  | 
-| INVERT    | Flips the screen orientation.                                     |
+| SETTINGS  | Shows settings page and changes hardware configurations.          |
 | MEM       | Prints to Serial the available free memory on MCU.                |
 | ERASE     | Erases previously displayed number history.                       |
+| RESET     | Resets all parameters (EEPROM) to factory defaults.               |
 | HISTORY   | Prints to Serial the displayed number history.                    |
+
+**Settings Menu**
+
+| Option    | Description                                                       |
+| --------- | ----------------------------------------------------------------- |
+| [1]       | Exits back to main menu.                                          |
+| [2]       | Set CYCLE Interval time between increasing numbers.               |
+| [3]       | Set Temperature Refresh Interval Time.                            |
+| [4]       | Set RAW Input Refresh Interval Time.                              |
+| [5]       | Flip Display Orientation.                                         |
+| [6]       | Enable / Disable Temperature Serial Output.                       |
 
 **TODO / IMPROVEMENTS**
 
 - EEPROM class writes more than one data type
-- add secondary serial interface for explicitly setting a number ONLY
