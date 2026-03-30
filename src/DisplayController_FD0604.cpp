@@ -20,6 +20,7 @@ const char DisplayController_FD0604::_commandList[][10] PROGMEM = {
     "INIT", 
     "SETTINGS", 
     "ERASE",
+    "RESET",
     "HISTORY",
     "OFF", 
     "CYCLE", 
@@ -137,12 +138,13 @@ void DisplayController_FD0604::processInput(const String& input) {
             case 3:     _handleInit();      break;
             case 4:     _handleSettings();  break;
             case 5:     _handleErase();     break;
-            case 6:     _handleHistory();   break;
-            case 7:     _handleOff();       break;
-            case 8:     _handleCycle();     break;
-            case 9:     _handleNull();      break;
-            case 10:    _handleTemp();      break;
-            case 11:    _handleRAWInput();  break;
+            case 6:     _handleReset();     break;
+            case 7:     _handleHistory();   break;
+            case 8:     _handleOff();       break;
+            case 9:     _handleCycle();     break;
+            case 10:    _handleNull();      break;
+            case 11:    _handleTemp();      break;
+            case 12:    _handleRAWInput();  break;
             default:                        break;
         }
     } else {
@@ -238,12 +240,13 @@ void DisplayController_FD0604::showAvailableCommands() {
     Serial.println(F("OFF        -  Turns off the display.                                                     "));
     Serial.println();
 
-    Serial.println(F("Configuration commands:                                                                "));
+    Serial.println(F("Configuration commands:                                                                  "));
     Serial.println(F("HELP       -  Shows this help page.                                                      "));
     Serial.println(F("INFO       -  Shows the hardware information of the board.                               "));
     Serial.println(F("SETTINGS   -  Shows settings page and changes hardware configurations.                   "));
     Serial.println(F("MEM        -  Prints to Serial the available free memory on the MCU.                     "));
     Serial.println(F("ERASE      -  Erases previously displayed number history.                                "));
+    Serial.println(F("RESET      -  Resets to factory defaults. CAUTION - WILL ERASE ALL USER DATA!            "));
     Serial.print(F("HISTORY    -  Prints to Serial the last ")); Serial.print(_params.numHistory); Serial.println(F(" numbers displayed. "));
     //    10 numbers displayed.                            "));
 
@@ -256,9 +259,9 @@ void DisplayController_FD0604::showAvailableCommands() {
  * @details         Displays a hardware report of configs to Serial. 
  */
 void DisplayController_FD0604::showInfo() {
-    unsigned long countingInterval;
-    unsigned long temperatureUpdateInterval;
-    unsigned long rawInputUpdateInterval;
+    int16_t countingInterval;
+    int16_t temperatureUpdateInterval;
+    int16_t rawInputUpdateInterval;
     bool serial_enabled;
     EEPROM.get(_params.countingIntervalAddress, countingInterval);
     EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
@@ -299,7 +302,8 @@ void DisplayController_FD0604::showInfo() {
     _delay_ms(3);
     Serial.println();
 
-    if (countingInterval == 0 || temperatureUpdateInterval == 0 || rawInputUpdateInterval == 0) {
+    if (countingInterval <= 0 || temperatureUpdateInterval <= 0 || rawInputUpdateInterval <= 0 
+        || countingInterval == 32767 || temperatureUpdateInterval == 32767 || rawInputUpdateInterval == 32767) {
         Serial.println(F("CAUTION: Board may have been reset. Multiple settings are incorrect. "));
         Serial.println(F("Please run SETTINGS command to set the parameters. Thank you. "));
         Serial.println();
@@ -504,6 +508,43 @@ void DisplayController_FD0604::_handleErase() {
     _storageManager.clearData();
     Serial.println(F("Successfully erased previous history. "));
 }
+
+void DisplayController_FD0604::_handleReset() {
+    Serial.println(F("You have selected RESET. This will wipe all program storage data!"));
+    Serial.println(F("CAUTION: This action is irreversable! "));
+    Serial.println(F("Please Type 'RESET ALL' to confirm this action. "));
+
+    bool hasInput = false;
+    String input;
+
+    while (!hasInput) {
+        if (Serial.available() > 0) {
+            input = Serial.readStringUntil('\n');
+            input.trim();
+
+            hasInput = true;
+        }
+    }
+
+    if (input == "RESET ALL") {
+        Serial.println(F("RESET Command recieved. Resetting..."));
+        for (uint16_t i=0; i<EEPROM.length(); i++) {
+            EEPROM.write(i, 0x00);
+        }
+        for (uint16_t i=0; i<EEPROM.length(); i++) {
+            EEPROM.write(i, 0xFF);
+        }
+        
+        Serial.println(F("RESET Complete. Rebooting..."));
+        Serial.flush();
+
+        wdt_enable(WDTO_15MS);
+        while (true) {}
+    } else {
+        Serial.println(F("Input is incorrect. No data has been changed. "));
+    }
+}
+
 
 /**
  * @details         Handles displaying EEPROM history. 
@@ -723,7 +764,7 @@ void DisplayController_FD0604::_exitSettings() {
 }
 
 void DisplayController_FD0604::_updateCycleInterval() {
-    unsigned long oldInterval = 0;
+    int16_t oldInterval = 0;
     EEPROM.get(_params.countingIntervalAddress, oldInterval);
 
     Serial.print(F("Old Cycle Interval Time: ")); Serial.println(oldInterval);
@@ -739,7 +780,7 @@ void DisplayController_FD0604::_updateCycleInterval() {
 }
 
 void DisplayController_FD0604::_updateTemperatureInterval() {
-    unsigned long oldInterval = 0;
+    int16_t oldInterval = 0;
     EEPROM.get(_params.temperatureUpdateIntervalAddress, oldInterval);
 
     Serial.print(F("Old Temperature Interval Time: ")); Serial.println(oldInterval);
@@ -755,7 +796,7 @@ void DisplayController_FD0604::_updateTemperatureInterval() {
 }
 
 void DisplayController_FD0604::_updateRawInputInterval() {
-    unsigned long oldInterval = 0;
+    int16_t oldInterval = 0;
     EEPROM.get(_params.rawInputUpdateIntervalAddress, oldInterval);
 
     Serial.print(F("Old Raw Input Interval Time: ")); Serial.println(oldInterval);

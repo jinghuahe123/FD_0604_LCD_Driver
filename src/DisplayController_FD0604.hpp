@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
 //#include <StandardCplusplus.h>
 //#include <iomanip>
 //#include <serstream>
@@ -104,6 +105,7 @@ private:
     void _handleInit();
     void _handleSettings();
     void _handleErase();
+    void _handleReset();
     void _handleHistory();
     void _handleOff();
     void _handleCycle();

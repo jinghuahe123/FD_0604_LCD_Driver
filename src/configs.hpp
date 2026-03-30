@@ -26,7 +26,7 @@ DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring minimalPortDisplayPa
 
 
 DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
-    16,         // EEPROM address to start writing writing from
+    6,          // EEPROM address to start writing writing from
     6,          // uint32_t for sequence number (for wear levelling) + uint16_t for number
     160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
@@ -34,11 +34,11 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams =
 
     A7,         // temperature sensor  pin
     10000.0,    // temperature sensor accompanying resistor
-    4,          // EEPROM address that stores the delay between the temperature reading updating
+    2,          // EEPROM address that stores the delay between the temperature reading updating
     0,          // enable serial output for temperature sensor
 
     A6,         // raw input pin
-    8,          // EEPROM address that stores the delay between the raw input reading updating 
+    4,          // EEPROM address that stores the delay between the raw input reading updating 
 
     12,         // EEPROM address for storing display orientation data
     128         // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
