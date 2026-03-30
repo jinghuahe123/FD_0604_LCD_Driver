@@ -33,15 +33,15 @@ public:
         const uint8_t SLOT_SIZE;
         const uint16_t NUM_SLOTS;
 
-        const unsigned long countingInterval;
+        const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data // const unsigned long countingInterval;
 
         const uint8_t temperaturePin;
         const double resistorValue;
-        const unsigned long temperatureUpdateInterval;
-        const bool serial_enabled;
+        const uint16_t temperatureUpdateIntervalAddress; // EEPROM address for storing temperature update interval data // const unsigned long temperatureUpdateInterval;
+        const uint16_t temperatureSerialEnabledAddress; // EEPROM address for storing serial enabled data // const bool serial_enabled;
 
         const uint8_t rawInputPin;
-        const unsigned long rawInputUpdateInterval; 
+        const uint16_t rawInputUpdateIntervalAddress; // EEPROM address for storing raw input update interval data // const unsigned long rawInputUpdateInterval; 
 
         const uint16_t displayOrientationAddress; // last EEPROM address for storing display orientation data
         const uint16_t numHistory;
@@ -87,7 +87,7 @@ private:
     void _init();
 
     static const uint8_t _commandListSize;
-    static const char _commandList[][8] PROGMEM;
+    static const char _commandList[][10] PROGMEM;
     void _getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize);
     int8_t _findCommandIndex(const String& input);
     String getValueDisplay(uint16_t value);
@@ -102,7 +102,7 @@ private:
     void _handleInfo();
     void _handleMem();
     void _handleInit();
-    void _handleInvert();
+    void _handleSettings();
     void _handleErase();
     void _handleHistory();
     void _handleOff();
@@ -116,6 +116,14 @@ private:
     void _displayNull();
     void _displayTemp();
     void _displayRAWInput();
+
+    int16_t _getSerial();
+
+    void _exitSettings();
+    void _updateCycleInterval();
+    void _updateTemperatureInterval();
+    void _updateRawInputInterval();
+    void _updateDisplayOrientation();
 
 };
 
