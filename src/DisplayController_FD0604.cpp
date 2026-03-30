@@ -38,7 +38,7 @@ const uint8_t DisplayController_FD0604::_commandListSize =
  * @param params            Controller-specific parameters struct to pass.
  */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
+        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS),
         transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(0) {
 
     _init();
@@ -154,6 +154,20 @@ void DisplayController_FD0604::processInput(const String& input) {
             Serial.print(_input);
             Serial.println(F("'. Please enter a valid command or number."));
         }
+    }
+}
+
+void DisplayController_FD0604::processSecondaryInput(const String& input) {
+    _input = input;
+    String trimmed_input = input;
+    trimmed_input.trim();
+
+    if (trimmed_input.length() == 0) return;
+
+    if (!_parseAndSetNumber(trimmed_input)) {
+        Serial.print(F("Error parsing '"));
+        Serial.print(_input);
+        Serial.println(F("'. Secondary input accepts numbers only."));
     }
 }
 

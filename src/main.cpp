@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
@@ -7,6 +8,7 @@
 
 String input;
 
+SoftwareSerial softSerial(softRX, softTX);
 DisplayController_FD0604 displayController(minimalDisplayParams, controllerParams);
 
 
@@ -15,12 +17,15 @@ int main(void) {
   init();
   //initVariant();
 
-  //Serial.begin(115200);
-  Serial.begin(1000000);
+  Serial.begin(hardwareSerialBaud);
+  softSerial.begin(softwareSerialBaud);
   analogReference(EXTERNAL);
 
   displayController.showInfo();
   displayController.showAvailableCommands();
+
+  softSerial.println(F("Secondary Serial Interface - INPUT (NUMBERS) ONLY. "));
+  softSerial.println(F("Refer to Main Serial Interface for Verbose Output. "));
 
   for (;;) {
     if (Serial.available() > 0) {
@@ -29,11 +34,15 @@ int main(void) {
       input = Serial.readStringUntil('\n');
       input.trim();
       displayController.processInput(input);
-
     }
-    
+
+    if (softSerial.available() > 0) {
+      input = softSerial.readStringUntil('\n');
+      input.trim();
+      displayController.processSecondaryInput(input);
+    }
+
     displayController.updateDisplay();
-    
   }
 
   return 0;

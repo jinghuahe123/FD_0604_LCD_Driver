@@ -40,3 +40,4 @@ Any number for the given ranges can be displayed on the screen:
 **TODO / IMPROVEMENTS**
 
 - EEPROM class writes more than one data type
+- add secondary serial interface for explicitly setting a number ONLY

@@ -1,5 +1,11 @@
 #include "DisplayController_FD0604.hpp"
 
+const uint8_t softRX = 4;
+const uint8_t softTX = 5;
+
+const uint32_t hardwareSerialBaud = 1000000;
+const uint32_t softwareSerialBaud = 19200;
+
 DisplayDriver_FD0604::DriverParams_MinimalWiring minimalDisplayParams = {
     1,          // transistor enabled
 
@@ -26,7 +32,7 @@ DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring minimalPortDisplayPa
 
 
 DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
-    16,          // EEPROM address to start writing writing from
+    16,         // EEPROM address to start writing writing from
     6,          // uint32_t for sequence number (for wear levelling) + uint16_t for number
     160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
