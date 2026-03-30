@@ -13,12 +13,12 @@
     const char DisplayController_FD0604::processor[] PROGMEM = "Non-AVR / Unknown CPU";
 #endif
 
-const char DisplayController_FD0604::_commandList[][8] PROGMEM = { 
+const char DisplayController_FD0604::_commandList[][10] PROGMEM = { 
     "HELP", 
     "INFO",
     "MEM", 
     "INIT", 
-    "INVERT", 
+    "SETTINGS", 
     "ERASE",
     "HISTORY",
     "OFF", 
@@ -37,7 +37,8 @@ const uint8_t DisplayController_FD0604::_commandListSize =
  * @param params            Controller-specific parameters struct to pass.
  */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(0) {
+        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
+        transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(0) {
 
     _init();
 }
@@ -48,7 +49,8 @@ DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverP
  * @param params            Controller-specific parameters struct to pass.
  */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(1) {
+        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
+        transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(0), minimal_pin_flag(1) {
 
     _init();
 }
@@ -59,7 +61,8 @@ DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverP
  * @param params            Controller-specific parameters struct to pass.
  */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(1), minimal_pin_flag(0) {
+        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
+        transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(1), minimal_pin_flag(0) {
 
     _init();
 }
@@ -70,7 +73,8 @@ DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverP
  * @param params            Controller-specific parameters struct to pass.
  */
 DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(1), minimal_pin_flag(1) {
+        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
+        transistor_enabled_flag(driverParams.npn_transistor_enable), register_manipulation_flag(1), minimal_pin_flag(1) {
 
     _init();
 }
@@ -131,7 +135,7 @@ void DisplayController_FD0604::processInput(const String& input) {
             case 1:     _handleInfo();      break;
             case 2:     _handleMem();       break;
             case 3:     _handleInit();      break;
-            case 4:     _handleInvert();    break;
+            case 4:     _handleSettings();  break;
             case 5:     _handleErase();     break;
             case 6:     _handleHistory();   break;
             case 7:     _handleOff();       break;
@@ -218,7 +222,7 @@ String DisplayController_FD0604::getValueDisplay(uint16_t value) {
  * @details         Displays the available display commands to Serial. 
  */
 void DisplayController_FD0604::showAvailableCommands() {
-    Serial.println(F("============================= FD-0604 LED Display Commands ============================"));
+    Serial.println(F("============================== FD-0604 LED Display Commands ============================="));
     Serial.println(F("Enter any number to display on the screen:                                             "));
     Serial.println(F("- 0000~3999 with normal orientation.                                                   "));
     Serial.println(F("- 000~999 with inverted orientation.                                                   "));
@@ -226,23 +230,24 @@ void DisplayController_FD0604::showAvailableCommands() {
     Serial.println();
 
     Serial.println(F("Alternative available commands:                                                        "));
-    Serial.print(F("TEMP     -  Turns the display into a thermometer using thermosistor attached on pin ")); Serial.print(temperaturePinAlias); Serial.println(F(". "));
-    Serial.print(F("RAW      -  Shows RAW input value on pin ")); Serial.print(rawInputPinAlias); Serial.println(F(". CAUTION: analogReference may be set! "));
-    Serial.println(F("CYCLE    -  Cycles continuously 0~3999 / 0~999 with 100ms delay between numbers.       "));
-    Serial.println(F("INIT     -  Flashes all possible digits and letters once.                              "));
-    Serial.println(F("NULL     -  Shows --:-- on the display.                                                "));
-    Serial.println(F("OFF      -  Turns off the display.                                                     "));
+    Serial.print(F("TEMP       -  Turns the display into a thermometer using thermosistor attached on pin ")); Serial.print(temperaturePinAlias); Serial.println(F(". "));
+    Serial.print(F("RAW        -  Shows RAW input value on pin ")); Serial.print(rawInputPinAlias); Serial.println(F(". CAUTION: analogReference may be set! "));
+    Serial.println(F("CYCLE      -  Cycles continuously 0~3999 / 0~999 with 100ms delay between numbers.       "));
+    Serial.println(F("INIT       -  Flashes all possible digits and letters once.                              "));
+    Serial.println(F("NULL       -  Shows --:-- on the display.                                                "));
+    Serial.println(F("OFF        -  Turns off the display.                                                     "));
     Serial.println();
 
     Serial.println(F("Configuration commands:                                                                "));
-    Serial.println(F("HELP     -  Shows this help page.                                                      "));
-    Serial.println(F("INVERT   -  Flips the screen orientation.                                              "));
-    Serial.println(F("MEM      -  Prints to Serial the available free memory on the MCU.                     "));
-    Serial.println(F("ERASE    -  Erases previously displayed number history.                                "));
-    Serial.print(F("HISTORY  -  Prints to Serial the last ")); Serial.print(_params.numHistory); Serial.println(F(" numbers displayed. "));
+    Serial.println(F("HELP       -  Shows this help page.                                                      "));
+    Serial.println(F("INFO       -  Shows the hardware information of the board.                               "));
+    Serial.println(F("SETTINGS   -  Shows settings page and changes hardware configurations.                   "));
+    Serial.println(F("MEM        -  Prints to Serial the available free memory on the MCU.                     "));
+    Serial.println(F("ERASE      -  Erases previously displayed number history.                                "));
+    Serial.print(F("HISTORY    -  Prints to Serial the last ")); Serial.print(_params.numHistory); Serial.println(F(" numbers displayed. "));
     //    10 numbers displayed.                            "));
 
-    Serial.println(F("======================================================================================="));
+    Serial.println(F("========================================================================================="));
     _delay_ms(3);
     Serial.println();
 }
@@ -251,7 +256,17 @@ void DisplayController_FD0604::showAvailableCommands() {
  * @details         Displays a hardware report of configs to Serial. 
  */
 void DisplayController_FD0604::showInfo() {
-    Serial.println(F("========================== FD-0604 LED Display HARDWARE INFO =========================="));
+    unsigned long countingInterval;
+    unsigned long temperatureUpdateInterval;
+    unsigned long rawInputUpdateInterval;
+    bool serial_enabled;
+    EEPROM.get(_params.countingIntervalAddress, countingInterval);
+    EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
+    EEPROM.get(_params.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
+    EEPROM.get(_params.temperatureSerialEnabledAddress, serial_enabled);
+
+
+    Serial.println(F("=========================== FD-0604 LED Display HARDWARE INFO ==========================="));
     
     // == Basic Configs ==
     Serial.print(F("CPU Model:                                      "));
@@ -261,28 +276,34 @@ void DisplayController_FD0604::showInfo() {
     Serial.print(F("Fast Mulitplex:                                 ")); Serial.println((register_manipulation_flag) ? F("Enabled") : F("Disabled"));
     Serial.print(F("Transistor Driver Circuit:                      ")); Serial.println((transistor_enabled_flag) ? F("Enabled") : F("Disabled"));
     Serial.print(F("Display Orientation:                            ")); Serial.println((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
-    Serial.print(F("Cycle Function Interval Time:                   ")); Serial.print(_params.countingInterval); Serial.println(F("ms"));
+    Serial.print(F("Cycle Function Interval Time:                   ")); Serial.print(countingInterval); Serial.println(F("ms"));
     Serial.println();
 
     // == Temp sensor ==
     Serial.print(F("Temperature Pin:                                ")); Serial.println(temperaturePinAlias);
-    Serial.print(F("Temperature Refresh Interval:                   ")); Serial.print(_params.temperatureUpdateInterval); Serial.println(F("ms"));
+    Serial.print(F("Temperature Refresh Interval:                   ")); Serial.print(temperatureUpdateInterval); Serial.println(F("ms"));
     Serial.print(F("Temperature Sensor Auxiliary Resistor Value:    ")); Serial.print(_params.resistorValue); Serial.println(F("ohm"));
-    Serial.print(F("Temperature Serial Output:                      ")); Serial.println((_params.serial_enabled) ? F("Enabled") : F("Disabled"));
+    Serial.print(F("Temperature Serial Output:                      ")); Serial.println((serial_enabled) ? F("Enabled") : F("Disabled"));
     Serial.println();
 
     // == RAW Input ==
     Serial.print(F("RAW Input Pin:                                  ")); Serial.println(rawInputPinAlias);
-    Serial.print(F("RAW Input Refresh Interval:                     ")); Serial.print(_params.rawInputUpdateInterval); Serial.println(F("ms"));
+    Serial.print(F("RAW Input Refresh Interval:                     ")); Serial.print(rawInputUpdateInterval); Serial.println(F("ms"));
     Serial.println();
 
     // == EEPROM ==
     Serial.print(F("EEPROM Base Address:                            0x")); Serial.printf("%04x\n", (unsigned)_params.BASE_ADDR);
     Serial.print(F("EEPROM Wear Levelling Slots:                    ")); Serial.println(_params.NUM_SLOTS);
 
-    Serial.println(F("======================================================================================="));
+    Serial.println(F("========================================================================================="));
     _delay_ms(3);
     Serial.println();
+
+    if (countingInterval == 0 || temperatureUpdateInterval == 0 || rawInputUpdateInterval == 0) {
+        Serial.println(F("CAUTION: Board may have been reset. Multiple settings are incorrect. "));
+        Serial.println(F("Please run SETTINGS command to set the parameters. Thank you. "));
+        Serial.println();
+    }
 }
 
 /**
@@ -426,16 +447,53 @@ void DisplayController_FD0604::_handleInit() {
 }
 
 /**
- * @details         Handles action if INVERT command is inputted. 
+ * @details         Handles action if SETTINGS command is inputted. 
  */
-void DisplayController_FD0604::_handleInvert() {
-    _display.flipDisplayOrientation();
+void DisplayController_FD0604::_handleSettings() {
+    Serial.println(F("============================== FD-0604 LED Display Settings ============================="));
+    Serial.println(F("Select one of the options below by typing a number. "));
+    Serial.println();
+    Serial.println(F("[1] Exit this menu. "));
+    Serial.println(F("[2] Set Cycle Interval Time. "));
+    Serial.println(F("[3] Set Temperature Refresh Interval Time. "));
+    Serial.println(F("[4] Set RAW Input Refresh Interval Time. "));
+    Serial.println(F("[5] Flip Display Orientation. "));
+    Serial.println(F("========================================================================================="));
 
-    bool orientation = _display.getDisplayOrientation(); 
-    EEPROM.update(_params.displayOrientationAddress, orientation);
+    bool optionSelected = false;
+    String input;
+    int16_t option = 0;
 
-    Serial.print(F("Display Orientation set to: "));
-    Serial.println((orientation) ? F("INVERTED. ") : F("NORMAL. "));
+    while (!optionSelected) {
+        if (Serial.available() > 0) {
+            input = Serial.readStringUntil('\n');
+            input.trim();
+
+            if (input.length() == 0) {
+                Serial.println(F("Please select an option. "));
+            } else if (input.length() != 1) {
+                Serial.println(F("Invalid Option. Please enter a single number. "));
+                continue;
+            } else if (!_checkIfNumeric(input, option)) {
+                Serial.println(F("Invalid Option. Please enter a number. "));
+                continue;
+            } else if (option < 1 || option > 5) {
+                Serial.println(F("Invalid Number selected. "));
+                continue;
+            }
+
+            optionSelected = true;
+        }
+    }
+
+    switch (option) {
+        case 1: _exitSettings();                return; break;
+        case 2: _updateCycleInterval();         return; break;
+        case 3: _updateTemperatureInterval();   return; break;
+        case 4: _updateRawInputInterval();      return; break;
+        case 5: _updateDisplayOrientation();    return; break;
+        default: return; break;
+    }
 }
 
 /**
@@ -555,8 +613,10 @@ void DisplayController_FD0604::_displayOff() {
  */
 void DisplayController_FD0604::_displayCycle() {
     unsigned long currentMillis = millis();
+    unsigned long countingInterval;
+    EEPROM.get(_params.countingIntervalAddress, countingInterval);
 
-    if (currentMillis - previousMillis > _params.countingInterval) {
+    if (currentMillis - previousMillis > countingInterval) {
         previousMillis = currentMillis;
         _cycle_number = (_display.getDisplayOrientation() ? ((_cycle_number + 1) % 1000) : (_cycle_number + 1) % 4000);
     }
@@ -580,8 +640,13 @@ void DisplayController_FD0604::_displayNull() {
  */
 void DisplayController_FD0604::_displayTemp() {
     uint16_t displayTemp;
+    unsigned long temperatureUpdateInterval;
+    bool serial_enabled;
+    EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
+    EEPROM.get(_params.temperatureSerialEnabledAddress, serial_enabled);
+
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis > _params.temperatureUpdateInterval) {
+    if (currentMillis - previousMillis > temperatureUpdateInterval) {
         previousMillis = currentMillis;
         
         uint16_t temperatureReading = analogRead(_params.temperaturePin);
@@ -590,7 +655,7 @@ void DisplayController_FD0604::_displayTemp() {
         tempK = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * tempK * tempK )) * tempK );
         float tempC = tempK - 273.15;
 
-        if (_params.serial_enabled) {
+        if (serial_enabled) {
             Serial.print(F("Temperature: ")); Serial.print(tempC); Serial.println(F("*C"));
         }
 
@@ -613,9 +678,11 @@ void DisplayController_FD0604::_displayTemp() {
  */
 void DisplayController_FD0604::_displayRAWInput() {
     uint16_t value;
+    unsigned long rawInputUpdateInterval;
+    EEPROM.get(_params.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
 
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis > _params.rawInputUpdateInterval) {
+    if (currentMillis - previousMillis > rawInputUpdateInterval) {
         previousMillis = currentMillis;
 
         value = analogRead(_params.rawInputPin);
@@ -623,3 +690,96 @@ void DisplayController_FD0604::_displayRAWInput() {
 
     _display.showNumber(value, 1);
 }
+
+
+
+int16_t DisplayController_FD0604::_getSerial() {
+    bool intervalSet = false;
+    String input;
+    int16_t value = 0;
+
+    while (!intervalSet) {
+        if (Serial.available() > 0) {
+            input = Serial.readStringUntil('\n');
+            input.trim();
+            Serial.println();
+
+            if (!_checkIfNumeric(input, value)) {
+                Serial.println(F("Invalid Option. Please enter a number. "));
+                continue;
+            }
+
+            intervalSet = true;
+        }
+    }
+
+    return value;
+}
+
+void DisplayController_FD0604::_exitSettings() {
+    Serial.println(F("Thank you. Exiting Settings..."));
+    _delay_ms(100);
+    showAvailableCommands();
+}
+
+void DisplayController_FD0604::_updateCycleInterval() {
+    unsigned long oldInterval = 0;
+    EEPROM.get(_params.countingIntervalAddress, oldInterval);
+
+    Serial.print(F("Old Cycle Interval Time: ")); Serial.println(oldInterval);
+    Serial.print(F("Enter New Cycle Interval Time: ")); 
+
+    int16_t value = _getSerial();
+
+    EEPROM.put(_params.countingIntervalAddress, value);
+    Serial.print(F("New Cycle Interval Time Set To: ")); Serial.println(value);
+
+    _delay_ms(20);
+    _exitSettings();
+}
+
+void DisplayController_FD0604::_updateTemperatureInterval() {
+    unsigned long oldInterval = 0;
+    EEPROM.get(_params.temperatureUpdateIntervalAddress, oldInterval);
+
+    Serial.print(F("Old Temperature Interval Time: ")); Serial.println(oldInterval);
+    Serial.print(F("Enter New Temperature Interval Time: ")); 
+
+    int16_t value = _getSerial();
+
+    EEPROM.put(_params.temperatureUpdateIntervalAddress, value);
+    Serial.print(F("New Temperature Interval Time Set To: ")); Serial.println(value);
+
+    _delay_ms(20);
+    _exitSettings();
+}
+
+void DisplayController_FD0604::_updateRawInputInterval() {
+    unsigned long oldInterval = 0;
+    EEPROM.get(_params.rawInputUpdateIntervalAddress, oldInterval);
+
+    Serial.print(F("Old Raw Input Interval Time: ")); Serial.println(oldInterval);
+    Serial.print(F("Enter New Raw Input Interval Time: ")); 
+
+    int16_t value = _getSerial();
+
+    EEPROM.put(_params.rawInputUpdateIntervalAddress, value);
+    Serial.print(F("New Raw Input Interval Time Set To: ")); Serial.println(value);
+
+    _delay_ms(20);
+    _exitSettings();
+}
+
+void DisplayController_FD0604::_updateDisplayOrientation() {
+    _display.flipDisplayOrientation();
+
+    bool orientation = _display.getDisplayOrientation(); 
+    EEPROM.update(_params.displayOrientationAddress, orientation);
+
+    Serial.print(F("Display Orientation set to: "));
+    Serial.println((orientation) ? F("INVERTED. ") : F("NORMAL. "));
+
+    _delay_ms(20);
+    _exitSettings();
+}
+
