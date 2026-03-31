@@ -776,7 +776,8 @@ int16_t DisplayController_FD0604::_getSerial() {
 void DisplayController_FD0604::_exitSettings() {
     Serial.println(F("Thank you. Exiting Settings..."));
     _delay_ms(100);
-    showAvailableCommands();
+    showInfo();
+    //showAvailableCommands();
 }
 
 void DisplayController_FD0604::_updateCycleInterval() {

@@ -23,6 +23,12 @@ int main(void) {
 
   displayController.showInfo();
   displayController.showAvailableCommands();
+  Serial.print(F("A secondary serial interface is enabled and attached on: RX:"));
+  Serial.print(softRX);
+  Serial.print(F(" TX:"));
+  Serial.print(softTX);
+  Serial.println(F(" (self)."));
+  Serial.println();
 
   softSerial.println(F("Secondary Serial Interface - INPUT (NUMBERS) ONLY. "));
   softSerial.println(F("Refer to Main Serial Interface for Verbose Output. "));
