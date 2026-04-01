@@ -1,5 +1,12 @@
 #include "DisplayController_FD0604.hpp"
 
+/*
+    EEPROM Memory Map:
+    0x0000-0x001F   -   Firmware Version
+    0x0020-0x003F   -   Display Paramaters
+    0x0040-0x03FF   -   Displayed Number History
+*/
+
 const uint8_t softRX = 4;
 const uint8_t softTX = 5;
 
@@ -32,21 +39,21 @@ DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring minimalPortDisplayPa
 
 
 DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
-    16,         // EEPROM address to start writing writing from
+    0x0040,     // EEPROM address to start writing writing from
     6,          // uint32_t for sequence number (for wear levelling) + uint16_t for number
     160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
-    0,          // EEPROM Address that stores the delay between counting intervals 
+    0x0020,     // EEPROM Address that stores the delay between counting intervals 
 
     A7,         // temperature sensor  pin
     10000.0,    // temperature sensor accompanying resistor
-    2,          // EEPROM address that stores the delay between the temperature reading updating
-    4,          // EEPROM address for enable serial output for temperature sensor
+    0x0022,     // EEPROM address that stores the delay between the temperature reading updating
+    0x0024,     // EEPROM address for enable serial output for temperature sensor
 
     A6,         // raw input pin
-    6,          // EEPROM address that stores the delay between the raw input reading updating 
-    8,          // EEPROM address for enable serial output for raw input
+    0x0026,     // EEPROM address that stores the delay between the raw input reading updating 
+    0x0028,     // EEPROM address for enable serial output for raw input
 
-    10,         // EEPROM address for storing display orientation data
+    0x002A,      // EEPROM address for storing display orientation data
     128         // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
 };
