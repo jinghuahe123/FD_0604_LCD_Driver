@@ -1,10 +1,13 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include <EEPROM.h>
 
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
 #include "DisplayController_FD0604.hpp"
 #include "configs.hpp"
+
+const char version[] PROGMEM = "FD_0604 LED Display v0.1.1";
 
 String input;
 
@@ -20,6 +23,16 @@ int main(void) {
   Serial.begin(hardwareSerialBaud);
   softSerial.begin(softwareSerialBaud);
   analogReference(EXTERNAL);
+
+  for (uint8_t i=0; i<sizeof(version); i++) {
+    if (sizeof(version) >= 32) {
+      Serial.println(F("Firmware Version String Invalid. Please Check Configurations. "));
+      while (1);
+    }
+    
+    char c = pgm_read_byte(&version[i]);
+    EEPROM.update(i, c);
+  }
 
   displayController.showInfo();
   displayController.showAvailableCommands();
