@@ -34,17 +34,18 @@ public:
         const uint8_t SLOT_SIZE;
         const uint16_t NUM_SLOTS;
 
-        const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data // const unsigned long countingInterval;
+        const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data 
 
-        const uint8_t temperaturePin;
-        const double resistorValue;
-        const uint16_t temperatureUpdateIntervalAddress; // EEPROM address for storing temperature update interval data // const unsigned long temperatureUpdateInterval;
-        const uint16_t temperatureSerialEnabledAddress; // EEPROM address for storing serial enabled data // const bool serial_enabled;
+        const uint8_t temperaturePin; // pin that the temperature probe is connected to
+        const double resistorValue; // accompanying resistor value for temperature probe
+        const uint16_t temperatureUpdateIntervalAddress; // EEPROM address for storing temperature update interval data 
+        const uint16_t temperatureSerialEnabledAddress; // EEPROM address for storing serial enabled data for temperature probe
 
-        const uint8_t rawInputPin;
-        const uint16_t rawInputUpdateIntervalAddress; // EEPROM address for storing raw input update interval data // const unsigned long rawInputUpdateInterval; 
+        const uint8_t rawInputPin; // pin that the raw input is connected to 
+        const uint16_t rawInputUpdateIntervalAddress; // EEPROM address for storing raw input update interval data  
+        const uint16_t rawInputSerialEnabledAddress; // EEPROM address for storing serial enabled data for raw input
 
-        const uint16_t displayOrientationAddress; // last EEPROM address for storing display orientation data
+        const uint16_t displayOrientationAddress; // EEPROM address for storing display orientation data
         const uint16_t numHistory;
         
     };
@@ -122,13 +123,15 @@ private:
 
     int16_t _getSerial();
 
+    const uint8_t maxSettingsOptions = 7;
     void _exitSettings();
     void _updateCycleInterval();
     void _updateTemperatureInterval();
-    void _updateRawInputInterval();
-    void _updateDisplayOrientation();
     void _updateTemperatureSerialOutput();
-
+    void _updateRawInputInterval();
+    void _updateRawInputSerialOutput();
+    void _updateDisplayOrientation();
+    
 };
 
 #endif

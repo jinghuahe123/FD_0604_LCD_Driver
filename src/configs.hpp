@@ -45,7 +45,8 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams =
 
     A6,         // raw input pin
     6,          // EEPROM address that stores the delay between the raw input reading updating 
+    8,          // EEPROM address for enable serial output for raw input
 
-    8,         // EEPROM address for storing display orientation data
+    10,         // EEPROM address for storing display orientation data
     128         // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
 };
