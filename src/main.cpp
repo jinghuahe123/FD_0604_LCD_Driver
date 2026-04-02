@@ -7,44 +7,43 @@
 #include "DisplayController_FD0604.hpp"
 #include "configs.hpp"
 
-const char version[] PROGMEM = "FD_0604 LED Display v0.1.1";
-
-String input;
-
-SoftwareSerial softSerial(softRX, softTX);
+SoftwareSerial softSerial(SOFT_RX, SOFT_TX);
 DisplayController_FD0604 displayController(minimalDisplayParams, controllerParams);
 
+static void updateVersion() {
+  for (uint8_t i=0; i<FIRMWARE_VER_SIZE; i++) {
+    if (i<sizeof(version)-1) { // ensure no null terminator is written
+      char c = pgm_read_byte(&version[i]);
+      EEPROM.update(i, c);
+    } else {
+      EEPROM.update(i, ' '); // fill rest with blanks
+    }
+  }
+}
 
 // int main(void) __attribute__((weak));
 int main(void) {
   init();
   //initVariant();
 
-  Serial.begin(hardwareSerialBaud);
-  softSerial.begin(softwareSerialBaud);
+  Serial.begin(HARDWARE_SERIAL_BAUD);
+  softSerial.begin(SOFTWARE_SERIAL_BAUD);
   analogReference(EXTERNAL);
-
-  for (uint8_t i=0; i<sizeof(version); i++) {
-    if (sizeof(version) >= 32) {
-      Serial.println(F("Firmware Version String Invalid. Please Check Configurations. "));
-      while (1);
-    }
-    
-    char c = pgm_read_byte(&version[i]);
-    EEPROM.update(i, c);
-  }
+  updateVersion();
 
   displayController.showInfo();
   displayController.showAvailableCommands();
   Serial.print(F("A secondary serial interface is enabled and attached on: RX:"));
-  Serial.print(softRX);
+  Serial.print(SOFT_RX);
   Serial.print(F(" TX:"));
-  Serial.print(softTX);
+  Serial.print(SOFT_TX);
   Serial.println(F(" (self)."));
   Serial.println();
 
   softSerial.println(F("Secondary Serial Interface - INPUT (NUMBERS) ONLY. "));
   softSerial.println(F("Refer to Main Serial Interface for Verbose Output. "));
+
+  String input;
 
   for (;;) {
     if (Serial.available() > 0) {
