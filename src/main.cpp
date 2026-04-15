@@ -40,8 +40,10 @@ int main(void) {
   Serial.println(F(" (self)."));
   Serial.println();
 
+  #ifdef SECONDARY_INPUT_INTRO_TEXT
   softSerial.println(F("Secondary Serial Interface - INPUT (NUMBERS) ONLY. "));
   softSerial.println(F("Refer to Main Serial Interface for Verbose Output. "));
+  #endif
 
   String input;
 

@@ -7,9 +7,7 @@
     0x0040-0x03FF   -   Displayed Number History
 */
 
-#define FIRMWARE_VER_SIZE       32
-#define PARAMS_SIZE             32
-#define HISTORY_LOG_SIZE        160
+#define SECONDARY_INPUT_INTRO_TEXT
 
 #define SOFT_RX                 4
 #define SOFT_TX                 5
@@ -17,13 +15,8 @@
 #define HARDWARE_SERIAL_BAUD    1000000
 #define SOFTWARE_SERIAL_BAUD    19200
 
+#define FIRMWARE_VER_SIZE       32
 const char version[] PROGMEM =  "FD_0604 LED Display v0.1.1";
-
-//const uint8_t softRX = 4;
-//const uint8_t softTX = 5;
-
-//const uint32_t hardwareSerialBaud = 1000000;
-//const uint32_t softwareSerialBaud = 19200;
 
 DisplayDriver_FD0604::DriverParams_MinimalWiring minimalDisplayParams = {
     1,          // transistor enabled
@@ -53,7 +46,7 @@ DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring minimalPortDisplayPa
 DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
     0x0040,     // EEPROM address to start writing writing from
     6,          // uint32_t for sequence number (for wear levelling) + uint16_t for number
-    HISTORY_LOG_SIZE,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+    160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
     0x0020,     // EEPROM Address that stores the delay between counting intervals 
 
