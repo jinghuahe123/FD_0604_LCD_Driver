@@ -54,3 +54,4 @@ Any number for the given ranges can be displayed on the screen:
 
 - EEPROM class writes more than one data type
 - remove requirement for Arduino String class and change for const char*
+- make history recall amount user customisable

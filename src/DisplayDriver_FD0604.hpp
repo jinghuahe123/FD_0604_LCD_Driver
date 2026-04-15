@@ -38,42 +38,45 @@ class DisplayDriver_FD0604 {
         };
 
         struct DriverParams_DIRECTPORT {
+            // some of these can be volatile uint8_t* const DDR...
+            // means pointer cannot change but the value can change
+            
             const bool npn_transistor_enable;
             
-            volatile uint8_t* DDRx_latchPin;
-            volatile uint8_t* PORTx_latchPin;
+            volatile uint8_t* const DDRx_latchPin;
+            volatile uint8_t* const PORTx_latchPin;
             const uint8_t PIN_latchPin;
 
-            volatile uint8_t* DDRx_clockPin;
-            volatile uint8_t* PORTx_clockPin;
+            volatile uint8_t* const DDRx_clockPin;
+            volatile uint8_t* const PORTx_clockPin;
             const uint8_t PIN_clockPin;
 
-            volatile uint8_t* DDRx_dataPin;
-            volatile uint8_t* PORTx_dataPin;
+            volatile uint8_t* const DDRx_dataPin;
+            volatile uint8_t* const PORTx_dataPin;
             const uint8_t PIN_dataPin;
 
-            volatile uint8_t* DDRx_GND1;
-            volatile uint8_t* PORTx_GND1;
+            volatile uint8_t* const DDRx_GND1;
+            volatile uint8_t* const PORTx_GND1;
             const uint8_t PIN_GND1;
 
-            volatile uint8_t* DDRx_GND2;
-            volatile uint8_t* PORTx_GND2;
+            volatile uint8_t* const DDRx_GND2;
+            volatile uint8_t* const PORTx_GND2;
             const uint8_t PIN_GND2;
         };
 
         struct DriverParams_DIRECTPORT_MinimalWiring {
             const bool npn_transistor_enable;
             
-            volatile uint8_t* DDRx_latchPin;
-            volatile uint8_t* PORTx_latchPin;
+            volatile uint8_t* const DDRx_latchPin;
+            volatile uint8_t* const PORTx_latchPin;
             const uint8_t PIN_latchPin;
 
-            volatile uint8_t* DDRx_clockPin;
-            volatile uint8_t* PORTx_clockPin;
+            volatile uint8_t* const DDRx_clockPin;
+            volatile uint8_t* const PORTx_clockPin;
             const uint8_t PIN_clockPin;
 
-            volatile uint8_t* DDRx_dataPin;
-            volatile uint8_t* PORTx_dataPin;
+            volatile uint8_t* const DDRx_dataPin;
+            volatile uint8_t* const PORTx_dataPin;
             const uint8_t PIN_dataPin;
         };
 
