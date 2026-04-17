@@ -142,35 +142,35 @@ void DisplayDriver_FD0604::showNumber(uint16_t number, unsigned long interval, b
 }
 
 /**
- * @details                 Parses each individual display number together.
+ * @details                 Parses each individual display number together. 
+ *                              MUST PASS A 4-DIGIT ARRAY + NULL TERMINATOR. FOR EMPTY DIGIT FILL WITH ' ' CHAR.
  * @param letters           The desired display letters.
  * @param interval          The time the number should be displayed for.
  * @param clock             Toggle the clock LEDs. 
- * @note                    DEPRECATED
+ * @note                    DEPRECATED, reccomend to use showDisplay
  */
-void DisplayDriver_FD0604::showLetter(String letters, unsigned long interval, bool clock) { // change to char array? OR limit to size 3
-  const String mask = "abcdef";
-  char each_character[5] = {0}; // extra byte required for /n character
+void DisplayDriver_FD0604::showLetter(const char letters[5], unsigned long interval, bool clock) { 
+  // 5 required for a \n terminator
+
+  const char mask[] = "abcdef";
   uint16_t arr[5][2] = {0};
   uint16_t out[2] = {0};
 
-  if (letters.length() > 4) letters = letters.substring(0, 4);
-
-  letters.toLowerCase();
-  letters.toCharArray(each_character, sizeof(each_character));
+  char output_letters[5] = {0};
+  for (uint8_t i=0; i<4; i++) output_letters[i] = tolower(letters[i]);
 
   for (uint8_t i=0; i<4; i++) {
-    if (i < letters.length()) {
-      int pos = mask.indexOf(each_character[i]);
-      if (pos != -1) {
-        if (displayOrientation == NORMAL_DISPLAY) {
-          getLetter(pos + 6*(3-i), arr[i]);
-        } else {
-          getLetterUpsideDown(pos + 6*(3-i), arr[i]);
-        }
+    int8_t pos = -1; 
+    char* ptr = strchr(mask, output_letters[i]);
+    if (ptr != NULL) pos = ptr - mask;
+
+    if (pos != -1) {
+      if (displayOrientation == NORMAL_DISPLAY) {
+        getLetter(pos + 6*(3-i), arr[i]);
+      } else {
+        getLetterUpsideDown(pos + 6*(3-i), arr[i]);
       }
     }
-    // getLetter(mask.indexOf(each_character[i]) + 6*(2-i), arr[i]);
   }
 
   checkClock(clock, arr[4]);
@@ -185,33 +185,18 @@ void DisplayDriver_FD0604::showLetter(String letters, unsigned long interval, bo
 
 /**
  * @details                 Parses each individual display sequence together.
+ *                              MUST PASS A 4-DIGIT ARRAY + NULL TERMINATOR. FOR EMPTY DIGIT FILL WITH ' ' CHAR.
  * @param letters           The desired display sequence.
  * @param interval          The time the number should be displayed for.
  * @param clock             Toggle the clock LEDs. 
  */
-void DisplayDriver_FD0604::showDisplay(String to_display, unsigned long interval, bool leading_zeroes, bool clock) {
-  char digits[4] = {' ', ' ', ' ', ' '};
-
-  uint8_t length = to_display.length();
-  uint8_t startPosition = 4 - length;
-
-  for (uint8_t i=0; i<length && i<4; i++) {
-    digits[startPosition + i] = to_display.charAt(i);
-  }  
-
-  charShowDisplay(digits, interval, leading_zeroes, clock);
-}
-
-/**
- * @details                 Parses each individual display sequence together.
- * @param letters           The desired display sequence.
- * @param interval          The time the number should be displayed for.
- * @param clock             Toggle the clock LEDs. 
- */
-void DisplayDriver_FD0604::charShowDisplay(char (&digits)[4], unsigned long interval, bool leading_zeroes, bool clock) {
+void DisplayDriver_FD0604::showDisplay(const char digits[5], unsigned long interval, bool leading_zeroes, bool clock) {
   uint16_t arr[5][2] = {0};
   uint16_t out[2] = {0};
+  const char mask[] = "abcdef";
   bool leading_digit = true;
+
+  char output_letters[5] = {0};
 
   for (int i=0; i<4; i++) {
     if (isdigit(digits[i])) {
@@ -229,11 +214,12 @@ void DisplayDriver_FD0604::charShowDisplay(char (&digits)[4], unsigned long inte
       }
     } else if (!isdigit(digits[i]) && digits[i] != ' ') {
       leading_digit = false;
-      digits[i] = tolower(digits[i]);
-      const String mask = "abcdef";
+      output_letters[i] = tolower(digits[i]);
 
-      int pos = mask.indexOf(digits[i]);
-      if (pos != -1) {
+      char* ptr = strchr(mask, output_letters[i]);
+
+      if (ptr != NULL) {
+        int8_t pos = ptr - mask;
         if (displayOrientation == NORMAL_DISPLAY) {
           getLetter(pos + 6*(3-i), arr[i]);
         } else {
