@@ -91,10 +91,8 @@ class DisplayDriver_FD0604 {
         bool getDisplayOrientation();
 
         // 5 required for a \n terminator
-        void showLetter(const char letters[5], unsigned long interval, bool clock = false); // need to deprecate for a char array
-        // void showDisplay(String to_display, unsigned long interval, bool leading_zeroes = false, bool clock = false); // need to fully deprecate for char array below
+        void showLetter(const char letters[5], unsigned long interval, bool clock = false); 
         void showDisplay(const char digits[5], unsigned long interval,  bool leading_zeroes = false, bool clock = false);
-        // void showDisplay(char (&to_display)[4], unsigned long interval, bool leading_zeroes, bool clock);
 
         void clear();
         void showNumber(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
