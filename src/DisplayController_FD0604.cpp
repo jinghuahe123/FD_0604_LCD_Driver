@@ -741,15 +741,11 @@ void DisplayController_FD0604::_displayTemp() {
     }
 
     snprintf(output, sizeof(output), "%u", displayTemp);
-    output[3] = 'o'; // rewrites the \n terminator as a o
+    output[3] = 'o'; // rewrites 4th digit as 'o'
 
     if ((displayTemp < 4000 && _display.getDisplayOrientation() == NORMAL_DISPLAY)) {
-        // String output = String(displayTemp / 10) + 'o';
-
         _display.showDisplay(output, 1);
     } else if (_display.getDisplayOrientation() == FLIPPED_DISPLAY) {
-        // String output = String(displayTemp / 10) + 'o'; // use 'o' to activate temperature symbol
-
         _display.showDisplay(output, 1);
     } 
 }
