@@ -115,6 +115,16 @@ void DisplayController_FD0604::_init() {
     _display.setDisplayOrientation(EEPROM.read(_params.displayOrientationAddress));
 }
 
+/**
+ * @details         Prints a line bar consisting of '=' characters. Used for saving flash space on AVR. 
+ * @param number    Number of '=' characters to print.
+ */
+void DisplayController_FD0604::_printLineBar(uint8_t number) {
+    while (number-- > 0) {
+        Serial.print(F("="));
+    }
+    Serial.println();
+}
 
 /**
  * @details         Process a String input as display confiugration parameters.
@@ -264,7 +274,8 @@ void DisplayController_FD0604::showAvailableCommands() {
     Serial.print(F("HISTORY    -  Prints to Serial the last ")); Serial.print(_params.numHistory); Serial.println(F(" numbers displayed. "));
     //    10 numbers displayed.                            "));
 
-    Serial.println(F("========================================================================================="));
+    //Serial.println(F("========================================================================================="));
+    _printLineBar(90); // instead of saving copies of massive string of = chars, saves space on flash
     _delay_ms(3);
     Serial.println();
 }
@@ -287,7 +298,7 @@ void DisplayController_FD0604::showInfo() {
     
     // == Basic Configs ==
     Serial.print(F("CPU Model:                                      "));
-        for (uint8_t i=0; ;i++) { char c = pgm_read_byte(&processor[i]); if (c==0) break; Serial.print(c); } Serial.println();
+        for (uint8_t i=0; ;i++) { char c = pgm_read_byte(&processor[i]); if(c==0)break; Serial.print(c); } Serial.println();
     Serial.print(F("CPU Clock Frequency:                            ")); Serial.print(F_CPU / 1000000); Serial.println(F("MHz"));
     Serial.print(F("Minimal Pin Configuration:                      ")); Serial.println((minimal_pin_flag) ? F("Enabled") : F("Disabled"));
     Serial.print(F("Fast Mulitplex:                                 ")); Serial.println((register_manipulation_flag) ? F("Enabled") : F("Disabled"));
@@ -313,7 +324,8 @@ void DisplayController_FD0604::showInfo() {
     Serial.print(F("EEPROM Base Address:                            0x")); Serial.printf("%04x\n", (unsigned)_params.BASE_ADDR);
     Serial.print(F("EEPROM Wear Levelling Slots:                    ")); Serial.println(_params.NUM_SLOTS);
 
-    Serial.println(F("========================================================================================="));
+    //Serial.println(F("========================================================================================="));
+    _printLineBar(90); // instead of saving copies of massive string of = chars, saves space on flash
     _delay_ms(3);
     Serial.println();
 
@@ -479,11 +491,12 @@ void DisplayController_FD0604::_handleSettings() {
     Serial.println(F("[5] Set RAW Input Refresh Interval Time. "));
     Serial.println(F("[6] Enable / Disable RAW Input Serial Output. "));
     Serial.println(F("[7] Flip Display Orientation. "));
-    Serial.println(F("========================================================================================="));
+    //Serial.println(F("========================================================================================="));
+    _printLineBar(90); // instead of saving copies of massive string of = chars, saves space on flash
 
     bool optionSelected = false;
     String input;
-    int16_t option = 0;
+    int16_t option = 0; // int16_t required for _checkIfNumeric function
 
     while (!optionSelected) {
         if (Serial.available() > 0) {
@@ -572,9 +585,11 @@ void DisplayController_FD0604::_handleHistory() {
     PersistentStorageManager::StorageEntry entries[_params.numHistory] = {0};
     //std::vector<PersistentStorageManager::StorageEntry> entries;
 
-    Serial.println(F("=============================================================="));
+    //Serial.println(F("=============================================================="));
+    _printLineBar(63); // instead of saving copies of massive string of = chars, saves space on flash
     Serial.println(F("                     EEPROM STORAGE HISTORY                   "));
-    Serial.println(F("=============================================================="));
+    _printLineBar(63);
+    //Serial.println(F("=============================================================="));
     Serial.print(F("Base Address: 0x")); Serial.printf("%04x\n", (unsigned)_params.BASE_ADDR);
     //Serial.print(F("Base Address: 0x"));
     //Serial.println(_storageManager.getBaseAddr(), HEX);
@@ -615,7 +630,8 @@ void DisplayController_FD0604::_handleHistory() {
         Serial.println(F("No data found in storage."));
     }
 
-    Serial.println(F("=============================================================="));
+    //Serial.println(F("=============================================================="));
+    _printLineBar(63);
 
     //entries.clear();
 }
@@ -701,6 +717,7 @@ void DisplayController_FD0604::_displayNull() {
 void DisplayController_FD0604::_displayTemp() {
     uint16_t displayTemp;
     int16_t temperatureUpdateInterval;
+    char output[5] = {0};
     bool serial_enabled;
     EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
     EEPROM.get(_params.temperatureSerialEnabledAddress, serial_enabled);
@@ -720,14 +737,18 @@ void DisplayController_FD0604::_displayTemp() {
         }
 
         displayTemp = tempC * 100; // 2 virtual decimal places
+        displayTemp /= 10; // for a 3sf display output
     }
 
+    snprintf(output, sizeof(output), "%u", displayTemp);
+    output[3] = 'o'; // rewrites the \n terminator as a o
+
     if ((displayTemp < 4000 && _display.getDisplayOrientation() == NORMAL_DISPLAY)) {
-        String output = String(displayTemp / 10) + 'o';
+        // String output = String(displayTemp / 10) + 'o';
 
         _display.showDisplay(output, 1);
     } else if (_display.getDisplayOrientation() == FLIPPED_DISPLAY) {
-        String output = String(displayTemp / 10) + 'o'; // use 'o' to activate temperature symbol
+        // String output = String(displayTemp / 10) + 'o'; // use 'o' to activate temperature symbol
 
         _display.showDisplay(output, 1);
     } 

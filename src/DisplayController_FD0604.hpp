@@ -88,6 +88,7 @@ private:
     const char* rawInputPinAlias = "  ";
     
     void _init();
+    void _printLineBar(uint8_t number);
 
     static const uint8_t _commandListSize;
     static const char _commandList[][10] PROGMEM;
@@ -123,7 +124,7 @@ private:
 
     int16_t _getSerial();
 
-    const uint8_t maxSettingsOptions = 7;
+    const uint8_t maxSettingsOptions = 7; // need to fix thsi for a more elegant solution
     void _exitSettings();
     void _updateCycleInterval();
     void _updateTemperatureInterval();

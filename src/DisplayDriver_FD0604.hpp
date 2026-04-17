@@ -90,16 +90,15 @@ class DisplayDriver_FD0604 {
         void flipDisplayOrientation();
         bool getDisplayOrientation();
 
-        void showLetter(String letters, unsigned long interval, bool clock = false);
-        void showDisplay(String to_display, unsigned long interval, bool leading_zeroes = false, bool clock = false);
+        // 5 required for a \n terminator
+        void showLetter(const char letters[5], unsigned long interval, bool clock = false); // need to deprecate for a char array
+        // void showDisplay(String to_display, unsigned long interval, bool leading_zeroes = false, bool clock = false); // need to fully deprecate for char array below
+        void showDisplay(const char digits[5], unsigned long interval,  bool leading_zeroes = false, bool clock = false);
         // void showDisplay(char (&to_display)[4], unsigned long interval, bool leading_zeroes, bool clock);
 
         void clear();
         void showNumber(uint16_t number, unsigned long interval, bool leading_zeroes = false, bool clock = false);
         void showNull(unsigned long interval);
-
-
-
 
     private:
         const DriverParams* _params;
@@ -119,8 +118,6 @@ class DisplayDriver_FD0604 {
         void getNumberUpsideDown(uint8_t index, uint16_t (&output)[2]);
         void getLetterUpsideDown(uint8_t index, uint16_t (&output)[2]);
         void getSpecialCharUpsideDown(uint8_t index, uint16_t (&output)[2]);
-
-        void charShowDisplay(char (&digits)[4], unsigned long interval,  bool leading_zeroes = false, bool clock = false);
 
         void checkClock(bool &clock, uint16_t (&arr)[2]);
 
