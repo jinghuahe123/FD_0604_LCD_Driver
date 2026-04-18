@@ -46,12 +46,14 @@ Any number for the given ranges can be displayed on the screen:
 | [1]       | Exits back to main menu.                                          |
 | [2]       | Set CYCLE Interval time between increasing numbers.               |
 | [3]       | Set Temperature Refresh Interval Time.                            |
-| [4]       | Set RAW Input Refresh Interval Time.                              |
-| [5]       | Flip Display Orientation.                                         |
-| [6]       | Enable / Disable Temperature Serial Output.                       |
+| [4]       | Enable / Disable Temperature Serial Output.                       |
+| [5]       | Set RAW Input Refresh Interval Time.                              |
+| [6]       | Enable / Disable RAW Input Serial Output.                         |
+| [7]       | Flip Display Orientation.                                         |
+| [8]       | Set History Recall Depth.                                         |
 
 **TODO / IMPROVEMENTS**
 
-- EEPROM class writes more than one data type
-- remove requirement for Arduino String class and change for const char*
-- make history recall amount user customisable
+- fix the fact that for display to be updated with the special chars the display has to poll constantly
+- test if normal pin config still works after implementing ISR routine
+- reduce DisplayController reliance on Arduino Core (mainly String)
