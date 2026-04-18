@@ -30,7 +30,7 @@ class PersistentStorageManager {
         uint16_t readData_uint16();
 
         void clearData();
-        uint16_t getLastEntries(uint8_t count, StorageEntry* entries, uint16_t entriesMax);
+        uint16_t getLastEntries(uint16_t count, StorageEntry* entries);
 
 };
 

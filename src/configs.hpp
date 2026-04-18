@@ -16,17 +16,9 @@
 #define SOFTWARE_SERIAL_BAUD    19200
 
 #define FIRMWARE_VER_SIZE       32
-const char version[] PROGMEM =  "FD_0604 LED Display v0.1.1";
+const char version[] PROGMEM =  "FD_0604 LED Display v0.1.28";
 
-DisplayDriver_FD0604::DriverParams_MinimalWiring minimalDisplayParams = {
-    1,          // transistor enabled
-
-    6,          // arduino latchpin
-    7,          // arduino clockpin
-    8           // arduino datapin
-};
-
-DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring minimalPortDisplayParams = {
+DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring displayParams = {
     1,          // transistor enabled
 	
 	&DDRD,      // latchpin DDRx register
@@ -59,6 +51,6 @@ DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams =
     0x0026,     // EEPROM address that stores the delay between the raw input reading updating 
     0x0028,     // EEPROM address for enable serial output for raw input
 
-    0x002A,      // EEPROM address for storing display orientation data
-    128         // How many numbers to search for in history. Don't set too large otherwise MCU will run out of RAM. 
+    0x002A,     // EEPROM address for storing display orientation data
+    0x002C      // EEPROM address for history recall depth
 };

@@ -46,14 +46,13 @@ public:
         const uint16_t rawInputSerialEnabledAddress; // EEPROM address for storing serial enabled data for raw input
 
         const uint16_t displayOrientationAddress; // EEPROM address for storing display orientation data
-        const uint16_t numHistory;
+        const uint16_t numHistoryAddress; // EEPROM address for storing how number history count to recall
         
     };
 
-    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params);
-    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params);
     DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params);
     DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params);
+    DisplayDriver_FD0604* getDisplayDriverObject();
     
     void updateDisplay();
     void processInput(const String& input);
@@ -69,7 +68,6 @@ private:
     DisplayDriver_FD0604 _display;
     PersistentStorageManager _storageManager;
     const bool transistor_enabled_flag;
-    const bool register_manipulation_flag;
     const bool minimal_pin_flag;
     
     // Calculate total RAM (AVR) or use manual define
@@ -83,12 +81,12 @@ private:
     uint16_t _cycle_number = 0;
     String _input = "";
     unsigned long previousMillis = 0;
+    bool staticDisplayShown = false;
 
     const char* temperaturePinAlias = "  ";
     const char* rawInputPinAlias = "  ";
     
     void _init();
-    void _printLineBar(uint8_t number);
 
     static const uint8_t _commandListSize;
     static const char _commandList[][10] PROGMEM;
@@ -124,7 +122,7 @@ private:
 
     int16_t _getSerial();
 
-    const uint8_t maxSettingsOptions = 7; // need to fix thsi for a more elegant solution
+    const uint8_t maxSettingsOptions = 8; // need to fix thsi for a more elegant solution
     void _exitSettings();
     void _updateCycleInterval();
     void _updateTemperatureInterval();
@@ -132,6 +130,7 @@ private:
     void _updateRawInputInterval();
     void _updateRawInputSerialOutput();
     void _updateDisplayOrientation();
+    void _updateHistoryRecallDepth();
     
 };
 
