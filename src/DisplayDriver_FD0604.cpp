@@ -253,6 +253,19 @@ void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
 /*
   The following is called on each ISR Routine. 
   minimal display is much more efficient
+
+  FIX: need to optimise runtime pin configuraiton check
+  e.g.
+
+    // In constructor:
+  if (minimal_pin_flag) {
+      multiplex_callback = &DisplayDriver_FD0604::multiplex_display_minimal;
+  } else {
+      multiplex_callback = &DisplayDriver_FD0604::multiplex_display_normal;
+  }
+
+  // In ISR:
+  (this->*multiplex_callback)();
 */
 
 /**

@@ -122,7 +122,10 @@ private:
 
     int16_t _getSerial();
 
-    const uint8_t maxSettingsOptions = 8; // need to fix thsi for a more elegant solution
+    using SettingsHandler = void(DisplayController_FD0604::*)();
+    static const SettingsHandler settingsHandlers[]; // static const array of function pointers
+    static const uint8_t maxSettingsOptions;
+
     void _exitSettings();
     void _updateCycleInterval();
     void _updateTemperatureInterval();
@@ -134,4 +137,4 @@ private:
     
 };
 
-#endif
+#endif // DISPLAY_CONTROLLER_FD0604_HPP

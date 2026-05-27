@@ -45,7 +45,6 @@ ISR(TIMER2_COMPA_vect) {
 int main(void) {
   init();
   //initVariant();
-
   init_timer2_for_1000hz();
 
   Serial.begin(HARDWARE_SERIAL_BAUD);
@@ -60,6 +59,8 @@ int main(void) {
   Serial.print(F(" TX:"));
   Serial.print(SOFT_TX);
   Serial.println(F(" (self)."));
+  Serial.print(F("Baud rate: "));
+  Serial.println(SOFTWARE_SERIAL_BAUD);
   Serial.println();
 
   #ifdef SECONDARY_INPUT_INTRO_TEXT
@@ -68,11 +69,8 @@ int main(void) {
   #endif
 
   String input;
-
   for (;;) {
     if (Serial.available() > 0) {
-      displayController.clear();
-
       input = Serial.readStringUntil('\n');
       input.trim();
       displayController.processInput(input);

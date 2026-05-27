@@ -57,3 +57,6 @@ Any number for the given ranges can be displayed on the screen:
 - fix the fact that for display to be updated with the special chars the display has to poll constantly
 - test if normal pin config still works after implementing ISR routine
 - reduce DisplayController reliance on Arduino Core (mainly String)
+- make softserial baud rate editable by user
+- deprecate entire Arduino framework, for compiling in Atmel Studio
+- set up watchdog timer in reset / interrupt and reset mode for hardware crash recovery
