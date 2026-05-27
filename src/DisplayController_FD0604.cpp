@@ -458,6 +458,23 @@ void DisplayController_FD0604::_handleInit() {
     _displayInit();
 }
 
+
+const DisplayController_FD0604::SettingsHandler DisplayController_FD0604::settingsHandlers[] = {
+    nullptr,  // index 0 unused (menu starts at 1)
+    &DisplayController_FD0604::_exitSettings,
+    &DisplayController_FD0604::_updateCycleInterval,
+    &DisplayController_FD0604::_updateTemperatureInterval,
+    &DisplayController_FD0604::_updateTemperatureSerialOutput,
+    &DisplayController_FD0604::_updateRawInputInterval,
+    &DisplayController_FD0604::_updateRawInputSerialOutput,
+    &DisplayController_FD0604::_updateDisplayOrientation,
+    &DisplayController_FD0604::_updateHistoryRecallDepth
+};
+
+const uint8_t DisplayController_FD0604::maxSettingsOptions = 
+        sizeof(DisplayController_FD0604::settingsHandlers) / 
+        sizeof(DisplayController_FD0604::settingsHandlers[0]) - 1;
+
 /**
  * @details         Handles action if SETTINGS command is inputted. 
  */
@@ -501,16 +518,8 @@ void DisplayController_FD0604::_handleSettings() {
         }
     }
 
-    switch (option) {
-        case 1: _exitSettings();                    return; break;
-        case 2: _updateCycleInterval();             return; break;
-        case 3: _updateTemperatureInterval();       return; break;
-        case 4: _updateTemperatureSerialOutput();   return; break;
-        case 5: _updateRawInputInterval();          return; break;
-        case 6: _updateRawInputSerialOutput();      return; break;
-        case 7: _updateDisplayOrientation();        return; break;
-        case 8: _updateHistoryRecallDepth();        return; break;
-        default: return; break;
+    if (option >= 1 && option <= maxSettingsOptions) {
+        (this->*settingsHandlers[option])();
     }
 }
 

@@ -16,7 +16,7 @@
 #define SOFTWARE_SERIAL_BAUD    19200
 
 #define FIRMWARE_VER_SIZE       32
-const char version[] PROGMEM =  "FD_0604 LED Display v0.1.28";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.28";
 
 DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring displayParams = {
     1,          // transistor enabled

@@ -14,4 +14,4 @@ while True:
         print("RX:", line)
 
     value = (value + 1) % 1000
-    time.sleep(0.015)
+    time.sleep(0.018)
