@@ -56,5 +56,4 @@ Any number for the given ranges can be displayed on the screen:
 
 - fix the fact that for display to be updated with the special chars the display has to poll constantly
 - make softserial baud rate editable by user
-- set up watchdog timer in reset / interrupt and reset mode for hardware crash recovery
 - custom write a softwareserial for less flash/memory usage?

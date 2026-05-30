@@ -94,7 +94,8 @@ private:
     void _updateDisplay();
     void _displayInit(int8_t initTime = 60);
     static int _freeMemory();
-    static bool _checkIfNumeric(const char* str, int16_t& number);
+    static bool _checkIfNumericSigned(const char* str, int16_t& number);
+    static bool _checkIfNumericUnsigned(const char* str, uint16_t& number);
     bool _parseAndSetNumber(const char* input);
 
     void _handleHelp();
@@ -117,7 +118,7 @@ private:
     void _displayTemp();
     void _displayRAWInput();
 
-    int16_t _getSerial();
+    uint16_t _getSerial();
 
     using SettingsHandler = void(DisplayController_FD0604::*)();
     static const SettingsHandler settingsHandlers[]; // static const array of function pointers
