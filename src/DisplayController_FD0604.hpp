@@ -10,10 +10,11 @@
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
+#include "serial.h"
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
 
-#define MAX_INPUT_SIZE  16
+#define MAX_INPUT_SIZE  RX_BUFFER_SIZE
 
 // special display states
 #define OFF         -1 
@@ -49,8 +50,7 @@ public:
         
     };
 
-    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params);
-    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params);
+    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params);
     DisplayDriver_FD0604* getDisplayDriverObject();
     
     void updateDisplay();
@@ -67,7 +67,6 @@ private:
     DisplayDriver_FD0604 _display;
     PersistentStorageManager _storageManager;
     const bool transistor_enabled_flag;
-    const bool minimal_pin_flag;
     
     // Calculate total RAM (AVR) or use manual define
     #if !defined(TOTAL_RAM) && defined(__AVR__)

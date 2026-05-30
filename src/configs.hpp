@@ -18,7 +18,7 @@
 #define FIRMWARE_VER_SIZE       32
 constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.28";
 
-DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring displayParams = {
+DisplayDriver_FD0604::DriverParams displayParams = {
     .npn_transistor_enable = 1,
 	
 	.DDRx_latchPin = &DDRD,             // latchpin data direction register
