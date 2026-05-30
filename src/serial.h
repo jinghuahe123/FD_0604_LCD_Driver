@@ -8,9 +8,13 @@
 extern "C" {
 #endif
 
+#undef F
 #ifndef F
 #define F(s)    PSTR(s)
 #endif
+
+// increase as needed, right now max input command does not pass 16 characters inc null terminator
+#define RX_BUFFER_SIZE 16 
 
 void serial_init(uint32_t baud);
 

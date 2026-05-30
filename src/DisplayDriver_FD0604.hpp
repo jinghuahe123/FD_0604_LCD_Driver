@@ -5,11 +5,6 @@
 #include <string.h>
 #include <util/delay.h>
 
-#define MULTIPLEX_SPEED             1
-
-#define NORMAL_WIRING_DIRECTPORT    2
-#define MINIMAL_WIRING_DIRECTPORT   3
-
 #define NORMAL_DISPLAY              0
 #define FLIPPED_DISPLAY             1
 #define INVERTED_DISPLAY            FLIPPED_DISPLAY
@@ -20,31 +15,7 @@
  */
 class DisplayDriver_FD0604 {
     public:
-        struct DriverParams_DIRECTPORT {
-            const bool npn_transistor_enable;
-            
-            volatile uint8_t* const DDRx_latchPin;
-            volatile uint8_t* const PORTx_latchPin;
-            const uint8_t PIN_latchPin;
-
-            volatile uint8_t* const DDRx_clockPin;
-            volatile uint8_t* const PORTx_clockPin;
-            const uint8_t PIN_clockPin;
-
-            volatile uint8_t* const DDRx_dataPin;
-            volatile uint8_t* const PORTx_dataPin;
-            const uint8_t PIN_dataPin;
-
-            volatile uint8_t* const DDRx_GND1;
-            volatile uint8_t* const PORTx_GND1;
-            const uint8_t PIN_GND1;
-
-            volatile uint8_t* const DDRx_GND2;
-            volatile uint8_t* const PORTx_GND2;
-            const uint8_t PIN_GND2;
-        };
-
-        struct DriverParams_DIRECTPORT_MinimalWiring {
+        struct DriverParams {
             const bool npn_transistor_enable;
             
             volatile uint8_t* const DDRx_latchPin;
@@ -60,9 +31,7 @@ class DisplayDriver_FD0604 {
             const uint8_t PIN_dataPin;
         };
 
-
-        DisplayDriver_FD0604(const DriverParams_DIRECTPORT& params);
-        DisplayDriver_FD0604(const DriverParams_DIRECTPORT_MinimalWiring& params);
+        DisplayDriver_FD0604(const DriverParams& params);
 
         void setDisplayOrientation(bool orientation);
         void flipDisplayOrientation();
@@ -81,9 +50,7 @@ class DisplayDriver_FD0604 {
         
 
     private:
-        const DriverParams_DIRECTPORT* _params_directport;
-        const DriverParams_DIRECTPORT_MinimalWiring* _params_directport_minimal;
-        const uint8_t _pinConfig; // 0 for Arduino style normal, 1 for Arduino style minimal, 2 for direct register manipulation normal, 3 for direct register manipulation minimal
+        const DriverParams* _params;
 
         volatile bool currentlyDisplayingGND = 0;
         volatile uint16_t displayingDigits[2] = {0};

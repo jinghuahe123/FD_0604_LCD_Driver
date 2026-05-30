@@ -9,9 +9,6 @@
 #include "DisplayController_FD0604.hpp"
 #include "configs.hpp"
 
-#undef F
-#define F   PSTR
-
 SoftwareSerial softSerial(SOFT_RX, SOFT_TX);
 DisplayController_FD0604 displayController(displayParams, controllerParams);
 
@@ -97,7 +94,7 @@ int main(void) {
   
   for (;;) {
     if (serial_available() > 0) {
-      char input[16] = {0};
+      char input[RX_BUFFER_SIZE] = {0};
       serial_read_string_until('\n', input, sizeof(input));
       trim(input);
       displayController.processInput(input);
@@ -105,7 +102,9 @@ int main(void) {
 
     
     if (softSerial.available() > 0) {
-      char input[16] = {0};
+      // technically, the max that is implemented by softwareserial can be larger than this
+      // but no command will go past rx_buffer_size anyway as enforced by main serial
+      char input[RX_BUFFER_SIZE] = {0}; 
       soft_serial_read_string_until('\n', input, sizeof(input));
       trim(input);
       displayController.processSecondaryInput(input);

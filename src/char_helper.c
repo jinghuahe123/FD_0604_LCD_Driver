@@ -1,4 +1,5 @@
 #include "char_helper.h"
+#include <string.h>
 #include <ctype.h> // for isspace()
 
 void trim(char* str) {

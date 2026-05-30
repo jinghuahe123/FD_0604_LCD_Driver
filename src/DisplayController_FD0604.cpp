@@ -1,11 +1,7 @@
 #include "DisplayController_FD0604.hpp"
 #include "char_helper.h"
-#include "serial.h"
 #include <EEPROM.h>
 #include <avr/wdt.h>
-
-#undef F
-#define F   PSTR
 
 #if defined(__AVR__)
     #define STR_HELPER(x) #x
@@ -35,26 +31,15 @@ const char DisplayController_FD0604::_commandList[][MAX_INPUT_SIZE] PROGMEM = {
 const uint8_t DisplayController_FD0604::_commandListSize = 
     sizeof(DisplayController_FD0604::_commandList) / sizeof(DisplayController_FD0604::_commandList[0]);
 
-/**
- * @details                 Create a DisplayController_FD0604 object.
- * @param driverParams      DisplayDriver_FD0604 params to pass.
- * @param params            Controller-specific parameters struct to pass.
- */
-DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT& driverParams, DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
-        transistor_enabled_flag(driverParams.npn_transistor_enable), minimal_pin_flag(0) {
-
-    _init();
-}
 
 /**
  * @details                 Create a DisplayController_FD0604 object.
  * @param driverParams      DisplayDriver_FD0604 params to pass.
  * @param params            Controller-specific parameters struct to pass.
  */
-DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams_DIRECTPORT_MinimalWiring& driverParams, DisplayController_FD0604_Parameters& params) : 
+DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params) : 
         _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
-        transistor_enabled_flag(driverParams.npn_transistor_enable), minimal_pin_flag(1) {
+        transistor_enabled_flag(driverParams.npn_transistor_enable) {
 
     _init();
 }
@@ -265,7 +250,6 @@ void DisplayController_FD0604::showInfo() {
     serial_print_P(F("CPU Model:                                      "));
         for (uint8_t i=0; ;i++) { char c = pgm_read_byte(&processor[i]); if(c==0)break; serial_write(c); } serial_ln();
     serial_print_P(F("CPU Clock Frequency:                            ")); serial_print_u8(F_CPU / 1000000); serial_println_P(F("MHz"));
-    serial_print_P(F("Minimal Pin Configuration:                      ")); serial_println_P((minimal_pin_flag) ? F("Enabled") : F("Disabled"));
     serial_print_P(F("Transistor Driver Circuit:                      ")); serial_println_P((transistor_enabled_flag) ? F("Enabled") : F("Disabled"));
     serial_print_P(F("Display Orientation:                            ")); serial_println_P((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
     serial_print_P(F("History recall depth:                           ")); serial_print_u16(numHistory); serial_ln();
@@ -603,11 +587,11 @@ void DisplayController_FD0604::_handleHistory() {
                 //Serial.printf("%010lu", (unsigned long)entries[i].sequence);
                 serial_print_P(F(" | Value: "));
                 switch (entries[i].value) {
-                    case OFF:           serial_println_P(F("OFF"));           break;
-                    case CYCLE:         serial_println_P(F("CYCLE"));         break;
-                    case NULL_DISP:     serial_println_P(F("NULL_DISP"));     break;
-                    case TEMP:          serial_println_P(F("TEMP"));          break;      
-                    case RAWINPUT:      serial_println_P(F("RAW"));           break;
+                    case OFF:           serial_print_P(F("OFF"));           break;
+                    case CYCLE:         serial_print_P(F("CYCLE"));         break;
+                    case NULL_DISP:     serial_print_P(F("NULL_DISP"));     break;
+                    case TEMP:          serial_print_P(F("TEMP"));          break;      
+                    case RAWINPUT:      serial_print_P(F("RAW"));           break;
                     default:            serial_print_i16(entries[i].value);   break;
                 }
                 serial_ln();

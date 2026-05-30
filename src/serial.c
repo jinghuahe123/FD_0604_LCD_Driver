@@ -6,8 +6,6 @@
 #error F_CPU not defined. 
 #endif
 
-#define RX_BUFFER_SIZE 16 // increase as needed, right now max input command does not pass 16 characters inc null terminator
-
 volatile uint8_t rx_buf[RX_BUFFER_SIZE];
 volatile uint8_t rx_head = 0;
 volatile uint8_t rx_tail = 0;
