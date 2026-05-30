@@ -1,10 +1,7 @@
 #ifndef PERSISTENTSTORAGEMANAGER_H
 #define PERSISTENTSTORAGEMANAGER_H
 
-#include <Arduino.h>
 #include <EEPROM.h>
-//#include <StandardCplusplus.h>
-//#include <vector>
 
 class PersistentStorageManager {
     private:

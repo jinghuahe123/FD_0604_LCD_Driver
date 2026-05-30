@@ -2,10 +2,15 @@
 #include <SoftwareSerial.h>
 #include <EEPROM.h>
 
+#include "serial.h"
+#include "char_helper.h"
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
 #include "DisplayController_FD0604.hpp"
 #include "configs.hpp"
+
+#undef F
+#define F   PSTR
 
 SoftwareSerial softSerial(SOFT_RX, SOFT_TX);
 DisplayController_FD0604 displayController(displayParams, controllerParams);
@@ -15,12 +20,12 @@ static void updateVersion(bool print=0) {
     if (i<sizeof(version)-1) { // ensure no null terminator is written
       char c = pgm_read_byte(&version[i]);
       EEPROM.update(i, c);
-      if (print) Serial.print(c);
+      if (print) serial_write(c);
     } else {
       EEPROM.update(i, ' '); // fill rest with blanks
     }
   }
-  if (print) Serial.println();
+  if (print) serial_ln();
 }
 
 static void init_timer2_for_1000hz(void) {
@@ -41,44 +46,68 @@ ISR(TIMER2_COMPA_vect) {
   DisplayDriver_FD0604::isr_mutliplex_display_callback(displayController.getDisplayDriverObject());
 }
 
+static uint8_t soft_serial_read_string_until(char delimiter, char* buffer, uint8_t max_len) {
+    uint8_t count = 0;
+    char c;
+
+    if (max_len == 0) return 0;
+    
+    while (count < (max_len - 1)) {
+        if (softSerial.available() > 0) {
+            c = softSerial.read();
+            
+            if (c == delimiter) break;
+            buffer[count++] = c;
+        }
+    }
+    buffer[count] = '\0';
+    
+    return count;
+}
+
+
 // int main(void) __attribute__((weak));
 int main(void) {
   init();
   //initVariant();
+  
   init_timer2_for_1000hz();
 
-  Serial.begin(HARDWARE_SERIAL_BAUD);
+  serial_init(HARDWARE_SERIAL_BAUD);
   softSerial.begin(SOFTWARE_SERIAL_BAUD);
   analogReference(EXTERNAL);
   updateVersion();
 
   displayController.showInfo();
   displayController.showAvailableCommands();
-  Serial.print(F("A secondary serial interface is enabled and attached on: RX:"));
-  Serial.print(SOFT_RX);
-  Serial.print(F(" TX:"));
-  Serial.print(SOFT_TX);
-  Serial.println(F(" (self)."));
-  Serial.print(F("Baud rate: "));
-  Serial.println(SOFTWARE_SERIAL_BAUD);
-  Serial.println();
+  serial_print_P(F("A secondary serial interface is enabled and attached on: RX:"));
+  serial_print_u8(SOFT_RX);
+  serial_print_P(F(" TX:"));
+  serial_print_u8(SOFT_TX);
+  serial_println_P(F(" (self)."));
+  serial_print_P(F("Baud rate: "));
+  serial_print_u32(SOFTWARE_SERIAL_BAUD);
+  serial_ln();
 
   #ifdef SECONDARY_INPUT_INTRO_TEXT
   softSerial.println(F("Secondary Serial Interface - INPUT (NUMBERS) ONLY. "));
   softSerial.println(F("Refer to Main Serial Interface for Verbose Output. "));
   #endif
 
-  String input;
+  
   for (;;) {
-    if (Serial.available() > 0) {
-      input = Serial.readStringUntil('\n');
-      input.trim();
+    if (serial_available() > 0) {
+      char input[16] = {0};
+      serial_read_string_until('\n', input, sizeof(input));
+      trim(input);
       displayController.processInput(input);
     }
 
+    
     if (softSerial.available() > 0) {
-      input = softSerial.readStringUntil('\n');
-      input.trim();
+      char input[16] = {0};
+      soft_serial_read_string_until('\n', input, sizeof(input));
+      trim(input);
       displayController.processSecondaryInput(input);
     }
 
