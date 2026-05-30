@@ -16,7 +16,7 @@
 
 
 /**
- * @details         Remember to set up an ISR with function isr_mutliplex_display_callback() and pass the object through. 
+ * @details         Need to set up an ISR with function isr_mutliplex_display_callback() and pass the object through. 
  */
 class DisplayDriver_FD0604 {
     public:
@@ -101,11 +101,8 @@ class DisplayDriver_FD0604 {
         void checkClock(bool &clock, uint16_t (&arr)[2]);
 
         void handlePinConfigurations(uint16_t (&data)[2]);
-        void multiplex_display_minimal();
-        void multiplex_display_normal();
-
-        void shiftOutLSBFirstNormalDisplay(uint8_t val);
-        void shiftOutLSBFirstMinimalDisplay(uint8_t val);
+        void multiplex_display();
+        void shiftOutLSBFirst(uint8_t val);
 
 };
 
