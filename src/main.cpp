@@ -112,7 +112,7 @@ int main(void) {
             displayController.processSecondaryInput(input);
         }
 
-            displayController.updateDisplay();
+        displayController.updateDisplay();
     }
 
     return 0;
