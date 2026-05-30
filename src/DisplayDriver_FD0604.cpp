@@ -252,20 +252,6 @@ void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
 
 /*
   The following is called on each ISR Routine. 
-  minimal display is much more efficient
-
-  FIX: need to optimise runtime pin configuraiton check
-  e.g.
-
-    // In constructor:
-  if (minimal_pin_flag) {
-      multiplex_callback = &DisplayDriver_FD0604::multiplex_display_minimal;
-  } else {
-      multiplex_callback = &DisplayDriver_FD0604::multiplex_display_normal;
-  }
-
-  // In ISR:
-  (this->*multiplex_callback)();
 */
 
 /**
@@ -280,71 +266,22 @@ void DisplayDriver_FD0604::isr_mutliplex_display_callback(DisplayDriver_FD0604* 
  * @details       Handles whether normal or minimal display multiplexer is used. 
  */
 void DisplayDriver_FD0604::multiplexdisplayHandler() {
-  switch (_pinConfig) {
-    case NORMAL_WIRING_DIRECTPORT:    multiplex_display_normal();   break;
-    case MINIMAL_WIRING_DIRECTPORT:   multiplex_display_minimal();   break;
-  }
+  multiplex_display();
 }
 
-/**
- * @details       Multiplexes the display based on normal display wiring. 
- */
-void DisplayDriver_FD0604::multiplex_display_normal() {
-  // could optimise this for better clarity.
-  // also need to test if this works or not
-  if (_params_directport->npn_transistor_enable && currentlyDisplayingGND == 0) {
-    *_params_directport->PORTx_GND1 |= (1 << _params_directport->PIN_GND1);
-    *_params_directport->PORTx_GND2 &= ~(1 << _params_directport->PIN_GND2);
-  } else if (_params_directport->npn_transistor_enable && currentlyDisplayingGND == 1) {
-    *_params_directport->PORTx_GND1 &= ~(1 << _params_directport->PIN_GND1);
-    *_params_directport->PORTx_GND2 |= (1 << _params_directport->PIN_GND2);
-  } else if (!_params_directport->npn_transistor_enable && currentlyDisplayingGND == 1) {
-    *_params_directport->PORTx_GND1 |= (1 << _params_directport->PIN_GND1);
-    *_params_directport->PORTx_GND2 &= ~(1 << _params_directport->PIN_GND2);
-  } else if (!_params_directport->npn_transistor_enable && currentlyDisplayingGND == 0) {
-    *_params_directport->PORTx_GND1 &= ~(1 << _params_directport->PIN_GND1);
-    *_params_directport->PORTx_GND2 |= (1 << _params_directport->PIN_GND2);
-  }
-
-  *(_params_directport->PORTx_latchPin) &= ~(1 << _params_directport->PIN_latchPin);
-  shiftOutLSBFirstNormalDisplay((uint8_t)displayingDigits[currentlyDisplayingGND]);
-  shiftOutLSBFirstNormalDisplay((uint8_t)(displayingDigits[currentlyDisplayingGND] >> 8));
-  *(_params_directport->PORTx_latchPin) |= (1 << _params_directport->PIN_latchPin);
-
-  currentlyDisplayingGND = !currentlyDisplayingGND;
-}
 
 /**
  * @details       Multiplexes the display based on minimal display wiring. 
  */
-void DisplayDriver_FD0604::multiplex_display_minimal() {
+void DisplayDriver_FD0604::multiplex_display() {
   // gnd pins handled by handlePinConfigurations when called by things like showNumber.
 
   *(_params_directport_minimal->PORTx_latchPin) &= ~(1 << _params_directport_minimal->PIN_latchPin);
-  shiftOutLSBFirstMinimalDisplay((uint8_t)displayingDigits[currentlyDisplayingGND]);
-  shiftOutLSBFirstMinimalDisplay((uint8_t)(displayingDigits[currentlyDisplayingGND] >> 8));
+  shiftOutLSBFirst((uint8_t)displayingDigits[currentlyDisplayingGND]);
+  shiftOutLSBFirst((uint8_t)(displayingDigits[currentlyDisplayingGND] >> 8));
   *(_params_directport_minimal->PORTx_latchPin) |= (1 << _params_directport_minimal->PIN_latchPin);
 
   currentlyDisplayingGND = !currentlyDisplayingGND;
-}
-
-/**
- * @details       Shift register function based on LSB, with normal display port configuration. 
- *                    Separates from minimal display configuration for speed, sacrificing code size. 
- * @param val     Value to shift out (8-bits at a time).
- */
-void DisplayDriver_FD0604::shiftOutLSBFirstNormalDisplay(uint8_t val) {
-  for (uint8_t i=0; i<8; i++) {
-    if (val & 1) {
-      *(_params_directport->PORTx_dataPin) |= (1 << _params_directport->PIN_dataPin);
-    } else {
-      *(_params_directport->PORTx_dataPin) &= ~(1 << _params_directport->PIN_dataPin);
-    }
-    val >>= 1;
-
-    *(_params_directport->PORTx_clockPin) |= (1 << _params_directport->PIN_clockPin);
-    *(_params_directport->PORTx_clockPin) &= ~(1 << _params_directport->PIN_clockPin);
-  }
 }
 
 /**
@@ -352,7 +289,7 @@ void DisplayDriver_FD0604::shiftOutLSBFirstNormalDisplay(uint8_t val) {
  *                    Separates from normal display configuration for speed, sacrificing code size. 
  * @param val     Value to shift out (8-bits at a time).
  */
-void DisplayDriver_FD0604::shiftOutLSBFirstMinimalDisplay(uint8_t val) {
+void DisplayDriver_FD0604::shiftOutLSBFirst(uint8_t val) {
   for (uint8_t i=0; i<8; i++) {
     if (val & 1) {
       *(_params_directport_minimal->PORTx_dataPin) |= (1 << _params_directport_minimal->PIN_dataPin);
