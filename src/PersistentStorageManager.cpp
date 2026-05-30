@@ -8,20 +8,9 @@
 PersistentStorageManager::PersistentStorageManager(const uint16_t &base_address, const uint8_t &slot_size, const uint16_t &num_slots) :
     BASE_ADDR(base_address), SLOT_SIZE(slot_size), NUM_SLOTS(num_slots) {
 
-  /*
-  BASE_ADDR = base_address;
-  SLOT_SIZE = slot_size;
-  NUM_SLOTS = num_slots;
-*/
-
   #if (NUM_SLOTS*SLOT_SIZE > E2END + 1)
   #error Too much EEPROM space allocated for wear levelling.
   #endif
-  /*
-  if (NUM_SLOTS*SLOT_SIZE > EEPROM.length()) {
-    Serial.println(F("Error: Too much EEPROM space allocated for wear levelling."));
-    while (1);
-  }*/
 }
 
 /**

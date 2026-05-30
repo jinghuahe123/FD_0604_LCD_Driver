@@ -56,7 +56,6 @@ Any number for the given ranges can be displayed on the screen:
 
 - fix the fact that for display to be updated with the special chars the display has to poll constantly
 - test if normal pin config still works after implementing ISR routine
-- reduce DisplayController reliance on Arduino Core (mainly String)
 - make softserial baud rate editable by user
 - set up watchdog timer in reset / interrupt and reset mode for hardware crash recovery
 - ISR routine features a lot of branching and also some getting from EEPROM. these are slow, remove branching by having a global pointer to the correct function to call (changed when config changes) and load eeprom defaults into memory (also changed when config changes)

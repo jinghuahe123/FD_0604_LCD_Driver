@@ -1,16 +1,19 @@
 #ifndef DISPLAYCONTROLLER_FD0604
 #define DISPLAYCONTROLLER_FD0604
 
+// prevent serial conflicts with custom serial driver
+#define HardwareSerial_h
+#define HardwareSerial_h_ 
+#define DISABLE_HARDWARE_SERIAL
+#undef Serial
+
 #include <Arduino.h>
-#include <EEPROM.h>
 #include <avr/pgmspace.h>
-#include <avr/wdt.h>
-//#include <StandardCplusplus.h>
-//#include <iomanip>
-//#include <serstream>
 
 #include "DisplayDriver_FD0604.hpp"
 #include "PersistentStorageManager.hpp"
+
+#define MAX_INPUT_SIZE  16
 
 // special display states
 #define OFF         -1 
@@ -23,10 +26,6 @@
 class DisplayDriver_FD0604;
 class PersistentStorageManager;
 
-//namespace std {
-//    extern ohserialstream cout;
-//}
-
 class DisplayController_FD0604 {
 public:
     struct DisplayController_FD0604_Parameters {
@@ -37,7 +36,7 @@ public:
         const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data 
 
         const uint8_t temperaturePin; // pin that the temperature probe is connected to
-        const double resistorValue; // accompanying resistor value for temperature probe
+        const float resistorValue; // accompanying resistor value for temperature probe
         const uint16_t temperatureUpdateIntervalAddress; // EEPROM address for storing temperature update interval data 
         const uint16_t temperatureSerialEnabledAddress; // EEPROM address for storing serial enabled data for temperature probe
 
@@ -55,8 +54,8 @@ public:
     DisplayDriver_FD0604* getDisplayDriverObject();
     
     void updateDisplay();
-    void processInput(const String& input);
-    void processSecondaryInput(const String& input);
+    void processInput(const char* input);
+    void processSecondaryInput(const char* input);
     void showAvailableCommands();
     void showInfo();
     void clear();
@@ -72,14 +71,14 @@ private:
     
     // Calculate total RAM (AVR) or use manual define
     #if !defined(TOTAL_RAM) && defined(__AVR__)
-    const unsigned int TOTAL_RAM = RAMEND - RAMSTART + 1;
+    const uint16_t TOTAL_RAM = RAMEND - RAMSTART + 1;
     #elif !defined(TOTAL_RAM)
     const unsigned int TOTAL_RAM = 0; // Fallback
     #endif
 
     int16_t _number = 0;
     uint16_t _cycle_number = 0;
-    String _input = "";
+    char _input[MAX_INPUT_SIZE] = {0};
     unsigned long previousMillis = 0;
     bool staticDisplayShown = false;
 
@@ -89,16 +88,15 @@ private:
     void _init();
 
     static const uint8_t _commandListSize;
-    static const char _commandList[][10] PROGMEM;
+    static const char _commandList[][MAX_INPUT_SIZE] PROGMEM;
     void _getCommandFromFlash(uint8_t index, char* buffer, size_t bufSize);
-    int8_t _findCommandIndex(const String& input);
-    String getValueDisplay(uint16_t value);
+    int8_t _findCommandIndex(const char* input);
 
     void _updateDisplay();
     void _displayInit(int8_t initTime = 60);
-    int _freeMemory();
-    bool _checkIfNumeric(const String& str, int16_t& number);
-    bool _parseAndSetNumber(const String& input);
+    static int _freeMemory();
+    static bool _checkIfNumeric(const char* str, int16_t& number);
+    bool _parseAndSetNumber(const char* input);
 
     void _handleHelp();
     void _handleInfo();
