@@ -1,6 +1,7 @@
 #include <Arduino.h>
-#include <SoftwareSerial.h>
 #include <EEPROM.h>
+#include <avr/wdt.h>
+#include <SoftwareSerial.h>
 
 #include "serial.h"
 #include "char_helper.h"
@@ -43,37 +44,18 @@ ISR(TIMER2_COMPA_vect) {
   DisplayDriver_FD0604::isr_mutliplex_display_callback(displayController.getDisplayDriverObject());
 }
 
-static uint8_t soft_serial_read_string_until(char delimiter, char* buffer, uint8_t max_len) {
-    uint8_t count = 0;
-    char c;
 
-    if (max_len == 0) return 0;
-    
-    while (count < (max_len - 1)) {
-        if (softSerial.available() > 0) {
-            c = softSerial.read();
-            
-            if (c == delimiter) break;
-            buffer[count++] = c;
-        }
-    }
-    buffer[count] = '\0';
-    
-    return count;
-}
-
-
-// int main(void) __attribute__((weak));
 int main(void) {
   init();
-  //initVariant();
-  
   init_timer2_for_1000hz();
 
   serial_init(HARDWARE_SERIAL_BAUD);
   softSerial.begin(SOFTWARE_SERIAL_BAUD);
   analogReference(EXTERNAL);
   updateVersion();
+
+  wdt_enable(WDTO_2S);
+  wdt_reset();
 
   displayController.showInfo();
   displayController.showAvailableCommands();
@@ -93,15 +75,35 @@ int main(void) {
 
   
   for (;;) {
+    wdt_reset();
+
     if (serial_available() > 0) {
       char input[RX_BUFFER_SIZE] = {0};
       serial_read_string_until('\n', input, sizeof(input));
       trim(input);
       displayController.processInput(input);
     }
-
     
     if (softSerial.available() > 0) {
+      auto soft_serial_read_string_until = [](char delimiter, char* buffer, uint8_t max_len) {
+        uint8_t count = 0;
+        char c;
+
+        if (max_len == 0) return (uint8_t)0;
+        
+        while (count < (max_len - 1)) {
+            if (softSerial.available() > 0) {
+                c = softSerial.read();
+                
+                if (c == delimiter) break;
+                buffer[count++] = c;
+            }
+        }
+        buffer[count] = '\0';
+        
+        return count;
+      };
+
       // technically, the max that is implemented by softwareserial can be larger than this
       // but no command will go past rx_buffer_size anyway as enforced by main serial
       char input[RX_BUFFER_SIZE] = {0}; 
