@@ -54,4 +54,4 @@ Any number for the given ranges can be displayed on the screen:
 
 **TODO / IMPROVEMENTS**
 
-- re-implement a cusotm softwareserial library in pure avr?
+- re-implement a custom softwareserial library in pure avr?
