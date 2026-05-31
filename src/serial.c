@@ -1,6 +1,7 @@
 #include "serial.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
 
 #ifndef F_CPU
 #error F_CPU not defined. 
@@ -72,6 +73,8 @@ uint8_t serial_read_string_until(char delimiter, char* buffer, uint8_t max_len) 
             
             buffer[count++] = c;
         }
+
+        wdt_reset(); // ensures watchdog does not reset board
     }
     buffer[count] = '\0'; // ensure null termination
     

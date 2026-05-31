@@ -7,18 +7,13 @@
     0x0040-0x03FF   -   Displayed Number History
 */
 
-#define SECONDARY_INPUT_INTRO_TEXT
-
-#define SOFT_RX                 4
-#define SOFT_TX                 5
 
 #define HARDWARE_SERIAL_BAUD    1000000
-#define SOFTWARE_SERIAL_BAUD    19200
 
 #define FIRMWARE_VER_SIZE       32
 constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.28";
 
-DisplayDriver_FD0604::DriverParams displayParams = {
+const DisplayDriver_FD0604::DriverParameters displayParams = {
     .npn_transistor_enable = 1,
 	
 	.DDRx_latchPin = &DDRD,             // latchpin data direction register
@@ -35,22 +30,35 @@ DisplayDriver_FD0604::DriverParams displayParams = {
 };
 
 
-DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
+const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
     .BASE_ADDR = 0x0040,     // EEPROM address to start writing writing from
     .SLOT_SIZE = 6,          // uint32_t for sequence number (for wear levelling) + uint16_t for number
     .NUM_SLOTS = 160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
     .countingIntervalAddress = 0x0020,     // EEPROM Address that stores the delay between counting intervals 
 
-    .temperaturePin = A7,                           // temperature sensor  pin
-    .resistorValue = 10000.0,                       // temperature sensor accompanying resistor
-    .temperatureUpdateIntervalAddress = 0x0022,     // EEPROM address that stores the delay between the temperature reading updating
-    .temperatureSerialEnabledAddress = 0x0024,      // EEPROM address for enable serial output for temperature sensor
-
-    .rawInputPin = A6,                          // raw input pin
-    .rawInputUpdateIntervalAddress = 0x0026,    // EEPROM address that stores the delay between the raw input reading updating 
-    .rawInputSerialEnabledAddress = 0x0028,     // EEPROM address for enable serial output for raw input
-
     .displayOrientationAddress = 0x002A,     // EEPROM address for storing display orientation data
-    .numHistoryAddress = 0x002C              // EEPROM address for history recall depth
+    .numHistoryAddress = 0x002C,             // EEPROM address for history recall depth
+
+    .tempSensor = {
+        // analog channel 7 cannot be output, does not have corresponding port
+        // otherwise for atmega328p would be &DDRC and &PORTC
+        .DDRx_temperaturePin = nullptr,       // data direction register for temp sensor
+        .PORTx_temperaturePin = nullptr,     // port register for temp sensor
+        .PIN_temperaturePin = 7,            // pin on port of temp sensor
+
+        .resistorValue = 10000.0,                       // temperature sensor accompanying resistor
+        .temperatureUpdateIntervalAddress = 0x0022,     // EEPROM address that stores the delay between the temperature reading updating
+        .temperatureSerialEnabledAddress = 0x0024,      // EEPROM address for enable serial output for temperature sensor
+    },
+
+    .rawInput = {
+        // analog channel 6 cannot be output, does not have corresponding port
+        .DDRx_rawInputPin = nullptr,        // data direction register for raw input
+        .PORTx_rawInputPin = nullptr,       // port register for raw input
+        .PIN_rawInputPin = 6,               // pin on port of raw input
+
+        .rawInputUpdateIntervalAddress = 0x0026,        // EEPROM address that stores the delay between the raw input reading updating 
+        .rawInputSerialEnabledAddress = 0x0028,         // EEPROM address for enable serial output for raw input
+    },
 };

@@ -15,7 +15,7 @@
  */
 class DisplayDriver_FD0604 {
     public:
-        struct DriverParams {
+        struct DriverParameters {
             const bool npn_transistor_enable;
             
             volatile uint8_t* const DDRx_latchPin;
@@ -31,7 +31,7 @@ class DisplayDriver_FD0604 {
             const uint8_t PIN_dataPin;
         };
 
-        DisplayDriver_FD0604(const DriverParams& params);
+        DisplayDriver_FD0604(const DriverParameters& params);
 
         void setDisplayOrientation(bool orientation);
         void flipDisplayOrientation();
@@ -50,7 +50,7 @@ class DisplayDriver_FD0604 {
         
 
     private:
-        const DriverParams* _params;
+        const DriverParameters* _params;
 
         volatile bool currentlyDisplayingGND = 0;
         volatile uint16_t displayingDigits[2] = {0};

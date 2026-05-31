@@ -1,7 +1,11 @@
 #include "DisplayController_FD0604.hpp"
+#include "timer.h"
+#include "io_helper.h"
 #include "char_helper.h"
-#include <EEPROM.h>
 #include <avr/wdt.h>
+#include <stdlib.h>
+
+#include <EEPROM.h>
 
 #if defined(__AVR__)
     #define STR_HELPER(x) #x
@@ -28,6 +32,17 @@ const char DisplayController_FD0604::_commandList[][MAX_INPUT_SIZE] PROGMEM = {
     "RAW", 
 };
 
+const char DisplayController_FD0604::pinAlias[][3] PROGMEM = {
+    "A0",
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+};
+
 const uint8_t DisplayController_FD0604::_commandListSize = 
     sizeof(DisplayController_FD0604::_commandList) / sizeof(DisplayController_FD0604::_commandList[0]);
 
@@ -37,7 +52,7 @@ const uint8_t DisplayController_FD0604::_commandListSize =
  * @param driverParams      DisplayDriver_FD0604 params to pass.
  * @param params            Controller-specific parameters struct to pass.
  */
-DisplayController_FD0604::DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params) : 
+DisplayController_FD0604::DisplayController_FD0604(const DisplayDriver_FD0604::DriverParameters& driverParams, const DisplayController_FD0604_Parameters& params) : 
         _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
         transistor_enabled_flag(driverParams.npn_transistor_enable) {
 
@@ -52,32 +67,19 @@ DisplayDriver_FD0604* DisplayController_FD0604::getDisplayDriverObject() {
  * @details         Initialise the display paramaters & get last display configuration from EEPROM. 
  */
 void DisplayController_FD0604::_init() {
-    if (_params.temperaturePin != A6 && _params.temperaturePin != A7) pinMode(_params.temperaturePin, INPUT);
-    if (_params.rawInputPin != A6 && _params.rawInputPin != A7) pinMode(_params.rawInputPin, INPUT);
-
-    switch (_params.temperaturePin) {
-        case A0: temperaturePinAlias = "A0"; break;
-        case A1: temperaturePinAlias = "A1"; break;
-        case A2: temperaturePinAlias = "A2"; break;
-        case A3: temperaturePinAlias = "A3"; break;
-        case A4: temperaturePinAlias = "A4"; break;
-        case A5: temperaturePinAlias = "A5"; break;
-        case A6: temperaturePinAlias = "A6"; break;
-        case A7: temperaturePinAlias = "A7"; break;
-        default: break;
+    // WARNING - this may not work for chip other than ATMEGA328P
+    if (_params.tempSensor.PIN_temperaturePin >= 0 && _params.tempSensor.PIN_temperaturePin <= 5) {
+        *(_params.tempSensor.DDRx_temperaturePin) &= ~(1 << _params.tempSensor.PIN_temperaturePin); // set to input
+        *(_params.tempSensor.PORTx_temperaturePin) &= ~(1 << _params.tempSensor.PIN_temperaturePin); // disable pullup
     }
 
-    switch (_params.rawInputPin) {
-        case A0: rawInputPinAlias = "A0"; break;
-        case A1: rawInputPinAlias = "A1"; break;
-        case A2: rawInputPinAlias = "A2"; break;
-        case A3: rawInputPinAlias = "A3"; break;
-        case A4: rawInputPinAlias = "A4"; break;
-        case A5: rawInputPinAlias = "A5"; break;
-        case A6: rawInputPinAlias = "A6"; break;
-        case A7: rawInputPinAlias = "A7"; break;
-        default: break;
+    if (_params.rawInput.PIN_rawInputPin >= 0 && _params.rawInput.PIN_rawInputPin <= 5) {
+        *(_params.rawInput.DDRx_rawInputPin) &= ~(1 << _params.rawInput.PIN_rawInputPin); // set to input
+        *(_params.rawInput.PORTx_rawInputPin) &= ~(1 << _params.rawInput.PIN_rawInputPin); // disable pullup
     }
+
+    strlcpy_P(temperaturePinAlias, pinAlias[_params.tempSensor.PIN_temperaturePin], sizeof(temperaturePinAlias));
+    strlcpy_P(rawInputPinAlias, pinAlias[_params.rawInput.PIN_rawInputPin], sizeof(rawInputPinAlias));
 
     _number = _storageManager.readData_uint16();
     _display.setDisplayOrientation(EEPROM.read(_params.displayOrientationAddress));
@@ -236,10 +238,10 @@ void DisplayController_FD0604::showInfo() {
     bool serial_enabled_temperature, serial_enabled_raw_input;
 
     EEPROM.get(_params.countingIntervalAddress, countingInterval);
-    EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
-    EEPROM.get(_params.temperatureSerialEnabledAddress, serial_enabled_temperature);
-    EEPROM.get(_params.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
-    EEPROM.get(_params.rawInputSerialEnabledAddress, serial_enabled_raw_input);
+    EEPROM.get(_params.tempSensor.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
+    EEPROM.get(_params.tempSensor.temperatureSerialEnabledAddress, serial_enabled_temperature);
+    EEPROM.get(_params.rawInput.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
+    EEPROM.get(_params.rawInput.rawInputSerialEnabledAddress, serial_enabled_raw_input);
     EEPROM.get(_params.numHistoryAddress, numHistory);
 
 
@@ -258,7 +260,7 @@ void DisplayController_FD0604::showInfo() {
     // == Temp sensor ==
     serial_print_P(F("Temperature Pin:                                ")); serial_println(temperaturePinAlias);
     serial_print_P(F("Temperature Refresh Interval:                   ")); serial_print_u16(temperatureUpdateInterval); serial_println_P(F("ms"));
-    serial_print_P(F("Temperature Sensor Auxiliary Resistor Value:    ")); serial_print_float(_params.resistorValue, 2); serial_println_P(F("ohm"));
+    serial_print_P(F("Temperature Sensor Auxiliary Resistor Value:    ")); serial_print_float(_params.tempSensor.resistorValue, 2); serial_println_P(F("ohm"));
     serial_print_P(F("Temperature Serial Output:                      ")); serial_println_P((serial_enabled_temperature) ? F("Enabled") : F("Disabled"));
     serial_ln();
 
@@ -309,24 +311,24 @@ void DisplayController_FD0604::_updateDisplay() {
  * @note            Uses blocking delays, could be implemented better. 
  */
 void DisplayController_FD0604::_displayInit(int8_t initTime) {
-    _display.showNull();                        delay(initTime + 35);
-    _display.showNumber(1111, true, true);      delay(initTime);
-    _display.showNumber(2222, true, true);      delay(initTime);
-    _display.showNumber(3333, true, true);      delay(initTime);
-    _display.showNumber(4444, true, true);      delay(initTime);
-    _display.showNumber(5555, true, true);      delay(initTime);
-    _display.showNumber(6666, true, true);      delay(initTime);
-    _display.showNumber(7777, true, true);      delay(initTime);
-    _display.showNumber(8888, true, true);      delay(initTime);
-    _display.showNumber(9999, true, true);      delay(initTime);
-    _display.showNumber(0000, true, true);      delay(initTime);
-    _display.showLetter("AAAA", true);          delay(initTime);
-    _display.showLetter("BBBB", true);          delay(initTime);
-    _display.showLetter("CCCC", true);          delay(initTime);
-    _display.showLetter("DDDD", true);          delay(initTime);
-    _display.showLetter("EEEE", true);          delay(initTime);
-    _display.showLetter("FFFF", true);          delay(initTime);
-    _display.showNull();                        delay(initTime + 35);
+    _display.showNull();                        busy_delay(initTime + 35);
+    _display.showNumber(1111, true, true);      busy_delay(initTime);
+    _display.showNumber(2222, true, true);      busy_delay(initTime);
+    _display.showNumber(3333, true, true);      busy_delay(initTime);
+    _display.showNumber(4444, true, true);      busy_delay(initTime);
+    _display.showNumber(5555, true, true);      busy_delay(initTime);
+    _display.showNumber(6666, true, true);      busy_delay(initTime);
+    _display.showNumber(7777, true, true);      busy_delay(initTime);
+    _display.showNumber(8888, true, true);      busy_delay(initTime);
+    _display.showNumber(9999, true, true);      busy_delay(initTime);
+    _display.showNumber(0000, true, true);      busy_delay(initTime);
+    _display.showLetter("AAAA", true);          busy_delay(initTime);
+    _display.showLetter("BBBB", true);          busy_delay(initTime);
+    _display.showLetter("CCCC", true);          busy_delay(initTime);
+    _display.showLetter("DDDD", true);          busy_delay(initTime);
+    _display.showLetter("EEEE", true);          busy_delay(initTime);
+    _display.showLetter("FFFF", true);          busy_delay(initTime);
+    _display.showNull();                        busy_delay(initTime + 35);
     _display.clear();
 }
 
@@ -729,16 +731,16 @@ void DisplayController_FD0604::_displayTemp() {
     uint16_t displayTemp, temperatureUpdateInterval;
     char output[5] = {0};
     bool serial_enabled;
-    EEPROM.get(_params.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
-    EEPROM.get(_params.temperatureSerialEnabledAddress, serial_enabled);
+    EEPROM.get(_params.tempSensor.temperatureUpdateIntervalAddress, temperatureUpdateInterval);
+    EEPROM.get(_params.tempSensor.temperatureSerialEnabledAddress, serial_enabled);
 
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis > static_cast<unsigned long>(temperatureUpdateInterval)) {
         previousMillis = currentMillis;
         
-        uint16_t temperatureReading = analogRead(_params.temperaturePin);
+        uint16_t temperatureReading = analog_read(_params.tempSensor.PIN_temperaturePin);
 
-        double tempK = log(_params.resistorValue * (1024.0 / temperatureReading - 1));
+        double tempK = log(_params.tempSensor.resistorValue * (1024.0 / temperatureReading - 1));
         tempK = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * tempK * tempK )) * tempK );
         float tempC = tempK - 273.15;
 
@@ -771,20 +773,20 @@ void DisplayController_FD0604::_displayTemp() {
 void DisplayController_FD0604::_displayRAWInput() {
     uint16_t value, rawInputUpdateInterval;
     bool serial_enabled;
-    EEPROM.get(_params.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
-    EEPROM.get(_params.rawInputSerialEnabledAddress, serial_enabled);
+    EEPROM.get(_params.rawInput.rawInputUpdateIntervalAddress, rawInputUpdateInterval);
+    EEPROM.get(_params.rawInput.rawInputSerialEnabledAddress, serial_enabled);
 
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis > static_cast<unsigned long>(rawInputUpdateInterval)) {
         previousMillis = currentMillis;
 
-        value = analogRead(_params.rawInputPin);
+        value = analog_read(_params.rawInput.PIN_rawInputPin);
 
         if (serial_enabled) {
             serial_print_P(F("RAW Input Value: ")); serial_print_u16(value); //Serial.printf("%04d\n", value);
         }
 
-        _display.showNumber(value);
+        _display.showNumber(value, 1);
     }   
 }
 
@@ -851,14 +853,14 @@ void DisplayController_FD0604::_updateCycleInterval() {
 
 void DisplayController_FD0604::_updateTemperatureInterval() {
     uint16_t oldInterval = 0;
-    EEPROM.get(_params.temperatureUpdateIntervalAddress, oldInterval);
+    EEPROM.get(_params.tempSensor.temperatureUpdateIntervalAddress, oldInterval);
 
     serial_print_P(F("Old Temperature Interval Time: ")); serial_print_u16(oldInterval); serial_ln();
     serial_print_P(F("Enter New Temperature Interval Time: ")); 
 
     uint16_t value = _getSerial();
 
-    EEPROM.put(_params.temperatureUpdateIntervalAddress, value);
+    EEPROM.put(_params.tempSensor.temperatureUpdateIntervalAddress, value);
     serial_print_P(F("New Temperature Interval Time Set To: ")); serial_print_u16(value); serial_ln();
 
     _delay_ms(20);
@@ -866,8 +868,8 @@ void DisplayController_FD0604::_updateTemperatureInterval() {
 }
 
 void DisplayController_FD0604::_updateTemperatureSerialOutput() {
-    bool tempOutput = !EEPROM.read(_params.temperatureSerialEnabledAddress);
-    EEPROM.update(_params.temperatureSerialEnabledAddress, tempOutput);
+    bool tempOutput = !EEPROM.read(_params.tempSensor.temperatureSerialEnabledAddress);
+    EEPROM.update(_params.tempSensor.temperatureSerialEnabledAddress, tempOutput);
 
     serial_print_P(F("Temperature Serial Output set to: "));
     serial_println_P((tempOutput) ? F("Enabled.") : F("Disabled."));
@@ -878,14 +880,14 @@ void DisplayController_FD0604::_updateTemperatureSerialOutput() {
 
 void DisplayController_FD0604::_updateRawInputInterval() {
     uint16_t oldInterval = 0;
-    EEPROM.get(_params.rawInputUpdateIntervalAddress, oldInterval);
+    EEPROM.get(_params.rawInput.rawInputUpdateIntervalAddress, oldInterval);
 
     serial_print_P(F("Old Raw Input Interval Time: ")); serial_print_u16(oldInterval); serial_ln();
     serial_print_P(F("Enter New Raw Input Interval Time: ")); 
 
     uint16_t value = _getSerial();
 
-    EEPROM.put(_params.rawInputUpdateIntervalAddress, value);
+    EEPROM.put(_params.rawInput.rawInputUpdateIntervalAddress, value);
     serial_print_P(F("New Raw Input Interval Time Set To: ")); serial_print_u16(value); serial_ln();
 
     _delay_ms(20);
@@ -893,8 +895,8 @@ void DisplayController_FD0604::_updateRawInputInterval() {
 }
 
 void DisplayController_FD0604::_updateRawInputSerialOutput() {
-    bool rawSerialOutput = !EEPROM.read(_params.rawInputSerialEnabledAddress);
-    EEPROM.update(_params.rawInputSerialEnabledAddress, rawSerialOutput);
+    bool rawSerialOutput = !EEPROM.read(_params.rawInput.rawInputSerialEnabledAddress);
+    EEPROM.update(_params.rawInput.rawInputSerialEnabledAddress, rawSerialOutput);
 
     serial_print_P(F("RAW Input Serial Output set to: "));
     serial_println_P((rawSerialOutput) ? F("Enabled.") : F("Disabled."));

@@ -27,13 +27,6 @@ PersistentStorageManager::writtenData PersistentStorageManager::writeData_uint16
     uint16_t address = BASE_ADDR + i * SLOT_SIZE;
     uint32_t sequence = 0;
     
-    /*
-    for(int8_t j=0; j<4; j++) {
-      uint8_t b = EEPROM.read(address + j);
-      if(b == 0xFF && j == 0) break;
-      ((uint8_t*)&sequence)[j] = b;
-    }*/
-    //uint32_t sequence;
     EEPROM.get(address, sequence);
     if (sequence == 0xFFFFFFFF) continue;  // empty slot
 
@@ -86,13 +79,6 @@ uint16_t PersistentStorageManager::readData_uint16() {
   uint16_t data;
   EEPROM.get(BASE_ADDR + newestSlot * SLOT_SIZE + 4, data);
 
-  /*
-  Serial.println(F("====================="));
-  Serial.print(F("Read Data: ")); Serial.println(data);
-  Serial.print(F("Read Slot: ")); Serial.println(newestSlot);
-  Serial.print(F("EEPROM Address: 0x")); Serial.println(BASE_ADDR + newestSlot * SLOT_SIZE, HEX);
-  Serial.println(F("====================="));
-*/
   return data;
 }
 
@@ -139,10 +125,10 @@ uint16_t PersistentStorageManager::getLastEntries(uint16_t count, StorageEntry* 
   }
 
   int16_t tempBaseAddr = BASE_ADDR;
-  for (int8_t i=count-1; i>=0; i--) {
+  for (uint16_t i=count; i>0; i--) {
+    uint16_t index = i-1;
     StorageEntry entry;
-    int16_t localAddress = latestAddress - i * SLOT_SIZE;
-    //if (localAddress < tempBaseAddr) localAddress = tempBaseAddr + NUM_SLOTS * SLOT_SIZE - (tempBaseAddr-localAddress);
+    int16_t localAddress = latestAddress - index * SLOT_SIZE;
     if (localAddress < tempBaseAddr) localAddress += NUM_SLOTS * SLOT_SIZE;
 
     
@@ -160,7 +146,6 @@ uint16_t PersistentStorageManager::getLastEntries(uint16_t count, StorageEntry* 
     } else {
       return uninitialised;
     }
-    //entries.push_back(entry);
   }
   
   return uninitialised;
