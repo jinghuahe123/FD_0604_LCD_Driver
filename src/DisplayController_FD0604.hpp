@@ -1,13 +1,10 @@
 #ifndef DISPLAYCONTROLLER_FD0604
 #define DISPLAYCONTROLLER_FD0604
 
-// prevent serial conflicts with custom serial driver
-#define HardwareSerial_h
-#define HardwareSerial_h_ 
-#define DISABLE_HARDWARE_SERIAL
-#undef Serial
+#ifndef __AVR_ATmega328P__
+#warning Chip is not certified for this code. ADC measurements may be off among other flukes.
+#endif
 
-#include <Arduino.h>
 #include <avr/pgmspace.h>
 
 #include "serial.h"
@@ -29,6 +26,7 @@ class PersistentStorageManager;
 
 class DisplayController_FD0604 {
 public:
+    // code assumes struct is placed in PROGMEM
     struct DisplayController_FD0604_Parameters {
         const uint16_t BASE_ADDR;
         const uint8_t SLOT_SIZE;
@@ -36,21 +34,31 @@ public:
 
         const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data 
 
-        const uint8_t temperaturePin; // pin that the temperature probe is connected to
-        const float resistorValue; // accompanying resistor value for temperature probe
-        const uint16_t temperatureUpdateIntervalAddress; // EEPROM address for storing temperature update interval data 
-        const uint16_t temperatureSerialEnabledAddress; // EEPROM address for storing serial enabled data for temperature probe
-
-        const uint8_t rawInputPin; // pin that the raw input is connected to 
-        const uint16_t rawInputUpdateIntervalAddress; // EEPROM address for storing raw input update interval data  
-        const uint16_t rawInputSerialEnabledAddress; // EEPROM address for storing serial enabled data for raw input
-
         const uint16_t displayOrientationAddress; // EEPROM address for storing display orientation data
         const uint16_t numHistoryAddress; // EEPROM address for storing how number history count to recall
+
+        struct {
+            volatile uint8_t* const DDRx_temperaturePin;        // data direction register for temperature pin
+            volatile uint8_t* const PORTx_temperaturePin;       // port register for temperature pin
+            const uint8_t PIN_temperaturePin;                   // pin on port for temperature pin
+
+            const float resistorValue;                          // accompanying resistor value for temperature probe
+            const uint16_t temperatureUpdateIntervalAddress;    // EEPROM address for storing temperature update interval data 
+            const uint16_t temperatureSerialEnabledAddress;     // EEPROM address for storing serial enabled data for temperature probe
+        } tempSensor;
         
+        struct {
+            volatile uint8_t* const DDRx_rawInputPin;           // data direction register for raw input pin
+            volatile uint8_t* const PORTx_rawInputPin;          // port register for raw input pin
+            const uint8_t PIN_rawInputPin;                      // pin on port for raw input pin
+
+            const uint16_t rawInputUpdateIntervalAddress;       // EEPROM address for storing raw input update interval data  
+            const uint16_t rawInputSerialEnabledAddress;        // EEPROM address for storing serial enabled data for raw input
+        } rawInput;
     };
 
-    DisplayController_FD0604(DisplayDriver_FD0604::DriverParams& driverParams, DisplayController_FD0604_Parameters& params);
+
+    DisplayController_FD0604(const DisplayDriver_FD0604::DriverParameters& driverParams, const DisplayController_FD0604_Parameters& params);
     DisplayDriver_FD0604* getDisplayDriverObject();
     
     void updateDisplay();
@@ -81,8 +89,10 @@ private:
     unsigned long previousMillis = 0;
     bool staticDisplayShown = false;
 
-    const char* temperaturePinAlias = "  ";
-    const char* rawInputPinAlias = "  ";
+    static const char pinAlias[][3] PROGMEM;
+
+    char temperaturePinAlias[3] = {0};
+    char rawInputPinAlias[3] = {0};
     
     void _init();
 

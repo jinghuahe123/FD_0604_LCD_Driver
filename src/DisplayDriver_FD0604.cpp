@@ -1,7 +1,7 @@
 #include "DisplayDriver_FD0604.hpp"
 #include "Digit_Patterns.hpp"
 
-DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParams& params) : _params(&params) {
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParameters& params) : _params(&params) {
   *(_params->DDRx_latchPin) |= (1 << _params->PIN_latchPin);
 	*(_params->DDRx_clockPin) |= (1 << _params->PIN_clockPin);
 	*(_params->DDRx_dataPin) |= (1 << _params->PIN_dataPin);
