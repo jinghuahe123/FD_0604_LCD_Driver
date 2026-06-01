@@ -65,9 +65,13 @@ void init_millis(void) {
     TIMSK0 |= (1 << OCIE0A); // enable match a interrupt
 }
 
-// make this go together with the mulitplexer?
+void __attribute__((weak)) isr_ms_timer(void) {
+    // default implementation is empty to be overridden
+}
+
 ISR(TIMER0_COMPA_vect) {
     timer0_millis++;
+    isr_ms_timer();
 }
 
 uint32_t millis(void) {

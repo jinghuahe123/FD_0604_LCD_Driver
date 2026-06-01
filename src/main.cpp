@@ -13,6 +13,7 @@
 #include "DisplayController_FD0604.hpp"
 
 DisplayController_FD0604 displayController(displayParams, controllerParams);
+DisplayDriver_FD0604* displayDriver = displayController.getDisplayDriverObject();
 
 static void updateVersion(bool print=0) {
     for (uint8_t i=0; i<FIRMWARE_VER_SIZE; i++) {
@@ -27,28 +28,14 @@ static void updateVersion(bool print=0) {
     if (print) serial_ln();
 }
 
-static void init_timer2_for_1000hz(void) {
-    // clear timer2 control registers
-    TCCR2A = 0x00; // normal mode, OC2 disconnected
-    TCCR2B = 0x00;
-    TCCR2A |= (1 << WGM21); // set CTC mode
-    
-    // Prescaler 128 
-    TCCR2B |= (1 << CS22) | (1 << CS20);  // CS22=1, CS21=0, CS20=1 = /128
-    OCR2A = 124;  // 16MHz/128 = 125kHz / 125 = 1000Hz
-    
-    TIMSK2 |= (1 << OCIE2A); // enable interrupts
-    sei();
-}
-
-ISR(TIMER2_COMPA_vect) {
-    DisplayDriver_FD0604::isr_mutliplex_display_callback(displayController.getDisplayDriverObject());
+// function of timer.h that runs every ms
+void isr_ms_timer(void) {
+    DisplayDriver_FD0604::isr_multiplex_display_callback(displayDriver);
 }
 
 int main(void) {
     init_millis();
     init_adc(ADC_REF_AREF);
-    init_timer2_for_1000hz();
 
     serial_init(HARDWARE_SERIAL_BAUD);
     updateVersion();
