@@ -235,7 +235,7 @@ void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
  * @details       Static multiplex callback for running in ISR routine.
  * @param obj     The corresponding display object to multiplex. 
  */
-void DisplayDriver_FD0604::isr_mutliplex_display_callback(DisplayDriver_FD0604* obj) {
+void DisplayDriver_FD0604::isr_multiplex_display_callback(DisplayDriver_FD0604* obj) {
   obj->multiplexdisplayHandler();
 }
 

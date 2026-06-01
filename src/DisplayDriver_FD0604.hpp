@@ -45,7 +45,7 @@ class DisplayDriver_FD0604 {
         void showNumber(uint16_t number, bool leading_zeroes = false, bool clock = false);
         void showNull();
 
-        static void isr_mutliplex_display_callback(DisplayDriver_FD0604* obj);
+        static void isr_multiplex_display_callback(DisplayDriver_FD0604* obj);
         void multiplexdisplayHandler();
         
 
