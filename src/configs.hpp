@@ -4,6 +4,9 @@
     EEPROM Memory Map:
     0x0000-0x001F   -   Firmware Version
     0x0020-0x003F   -   Display Paramaters
+                            0x0020-0x002F   -   General Display Parameters
+                            0x0030-0x0037   -   Temperature Parameters
+                            0x0038-0x003F   -   Raw Input Parameters
     0x0040-0x03FF   -   Displayed Number History
 */
 
@@ -11,7 +14,7 @@
 #define HARDWARE_SERIAL_BAUD    1000000
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.28";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.33";
 
 const DisplayDriver_FD0604::DriverParameters displayParams = {
     .npn_transistor_enable = 1,
@@ -37,8 +40,8 @@ const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerPa
 
     .countingIntervalAddress = 0x0020,     // EEPROM Address that stores the delay between counting intervals 
 
-    .displayOrientationAddress = 0x002A,     // EEPROM address for storing display orientation data
-    .numHistoryAddress = 0x002C,             // EEPROM address for history recall depth
+    .displayOrientationAddress = 0x0022,     // EEPROM address for storing display orientation data
+    .numHistoryAddress = 0x0024,             // EEPROM address for history recall depth
 
     .tempSensor = {
         // analog channel 7 cannot be output, does not have corresponding port
@@ -48,8 +51,8 @@ const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerPa
         .PIN_temperaturePin = 7,            // pin on port of temp sensor
 
         .resistorValue = 10000.0,                       // temperature sensor accompanying resistor
-        .temperatureUpdateIntervalAddress = 0x0022,     // EEPROM address that stores the delay between the temperature reading updating
-        .temperatureSerialEnabledAddress = 0x0024,      // EEPROM address for enable serial output for temperature sensor
+        .temperatureUpdateIntervalAddress = 0x0030,     // EEPROM address that stores the delay between the temperature reading updating
+        .temperatureSerialEnabledAddress = 0x0032,      // EEPROM address for enable serial output for temperature sensor
     },
 
     .rawInput = {
@@ -58,7 +61,7 @@ const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerPa
         .PORTx_rawInputPin = nullptr,       // port register for raw input
         .PIN_rawInputPin = 6,               // pin on port of raw input
 
-        .rawInputUpdateIntervalAddress = 0x0026,        // EEPROM address that stores the delay between the raw input reading updating 
-        .rawInputSerialEnabledAddress = 0x0028,         // EEPROM address for enable serial output for raw input
+        .rawInputUpdateIntervalAddress = 0x0038,        // EEPROM address that stores the delay between the raw input reading updating 
+        .rawInputSerialEnabledAddress = 0x003A,         // EEPROM address for enable serial output for raw input
     },
 };
