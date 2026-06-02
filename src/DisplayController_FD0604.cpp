@@ -278,7 +278,8 @@ void DisplayController_FD0604::showInfo() {
     _delay_ms(3);
     serial_ln();
 
-    if (numHistory == 65535 || countingInterval == 65535 || temperatureUpdateInterval == 65535 || rawInputUpdateInterval == 65535) {
+    if (numHistory == 0 || countingInterval == 0 || temperatureUpdateInterval == 0 || rawInputUpdateInterval == 0
+        || numHistory == 65535 || countingInterval == 65535 || temperatureUpdateInterval == 65535 || rawInputUpdateInterval == 65535) {
         serial_println_P(F("CAUTION: Board may have been reset. Multiple settings are incorrect."));
         serial_println_P(F("Please run SETTINGS command to set the parameters. Thank you."));
         serial_ln();
