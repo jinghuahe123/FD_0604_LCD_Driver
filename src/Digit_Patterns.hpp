@@ -144,7 +144,6 @@ static const uint16_t number_upsidedown[40][2] PROGMEM {
   {0x00E0, 0x00F0}, // number 8 in hundreds digit
   {0x00A0, 0x00F0}, // number 9 in hundreds digit
 
-  //{0b000000000010110, 0b000000000001110}, // number 0 in thousands digit
   {0x0016, 0x000E}, // number 0 in thousands digit
   {0x0012, 0x0000}, // number 1 in thousands digit
   {0x001C, 0x000A}, // number 2 in thousands digit

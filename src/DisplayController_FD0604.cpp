@@ -30,6 +30,7 @@ const char DisplayController_FD0604::_commandList[][MAX_INPUT_SIZE] PROGMEM = {
     "NULL", 
     "TEMP",
     "RAW", 
+    "REBOOT",
 };
 
 const char DisplayController_FD0604::pinAlias[][3] PROGMEM = {
@@ -85,6 +86,27 @@ void DisplayController_FD0604::_init() {
     _display.setDisplayOrientation(EEPROM.read(_params.displayOrientationAddress));
 }
 
+const DisplayController_FD0604::CommandHandler DisplayController_FD0604::commandHandlers[] = {
+    &DisplayController_FD0604::_handleHelp,
+    &DisplayController_FD0604::_handleInfo,
+    &DisplayController_FD0604::_handleMem,
+    &DisplayController_FD0604::_handleInit,
+    &DisplayController_FD0604::_handleSettings,
+    &DisplayController_FD0604::_handleErase,
+    &DisplayController_FD0604::_handleReset,
+    &DisplayController_FD0604::_handleHistory,
+    &DisplayController_FD0604::_handleOff,
+    &DisplayController_FD0604::_handleCycle,
+    &DisplayController_FD0604::_handleNull,
+    &DisplayController_FD0604::_handleTemp,
+    &DisplayController_FD0604::_handleRAWInput,
+    &DisplayController_FD0604::_handleReboot,
+};
+
+const uint8_t DisplayController_FD0604::maxCommandOptions = 
+    sizeof(DisplayController_FD0604::commandHandlers) / 
+    sizeof(DisplayController_FD0604::commandHandlers[0]) - 1;
+
 /**
  * @details         Process a C-style string as display confiugration parameters.
  * @param input     Array to pass as configuration parameters. 
@@ -102,23 +124,13 @@ void DisplayController_FD0604::processInput(const char* input) {
     int8_t cmdIndex = _findCommandIndex(_input);
 
     // process as a switch statement and then pass to individual functions rather than as a continuous if statement
+    if (cmdIndex > maxCommandOptions) {
+        serial_println_P(F("Internal issue with command code, this line should never print.\nPlease check command functions align with command key words."));
+        return;
+    }
+    
     if (cmdIndex != -1) {
-        switch (cmdIndex) {
-            case 0:     _handleHelp();      break;
-            case 1:     _handleInfo();      break;
-            case 2:     _handleMem();       break;
-            case 3:     _handleInit();      break;
-            case 4:     _handleSettings();  break;
-            case 5:     _handleErase();     break;
-            case 6:     _handleReset();     break;
-            case 7:     _handleHistory();   break;
-            case 8:     _handleOff();       break;
-            case 9:     _handleCycle();     break;
-            case 10:    _handleNull();      break;
-            case 11:    _handleTemp();      break;
-            case 12:    _handleRAWInput();  break;
-            default:                        break;
-        }
+        (this->*commandHandlers[cmdIndex])();
     } else {
         // Not a command, try to parse as a number
         if (!_parseAndSetNumber(_input)) { // also sets the number in the class variable
@@ -147,20 +159,30 @@ void DisplayController_FD0604::processSecondaryInput(const char* input) {
     }
 }
 
+const DisplayController_FD0604::DisplayHandler DisplayController_FD0604::displayHandlers[] = {
+    nullptr,
+    &DisplayController_FD0604::_displayOff,
+    &DisplayController_FD0604::_displayCycle,
+    &DisplayController_FD0604::_displayNull,
+    &DisplayController_FD0604::_displayTemp,
+    &DisplayController_FD0604::_displayRAWInput,
+};
+
+const uint8_t DisplayController_FD0604::maxDisplayHandlers = 
+    sizeof(DisplayController_FD0604::displayHandlers) / 
+    sizeof(DisplayController_FD0604::displayHandlers[0]) - 1;
+
 /**
  * @details         Show the processed input on the display. 
  * @note            Requires continuous polling otherwise will not work, except for the static number display. Probably should fix. 
  */
 void DisplayController_FD0604::updateDisplay() {
     if (_number < 0) {
-        switch (_number) {
-            case -1: _displayOff();      break;
-            case -2: _displayCycle();    break;
-            case -3: _displayNull();     break;
-            case -4: _displayTemp();     break;
-            case -5: _displayRAWInput(); break;
-            default: break;
+        if ((_number * -1) > maxDisplayHandlers) {
+            serial_println_P(F("Internal issue with display code, this line should never print.\nPlease check display functions."));
+            return;
         }
+        (this->*displayHandlers[_number * -1])();
     } else if (!staticDisplayShown) {
         _display.showNumber(_display.getDisplayOrientation() ? _number * 10 : _number);
         staticDisplayShown = true;
@@ -224,6 +246,7 @@ void DisplayController_FD0604::showAvailableCommands() {
     serial_println_P(F("ERASE      -  Erases previously displayed number history."));
     serial_println_P(F("RESET      -  Resets to factory defaults. CAUTION - WILL ERASE ALL USER DATA!"));
     serial_print_P(F("HISTORY    -  Prints to Serial the last ")); serial_print_u16(numHistory); serial_println_P(F(" numbers displayed."));
+    serial_println_P(F("REBOOT     -  Reboots system."));
 
     serial_println_P(F("========================================================================================="));
     _delay_ms(3);
@@ -567,7 +590,7 @@ void DisplayController_FD0604::_handleHistory() {
     int freeMemory = _freeMemory();
     if (freeMemory < 0) freeMemory = 0;
     freeMemory = freeMemory * 0.8; // leave 20% buffer room 
-    if ((unsigned int)freeMemory < numHistory * sizeof(PersistentStorageManager::StorageEntry) || numHistory > _params.NUM_SLOTS) {
+    if ((unsigned int)freeMemory < numHistory * sizeof(PersistentStorageManager::StorageEntry)) {
         serial_print_P(F("MCU does not have enough free memory to display "));
         serial_print_u16(numHistory);
         serial_println_P(F(" number histories."));
@@ -603,13 +626,11 @@ void DisplayController_FD0604::_handleHistory() {
         if (uninitialised != 0xFFFF) {
             for(size_t i = 0; i < numHistory - uninitialised; i++) {
                 serial_print_P(F("["));
-                //Serial.printf("%04u", (unsigned)i);
                 print_padded_u32(i, 4);
                 serial_print_P(F("] Address: 0x"));
                 serial_print_hex16(entries[i].address);
                 serial_print_P(F(" | Sequence: "));
                 print_padded_u32(entries[i].sequence, 10);
-                //Serial.printf("%010lu", (unsigned long)entries[i].sequence);
                 serial_print_P(F(" | Value: "));
                 switch (entries[i].value) {
                     case OFF:           serial_print_P(F("OFF"));           break;
@@ -677,6 +698,12 @@ void DisplayController_FD0604::_handleRAWInput() {
         serial_println_P(F("CAUTION: Inverted display does not support last digit output."));
         serial_println_P(F("Output will be one order of magnitude smaller than real value, and truncated."));
     }
+}
+
+void DisplayController_FD0604::_handleReboot() {
+    serial_println_P(F("Rebooting..."));
+    wdt_enable(WDTO_15MS);
+    while(1);
 }
 
 
@@ -927,6 +954,16 @@ void DisplayController_FD0604::_updateHistoryRecallDepth() {
     serial_print_P(F("Enter New History Recall Depth: ")); 
 
     numHistory = _getSerial();
+
+    if (numHistory > _params.NUM_SLOTS) {
+        serial_print_P(F("Cannot set recall to more than max slots of "));
+        serial_print_u16(_params.NUM_SLOTS);
+        serial_ln();
+
+        _delay_ms(20);
+        _exitSettings();
+        return;
+    }
 
     EEPROM.put(_params.numHistoryAddress, numHistory);
     serial_print_P(F("New History Recal Depth set to: "));
