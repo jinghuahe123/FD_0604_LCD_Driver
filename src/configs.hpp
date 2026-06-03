@@ -14,7 +14,7 @@
 #define HARDWARE_SERIAL_BAUD    1000000
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.33";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.34";
 
 const DisplayDriver_FD0604::DriverParameters displayParams = {
     .npn_transistor_enable = 1,
