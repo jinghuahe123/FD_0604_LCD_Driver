@@ -108,6 +108,9 @@ private:
     static bool _checkIfNumericUnsigned(const char* str, uint16_t& number);
     bool _parseAndSetNumber(const char* input);
 
+    using CommandHandler = void(DisplayController_FD0604::*)();
+    static const CommandHandler commandHandlers[]; // static const array of function pointers to command handler functions
+    static const uint8_t maxCommandOptions;
     void _handleHelp();
     void _handleInfo();
     void _handleMem();
@@ -121,7 +124,11 @@ private:
     void _handleNull();
     void _handleTemp();
     void _handleRAWInput();
+    void _handleReboot();
 
+    using DisplayHandler = void(DisplayController_FD0604::*)();
+    static const DisplayHandler displayHandlers[];
+    static const uint8_t maxDisplayHandlers;
     void _displayOff();
     void _displayCycle();
     void _displayNull();
@@ -129,11 +136,9 @@ private:
     void _displayRAWInput();
 
     uint16_t _getSerial();
-
     using SettingsHandler = void(DisplayController_FD0604::*)();
     static const SettingsHandler settingsHandlers[]; // static const array of function pointers
     static const uint8_t maxSettingsOptions;
-
     void _exitSettings();
     void _updateCycleInterval();
     void _updateTemperatureInterval();

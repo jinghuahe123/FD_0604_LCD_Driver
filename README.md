@@ -38,6 +38,7 @@ Any number for the given ranges can be displayed on the screen:
 | ERASE     | Erases previously displayed number history.                       |
 | RESET     | Resets all parameters (EEPROM) to factory defaults.               |
 | HISTORY   | Prints to Serial the displayed number history.                    |
+| REBOOT    | Reboots system.                                                   |
 
 **Settings Menu**
 
