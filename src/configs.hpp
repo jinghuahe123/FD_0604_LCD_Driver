@@ -44,8 +44,7 @@ const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerPa
     .numHistoryAddress = 0x0024,             // EEPROM address for history recall depth
 
     .tempSensor = {
-        // analog channel 7 cannot be output, does not have corresponding port
-        // otherwise for atmega328p would be &DDRC and &PORTC
+        // for analog channel 6/7, as there it is input pin only, MUST SET DDRx and PORTx as nullptr!
         .DDRx_temperaturePin = nullptr,       // data direction register for temp sensor
         .PORTx_temperaturePin = nullptr,     // port register for temp sensor
         .PIN_temperaturePin = 7,            // pin on port of temp sensor
@@ -56,7 +55,7 @@ const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerPa
     },
 
     .rawInput = {
-        // analog channel 6 cannot be output, does not have corresponding port
+        // for analog channel 6/7, as there it is input pin only, MUST SET DDRx and PORTx as nullptr!
         .DDRx_rawInputPin = nullptr,        // data direction register for raw input
         .PORTx_rawInputPin = nullptr,       // port register for raw input
         .PIN_rawInputPin = 6,               // pin on port of raw input

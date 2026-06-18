@@ -1,7 +1,6 @@
 #include <EEPROM.h>
 #include <avr/wdt.h>
 #include <avr/io.h>
-#include <avr/interrupt.h>
 
 #include "configs.hpp"
 #include "serial.h"
@@ -9,7 +8,6 @@
 #include "timer.h"
 #include "io_helper.h"
 #include "DisplayDriver_FD0604.hpp"
-#include "PersistentStorageManager.hpp"
 #include "DisplayController_FD0604.hpp"
 
 DisplayController_FD0604 displayController(displayParams, controllerParams);

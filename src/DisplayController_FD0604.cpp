@@ -68,13 +68,17 @@ DisplayDriver_FD0604* DisplayController_FD0604::getDisplayDriverObject() {
  * @details         Initialise the display paramaters & get last display configuration from EEPROM. 
  */
 void DisplayController_FD0604::_init() {
-    // WARNING - this may not work for chip other than ATMEGA328P
-    if (_params.tempSensor.PIN_temperaturePin >= 0 && _params.tempSensor.PIN_temperaturePin <= 5) {
+    // only a basic check that is confirmed working for atmega328p, may not work for all chips
+    if (_params.tempSensor.DDRx_temperaturePin != nullptr && _params.tempSensor.PORTx_temperaturePin != nullptr
+            && _params.tempSensor.PIN_temperaturePin >= 0 && _params.tempSensor.PIN_temperaturePin <= 5) 
+        {
         *(_params.tempSensor.DDRx_temperaturePin) &= ~(1 << _params.tempSensor.PIN_temperaturePin); // set to input
         *(_params.tempSensor.PORTx_temperaturePin) &= ~(1 << _params.tempSensor.PIN_temperaturePin); // disable pullup
     }
 
-    if (_params.rawInput.PIN_rawInputPin >= 0 && _params.rawInput.PIN_rawInputPin <= 5) {
+    if (_params.rawInput.DDRx_rawInputPin != nullptr && _params.rawInput.PORTx_rawInputPin != nullptr
+            && _params.rawInput.PIN_rawInputPin >= 0 && _params.rawInput.PIN_rawInputPin <= 5) 
+        {
         *(_params.rawInput.DDRx_rawInputPin) &= ~(1 << _params.rawInput.PIN_rawInputPin); // set to input
         *(_params.rawInput.PORTx_rawInputPin) &= ~(1 << _params.rawInput.PIN_rawInputPin); // disable pullup
     }
@@ -611,6 +615,17 @@ void DisplayController_FD0604::_handleHistory() {
             serial_print(ptr);
         };
 
+        auto parse_and_print_value = [](int16_t val) {
+            switch (val) {
+                case OFF:           serial_print_P(F("OFF"));           break;
+                case CYCLE:         serial_print_P(F("CYCLE"));         break;
+                case NULL_DISP:     serial_print_P(F("NULL_DISP"));     break;
+                case TEMP:          serial_print_P(F("TEMP"));          break;      
+                case RAWINPUT:      serial_print_P(F("RAW"));           break;
+                default:            serial_print_i16(val);              break;
+            }
+        };
+
         serial_println_P(F("=============================================================="));
         serial_println_P(F("                     EEPROM STORAGE HISTORY"));
         serial_println_P(F("=============================================================="));
@@ -624,30 +639,17 @@ void DisplayController_FD0604::_handleHistory() {
         uint16_t uninitialised = _storageManager.getLastEntries(numHistory, entries);
 
         if (uninitialised != 0xFFFF) {
-            for(size_t i = 0; i < numHistory - uninitialised; i++) {
-                serial_print_P(F("["));
-                print_padded_u32(i, 4);
-                serial_print_P(F("] Address: 0x"));
-                serial_print_hex16(entries[i].address);
-                serial_print_P(F(" | Sequence: "));
-                print_padded_u32(entries[i].sequence, 10);
-                serial_print_P(F(" | Value: "));
-                switch (entries[i].value) {
-                    case OFF:           serial_print_P(F("OFF"));           break;
-                    case CYCLE:         serial_print_P(F("CYCLE"));         break;
-                    case NULL_DISP:     serial_print_P(F("NULL_DISP"));     break;
-                    case TEMP:          serial_print_P(F("TEMP"));          break;      
-                    case RAWINPUT:      serial_print_P(F("RAW"));           break;
-                    default:            serial_print_i16(entries[i].value);   break;
-                }
+            for (uint16_t i = 0; i < numHistory - uninitialised; i++) {
+                serial_print_P(F("[")); print_padded_u32(i, 4);
+                serial_print_P(F("] Address: 0x")); serial_print_hex16(entries[i].address);
+                serial_print_P(F(" | Sequence: ")); print_padded_u32(entries[i].sequence, 10);
+                serial_print_P(F(" | Value: ")); parse_and_print_value(entries[i].value);
                 serial_ln();
             }
             serial_println_P(F("--------------------------------------------------------------"));
-            serial_print_P(F("Total entries searched: "));
-            serial_print_u16(numHistory - uninitialised);
+            serial_print_P(F("Total entries searched: ")); serial_print_u16(numHistory - uninitialised);
             serial_ln();
-            serial_print_P(F("Empty entries searched: "));
-            serial_print_u16(uninitialised);
+            serial_print_P(F("Empty entries searched: ")); serial_print_u16(uninitialised);
             serial_ln();
         } else {
             serial_println_P(F("No data found in storage."));
