@@ -1,5 +1,5 @@
-#ifndef DISPLAY_DRIVER_FD0604_H
-#define DISPLAY_DRIVER_FD0604_H
+#ifndef DISPLAY_DRIVER_FD0604_HPP
+#define DISPLAY_DRIVER_FD0604_HPP
 
 #include <ctype.h>
 #include <string.h>
@@ -73,4 +73,4 @@ class DisplayDriver_FD0604 {
 
 };
 
-#endif
+#endif // DISPLAY_DRIVER_FD0604_HPP

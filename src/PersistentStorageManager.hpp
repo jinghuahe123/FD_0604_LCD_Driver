@@ -1,17 +1,12 @@
-#ifndef PERSISTENTSTORAGEMANAGER_H
-#define PERSISTENTSTORAGEMANAGER_H
+#ifndef PERSISTENTSTORAGEMANAGER_HPP
+#define PERSISTENTSTORAGEMANAGER_HPP
 
 #include <EEPROM.h>
+#include <avr/wdt.h>
 
+template <typename T>
 class PersistentStorageManager {
-    private:
-        const uint16_t BASE_ADDR;
-        const uint8_t SLOT_SIZE;
-        const uint16_t NUM_SLOTS;
-
-    public:
-        PersistentStorageManager(const uint16_t &base_address, const uint8_t &slot_size, const uint16_t &num_slots);
-
+    public: 
         struct writtenData {
             uint16_t writeSlot;
             uint16_t writeAddress;
@@ -20,15 +15,25 @@ class PersistentStorageManager {
         struct StorageEntry {
             uint16_t address;
             uint32_t sequence;
-            int16_t value;
+            T value;
         };
 
-        writtenData writeData_uint16(uint16_t value);
-        uint16_t readData_uint16();
+        PersistentStorageManager(uint16_t base_addr, uint16_t num_slots);
 
-        void clearData();
-        uint16_t getLastEntries(uint16_t count, StorageEntry* entries);
+        writtenData write(const T& value) const;
+        T read() const;
 
+        void erase() const;
+        uint16_t readHistory(uint16_t count, StorageEntry* entries) const;
+
+    private:
+        const uint16_t BASE_ADDR;
+        const uint8_t SLOT_SIZE;
+        const uint16_t NUM_SLOTS; 
+        
+        bool findLatestEntry(uint16_t& latestIndex, uint32_t& latestSequence) const;
 };
 
-#endif
+#include "PersistentStorageManager.tpp"
+
+#endif // PERSISTENTSTORAGEMANAGER_HPP

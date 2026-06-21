@@ -1,5 +1,5 @@
-#ifndef DISPLAYCONTROLLER_FD0604
-#define DISPLAYCONTROLLER_FD0604
+#ifndef DISPLAYCONTROLLER_FD0604_HPP
+#define DISPLAYCONTROLLER_FD0604_HPP
 
 #ifndef __AVR_ATmega328P__
 #warning Chip is not certified for this code. ADC measurements may be off among other flukes.
@@ -20,16 +20,11 @@
 #define TEMP        -4 
 #define RAWINPUT    -5
 
-// predefine classes used
-class DisplayDriver_FD0604;
-class PersistentStorageManager;
-
 class DisplayController_FD0604 {
 public:
     // code assumes struct is placed in PROGMEM
     struct DisplayController_FD0604_Parameters {
         const uint16_t BASE_ADDR;
-        const uint8_t SLOT_SIZE;
         const uint16_t NUM_SLOTS;
 
         const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data 
@@ -73,7 +68,7 @@ private:
 
     DisplayController_FD0604_Parameters _params;
     DisplayDriver_FD0604 _display;
-    PersistentStorageManager _storageManager;
+    PersistentStorageManager<int16_t> _storageManager;
     const bool transistor_enabled_flag;
     
     // Calculate total RAM (AVR) or use manual define
