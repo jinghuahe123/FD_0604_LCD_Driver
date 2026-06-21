@@ -14,7 +14,7 @@
 #define HARDWARE_SERIAL_BAUD    1000000
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.34";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.35";
 
 const DisplayDriver_FD0604::DriverParameters displayParams = {
     .npn_transistor_enable = 1,
@@ -35,7 +35,6 @@ const DisplayDriver_FD0604::DriverParameters displayParams = {
 
 const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
     .BASE_ADDR = 0x0040,     // EEPROM address to start writing writing from
-    .SLOT_SIZE = 6,          // uint32_t for sequence number (for wear levelling) + uint16_t for number
     .NUM_SLOTS = 160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 
     .countingIntervalAddress = 0x0020,     // EEPROM Address that stores the delay between counting intervals 

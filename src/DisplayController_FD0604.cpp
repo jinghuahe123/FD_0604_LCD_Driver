@@ -54,7 +54,7 @@ const uint8_t DisplayController_FD0604::_commandListSize =
  * @param params            Controller-specific parameters struct to pass.
  */
 DisplayController_FD0604::DisplayController_FD0604(const DisplayDriver_FD0604::DriverParameters& driverParams, const DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.SLOT_SIZE, _params.NUM_SLOTS), 
+        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.NUM_SLOTS), 
         transistor_enabled_flag(driverParams.npn_transistor_enable) {
 
     _init();
@@ -86,7 +86,7 @@ void DisplayController_FD0604::_init() {
     strlcpy_P(temperaturePinAlias, pinAlias[_params.tempSensor.PIN_temperaturePin], sizeof(temperaturePinAlias));
     strlcpy_P(rawInputPinAlias, pinAlias[_params.rawInput.PIN_rawInputPin], sizeof(rawInputPinAlias));
 
-    _number = _storageManager.readData_uint16();
+    _number = _storageManager.read();
     _display.setDisplayOrientation(EEPROM.read(_params.displayOrientationAddress));
 }
 
@@ -324,7 +324,7 @@ void DisplayController_FD0604::clear() {
  * @details         Update EEPROM with new display data and print update information to serial.
  */
 void DisplayController_FD0604::_updateDisplay() {
-    auto data = _storageManager.writeData_uint16(_number);
+    auto data = _storageManager.write(_number);
     serial_println_P(F("====================="));
     serial_print_P(F("Wrote Data: ")); if (_number > 0) {serial_print_i16(_number); serial_ln();} else {serial_println(_input);}
     serial_print_P(F("Written Slot: ")); serial_print_u16(data.writeSlot); serial_ln();
@@ -542,7 +542,7 @@ void DisplayController_FD0604::_handleSettings() {
  */
 void DisplayController_FD0604::_handleErase() {
     serial_print_P(F("Erasing... "));
-    _storageManager.clearData();
+    _storageManager.erase();
     serial_println_P(F("Successfully erased previous history."));
 }
 
@@ -565,6 +565,8 @@ void DisplayController_FD0604::_handleReset() {
     }
 
     if (strcasecmp(input, "RESET ALL") == 0) {
+        wdt_disable(); // disable watchdog timer to prevent reset during EEPROM write
+        
         serial_println_P(F("RESET Command recieved. Resetting..."));
         for (uint16_t i=0; i<EEPROM.length(); i++) {
             EEPROM.write(i, 0x00);
@@ -594,12 +596,12 @@ void DisplayController_FD0604::_handleHistory() {
     int freeMemory = _freeMemory();
     if (freeMemory < 0) freeMemory = 0;
     freeMemory = freeMemory * 0.8; // leave 20% buffer room 
-    if ((unsigned int)freeMemory < numHistory * sizeof(PersistentStorageManager::StorageEntry)) {
+    if ((unsigned int)freeMemory < numHistory * sizeof(PersistentStorageManager<int16_t>::StorageEntry)) {
         serial_print_P(F("MCU does not have enough free memory to display "));
         serial_print_u16(numHistory);
         serial_println_P(F(" number histories."));
     } else {
-        PersistentStorageManager::StorageEntry entries[numHistory] = {0};
+        PersistentStorageManager<int16_t>::StorageEntry entries[numHistory] = {0};
 
         auto print_padded_u32 = [](uint32_t value, uint8_t digits) {
             char buffer[11]; // max 10 digits + null terminator
@@ -636,7 +638,7 @@ void DisplayController_FD0604::_handleHistory() {
         serial_println_P((EEPROM.read(_params.displayOrientationAddress)) ? F("Inverted Display") : F("Normal Display"));
         _handleMem();
         serial_println_P(F("--------------------------------------------------------------"));
-        uint16_t uninitialised = _storageManager.getLastEntries(numHistory, entries);
+        uint16_t uninitialised = _storageManager.readHistory(numHistory, entries);
 
         if (uninitialised != 0xFFFF) {
             for (uint16_t i = 0; i < numHistory - uninitialised; i++) {
