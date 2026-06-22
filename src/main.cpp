@@ -13,7 +13,7 @@
 DisplayController_FD0604 displayController(displayParams, controllerParams);
 DisplayDriver_FD0604* displayDriver = displayController.getDisplayDriverObject();
 
-static void updateVersion(bool print=0) {
+static void updateVersion(const bool print=0) {
     for (uint8_t i=0; i<FIRMWARE_VER_SIZE; i++) {
         if (i<sizeof(version)-1) { // ensure no null terminator is written
             char c = pgm_read_byte(&version[i]);
@@ -26,12 +26,29 @@ static void updateVersion(bool print=0) {
     if (print) serial_ln();
 }
 
+static void initStatusLED() {
+    DDRB |= (1 << PB5);
+    PORTB &= ~(1 << PB5);
+}
+static void updateStatusLED(const uint32_t interval = 1000) {
+    static uint32_t previousTime = 0;
+    uint32_t currentTime = millis();
+
+    if (currentTime - previousTime >= interval) {
+        previousTime = currentTime;
+        PINB |= (1 << PB5);
+    }
+}
+
 // function of timer.h that runs every ms
 void isr_ms_timer(void) {
     DisplayDriver_FD0604::isr_multiplex_display_callback(displayDriver);
+    updateStatusLED(100);
 }
 
 int main(void) {
+    initStatusLED();
+    
     init_millis();
     init_adc(ADC_REF_AREF);
 
