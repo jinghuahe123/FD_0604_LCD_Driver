@@ -13,23 +13,38 @@
 
 #define HARDWARE_SERIAL_BAUD    1000000
 
+// @ 8MHz 2400 is the maximum working speed (1200 with heartbeat LED)
+// fix? - code issue or just hardware limit
+#define SOFTWARE_SERIAL_BAUD    1200
+// RX: PORTB, pin 3 D11
+#define SOFT_RX_PORT    SS_PORT_B
+#define SOFT_RX_PIN     3
+// TX: PORTB, pin 4 D12
+#define SOFT_TX_PORT    SS_PORT_B
+#define SOFT_TX_PIN     4
+// whether secondary serial output should print initialisation text
+#define SOFT_SERIAL_OUTPUT
+
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.35";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.36";
 
 const DisplayDriver_FD0604::DriverParameters displayParams = {
     .npn_transistor_enable = 1,
 	
+    // pin D4
 	.DDRx_latchPin = &DDRD,             // latchpin data direction register
 	.PORTx_latchPin = &PORTD,           // latchpin port register
-	.PIN_latchPin = 6,                  // latchpin physical pin (on register)
+	.PIN_latchPin = 4,                  // latchpin physical pin (on register)
 	
+    // pin D5
 	.DDRx_clockPin = &DDRD,             // clockpin data direction register   
 	.PORTx_clockPin = &PORTD,           // clockpin port register
-	.PIN_clockPin = 7,                  // clockpin physical pin (on register)
+	.PIN_clockPin = 5,                  // clockpin physical pin (on register)
 	
-	.DDRx_dataPin = &DDRB,              // datapin data direction register
-	.PORTx_dataPin = &PORTB,            // datapin port register
-	.PIN_dataPin = 0,                   // datapin physical pin (on register)
+    // pin D6
+	.DDRx_dataPin = &DDRD,              // datapin data direction register
+	.PORTx_dataPin = &PORTD,            // datapin port register
+	.PIN_dataPin = 6,                   // datapin physical pin (on register)
 };
 
 

@@ -53,6 +53,3 @@ Any number for the given ranges can be displayed on the screen:
 | [7]       | Flip Display Orientation.                                         |
 | [8]       | Set History Recall Depth.                                         |
 
-**TODO / IMPROVEMENTS**
-
-- re-implement a custom softwareserial library in pure avr?

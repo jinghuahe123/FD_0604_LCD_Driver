@@ -53,7 +53,7 @@
 
 volatile uint32_t timer0_millis = 0;
 
-void init_millis(void) {
+void init_timer0_millis(void) {
     TCCR0B = 0; // stop timer0 to configure
 
     TCCR0A = (1 << WGM01); // configure for CTC mode
@@ -84,5 +84,5 @@ uint32_t millis(void) {
 
 void busy_delay(uint16_t ms) {
     uint32_t start = millis();
-    while ((millis() - start) < ms) asm volatile("");
+    while ((millis() - start) < ms) asm volatile("nop");
 }

@@ -593,10 +593,16 @@ void DisplayController_FD0604::_handleHistory() {
     EEPROM.get(_params.numHistoryAddress, numHistory);
 
     // check if free memory is enough to create the array for storing number history
-    int freeMemory = _freeMemory();
-    if (freeMemory < 0) freeMemory = 0;
-    freeMemory = freeMemory * 0.8; // leave 20% buffer room 
-    if ((unsigned int)freeMemory < numHistory * sizeof(PersistentStorageManager<int16_t>::StorageEntry)) {
+    const uint16_t total_ram = RAMEND - RAMSTART + 1;
+    const uint16_t min_allowed_ram = total_ram * 0.1; // leave 10% buffer room
+    const uint16_t mem_required = numHistory * sizeof(PersistentStorageManager<int16_t>::StorageEntry);
+    int free_memory = _freeMemory();
+    
+    if (free_memory < 0) free_memory = 0;
+
+    bool enough_memory_available = (min_allowed_ram + mem_required >= (unsigned int)free_memory) ? true : false;
+
+    if (enough_memory_available) {
         serial_print_P(F("MCU does not have enough free memory to display "));
         serial_print_u16(numHistory);
         serial_println_P(F(" number histories."));

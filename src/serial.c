@@ -152,10 +152,10 @@ void serial_print_i64(int64_t v) {
 
 // ===== FORMATS =====
 void serial_print_hex8(uint8_t v) {
-    const char hex[] = "0123456789ABCDEF";
+    static const char hex[] PROGMEM = "0123456789ABCDEF";
     //uart_tx('0'); uart_tx('x');
-    uart_tx(hex[v >> 4]);
-    uart_tx(hex[v & 0x0F]);
+    uart_tx(pgm_read_byte(&hex[v >> 4]));
+    uart_tx(pgm_read_byte(&hex[v & 0x0F]));
 }
 
 void serial_print_hex16(uint16_t v) {

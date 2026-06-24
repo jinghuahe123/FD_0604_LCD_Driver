@@ -2,12 +2,13 @@
 #define TIMER_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void init_millis(void);
+void init_timer0_millis(void);
 uint32_t millis(void);
 void busy_delay(uint16_t ms);
 
