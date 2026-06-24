@@ -27,7 +27,7 @@
 // Pattern:
 // {<gnds1>, <gnds2>}
 
-static const uint16_t number[40][2] PROGMEM = { // [digit][gnd pin]
+const uint16_t DisplayDriver_FD0604::number[40][2] PROGMEM = { // [digit][gnd pin]
   {0x0016, 0x000E}, // number 0 in ones digit
   {0x0000, 0x000C}, // number 1 in ones digit
   {0x001C, 0x000A}, // number 2 in ones digit
@@ -73,14 +73,14 @@ static const uint16_t number[40][2] PROGMEM = { // [digit][gnd pin]
   {0x0000, 0x0000}, // number 9 in thousands digit - CAUTION: is not supported
 };
 
-static const uint16_t special_character[4][2] PROGMEM {
+const uint16_t DisplayDriver_FD0604::special_character[4][2] PROGMEM {
   {0x0001, 0x0000}, // clock region
   {0x0408, 0x2040}, // nullDisplay
   {0x0000, 0x1800}, // highValue Symbol
   {0x000A, 0x0002} // degree symbol
 };
 
-static const uint16_t letter[24][2] PROGMEM = {
+const uint16_t DisplayDriver_FD0604::letter[24][2] PROGMEM = {
   {0x001A, 0x000E}, // A in ones digit
   {0x001E, 0x0004}, // B in ones digit
   {0x001C, 0x0000}, // C in ones digit
@@ -110,7 +110,7 @@ static const uint16_t letter[24][2] PROGMEM = {
   {0x0000, 0x0000}, // F in thousands digit - CAUTION is not supported
 };
 
-static const uint16_t number_upsidedown[40][2] PROGMEM {
+const uint16_t DisplayDriver_FD0604::number_upsidedown[40][2] PROGMEM {
   {0x0000, 0x0000}, // number 0 in ones digit - CAUTION: is not supported
   {0x0000, 0x0000}, // number 1 in ones digit - CAUTION: is not supported
   {0x3000, 0x7000}, // number 2 in ones digit
@@ -156,7 +156,7 @@ static const uint16_t number_upsidedown[40][2] PROGMEM {
   {0x001E, 0x0006}, // number 9 in thousands digit
 };
 
-static const uint16_t letter_upsidedown[24][2] PROGMEM = {
+const uint16_t DisplayDriver_FD0604::letter_upsidedown[24][2] PROGMEM = {
   {0x0000, 0x0000}, // A in ones digit - CAUTION: is not supported
   {0x0000, 0x0000}, // B in ones digit - CAUTION: is not supported
   {0x2000, 0x6000}, // C in ones digit 
@@ -186,7 +186,7 @@ static const uint16_t letter_upsidedown[24][2] PROGMEM = {
   {0x000C, 0x000C}, // F in thousands digit 
 }; 
 
-static const uint16_t special_character_upsidedown[4][2] PROGMEM = {
+const uint16_t DisplayDriver_FD0604::special_character_upsidedown[4][2] PROGMEM = {
   {0x0001, 0x0000}, // clock region
   {0x0408, 0x2040}, // nullDisplay
   {0x0000, 0x0000}, // highValue Symbol - deprecated & removed

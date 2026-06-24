@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <util/delay.h>
+#include <avr/pgmspace.h>
 
 #define NORMAL_DISPLAY              0
 #define FLIPPED_DISPLAY             1
@@ -50,6 +51,13 @@ class DisplayDriver_FD0604 {
         
 
     private:
+        static const uint16_t number[40][2] PROGMEM;
+        static const uint16_t special_character[4][2] PROGMEM;
+        static const uint16_t letter[24][2] PROGMEM;
+        static const uint16_t number_upsidedown[40][2] PROGMEM;
+        static const uint16_t letter_upsidedown[24][2] PROGMEM;
+        static const uint16_t special_character_upsidedown[4][2] PROGMEM;
+
         const DriverParameters* _params;
 
         volatile bool currentlyDisplayingGND = 0;
