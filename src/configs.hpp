@@ -1,13 +1,35 @@
 #include "DisplayController_FD0604.hpp"
 
 /*
-    EEPROM Memory Map:
+    ============================= EEPROM Memory Map =============================
+
     0x0000-0x001F   -   Firmware Version
     0x0020-0x003F   -   Display Paramaters
                             0x0020-0x002F   -   General Display Parameters
                             0x0030-0x0037   -   Temperature Parameters
                             0x0038-0x003F   -   Raw Input Parameters
     0x0040-0x03FF   -   Displayed Number History
+
+
+
+    ============================= NANO Board Pinout =============================
+
+            Status Heartbeat LED    D13 |  | D12    Secondary Input TX
+                                    3V3 |  | D11    Secondary Input RX
+                      AREF (3V3)    REF |  | D10
+                                    A0  |  |  D9
+                                    A1  |  |  D8
+                                    A2  |  |  D7
+                                    A3  |  |  D6    Shift Register Data Pin
+                                    A4  |  |  D5    Shift Register Clock Pin
+                                    A5  |  |  D4    Shift Register Latch Pin
+            Raw Input (AREF) Pin    A6  |  |  D3    
+          Temp Sensor (AREF) Pin    A7  |  |  D2    
+                                    5V  |  | GND
+                                    RST |  | RST
+                                    GND |  | RX0    Main Input RX
+                                    VIN |  | TX1    Main Input TX
+
 */
 
 
