@@ -90,7 +90,7 @@ void DisplayController_FD0604::_init() {
     _display.setDisplayOrientation(EEPROM.read(_params.displayOrientationAddress));
 }
 
-const DisplayController_FD0604::CommandHandler DisplayController_FD0604::commandHandlers[] = {
+const DisplayController_FD0604::CommandHandler DisplayController_FD0604::commandHandlers[] PROGMEM = {
     &DisplayController_FD0604::_handleHelp,
     &DisplayController_FD0604::_handleInfo,
     &DisplayController_FD0604::_handleMem,
@@ -134,7 +134,11 @@ void DisplayController_FD0604::processInput(const char* input) {
     }
     
     if (cmdIndex != -1) {
-        (this->*commandHandlers[cmdIndex])();
+        // unfortunately, cannot use pgm_read_ptr as it does not support casting to type CommandHandler from void*
+        // could consider using a union in future release
+        CommandHandler handler;
+        memcpy_P(&handler, &commandHandlers[cmdIndex], sizeof(handler));
+        (this->*handler)();
     } else {
         // Not a command, try to parse as a number
         if (!_parseAndSetNumber(_input)) { // also sets the number in the class variable
@@ -163,7 +167,7 @@ void DisplayController_FD0604::processSecondaryInput(const char* input) {
     }
 }
 
-const DisplayController_FD0604::DisplayHandler DisplayController_FD0604::displayHandlers[] = {
+const DisplayController_FD0604::DisplayHandler DisplayController_FD0604::displayHandlers[] PROGMEM = {
     nullptr,
     &DisplayController_FD0604::_displayOff,
     &DisplayController_FD0604::_displayCycle,
@@ -186,7 +190,9 @@ void DisplayController_FD0604::updateDisplay() {
             serial_println_P(F("Internal issue with display code, this line should never print.\nPlease check display functions."));
             return;
         }
-        (this->*displayHandlers[_number * -1])();
+        DisplayHandler handler;
+        memcpy_P(&handler, &displayHandlers[_number * -1], sizeof(handler));
+        (this->*handler)();
     } else if (!staticDisplayShown) {
         _display.showNumber(_display.getDisplayOrientation() ? _number * 10 : _number);
         staticDisplayShown = true;
@@ -474,7 +480,7 @@ void DisplayController_FD0604::_handleInit() {
 }
 
 
-const DisplayController_FD0604::SettingsHandler DisplayController_FD0604::settingsHandlers[] = {
+const DisplayController_FD0604::SettingsHandler DisplayController_FD0604::settingsHandlers[] PROGMEM = {
     nullptr,  // index 0 unused (menu starts at 1)
     &DisplayController_FD0604::_exitSettings,
     &DisplayController_FD0604::_updateCycleInterval,
@@ -533,7 +539,9 @@ void DisplayController_FD0604::_handleSettings() {
     }
 
     if (option >= 1 && option <= maxSettingsOptions) {
-        (this->*settingsHandlers[option])();
+        SettingsHandler handler;
+        memcpy_P(&handler, &settingsHandlers[option], sizeof(handler));
+        (this->*handler)();
     }
 }
 

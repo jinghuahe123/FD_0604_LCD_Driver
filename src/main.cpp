@@ -35,8 +35,8 @@ static void initStatusLED() {
     PORTB &= ~(1 << PB5);
 }
 
-static void updateStatusLED(const uint32_t overflow = 1000) {
-    static uint32_t counter = 0;
+static void updateStatusLED(const uint16_t overflow = 1000) {
+    static uint16_t counter = 0;
 
     if (counter == 0) {
         PINB |= (1 << PB5);
@@ -48,7 +48,7 @@ static void updateStatusLED(const uint32_t overflow = 1000) {
 // function of timer.h that runs every ms
 void isr_ms_timer(void) {
     DisplayDriver_FD0604::isr_multiplex_display_callback(displayDriver);
-    updateStatusLED(100);
+    updateStatusLED(32);
 }
 
 

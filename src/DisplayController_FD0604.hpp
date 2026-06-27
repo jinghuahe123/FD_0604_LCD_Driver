@@ -22,7 +22,6 @@
 
 class DisplayController_FD0604 {
 public:
-    // code assumes struct is placed in PROGMEM
     struct DisplayController_FD0604_Parameters {
         const uint16_t BASE_ADDR;
         const uint16_t NUM_SLOTS;
@@ -104,7 +103,7 @@ private:
     bool _parseAndSetNumber(const char* input);
 
     using CommandHandler = void(DisplayController_FD0604::*)();
-    static const CommandHandler commandHandlers[]; // static const array of function pointers to command handler functions
+    static const CommandHandler commandHandlers[] PROGMEM; // static const array of function pointers to command handler functions
     static const uint8_t maxCommandOptions;
     void _handleHelp();
     void _handleInfo();
@@ -122,7 +121,7 @@ private:
     void _handleReboot();
 
     using DisplayHandler = void(DisplayController_FD0604::*)();
-    static const DisplayHandler displayHandlers[];
+    static const DisplayHandler displayHandlers[] PROGMEM; // static const array of function pointers to display handler functions
     static const uint8_t maxDisplayHandlers;
     void _displayOff();
     void _displayCycle();
@@ -132,7 +131,7 @@ private:
 
     uint16_t _getSerial();
     using SettingsHandler = void(DisplayController_FD0604::*)();
-    static const SettingsHandler settingsHandlers[]; // static const array of function pointers
+    static const SettingsHandler settingsHandlers[] PROGMEM; // static const array of function pointers to settings handler functions
     static const uint8_t maxSettingsOptions;
     void _exitSettings();
     void _updateCycleInterval();
