@@ -13,8 +13,15 @@ extern "C" {
 #define F(s)    PSTR(s)
 #endif
 
-// increase as needed, right now max input command does not pass 16 characters inc null terminator
-#define RX_BUFFER_SIZE 16 
+#if !defined(USE_HW_UART) 
+    #if defined(UCSR0A) || defined(UCSRA)   /* ATmega multi-UART or ATtiny2313/4313 */
+        #define USE_HW_UART
+    #endif
+#endif
+
+#if defined(USE_HW_UART)
+
+#define RX_BUFFER_SIZE 16
 
 void serial_init(uint32_t baud);
 
@@ -52,6 +59,8 @@ void serial_print_float(float f, uint8_t decimals);
 
 // New Line
 void serial_ln(void);
+
+#endif // USE_HW_UART
 
 #ifdef __cplusplus
 }

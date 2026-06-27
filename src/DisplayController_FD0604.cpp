@@ -1,6 +1,6 @@
 #include "DisplayController_FD0604.hpp"
 #include "timer.h"
-#include "io_helper.h"
+#include "adc.h"
 #include "char_helper.h"
 #include <avr/wdt.h>
 #include <stdlib.h>

@@ -9,7 +9,7 @@
 #include "software_serial_avr_port_name_compatibility.h"
 #include "char_helper.h"
 #include "timer.h"
-#include "io_helper.h"
+#include "adc.h"
 #include "DisplayDriver_FD0604.hpp"
 #include "DisplayController_FD0604.hpp"
 
@@ -62,8 +62,8 @@ int main(void) {
 
     // ======= initialisation of secondary (software) serial interface =======
     software_serial_init(&secondarySerialInterface, 
-                        SOFT_RX_PORT, SOFT_RX_PIN,
-                        SOFT_TX_PORT, SOFT_TX_PIN,
+                        SOFT_RX_DIGITAL_PIN,
+                        SOFT_TX_DIGITAL_PIN,
                         false); // non-inverted logic
     software_serial_begin(&secondarySerialInterface, SOFTWARE_SERIAL_BAUD);
 

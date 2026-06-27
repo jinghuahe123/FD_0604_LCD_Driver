@@ -1,4 +1,4 @@
-#include "io_helper.h"
+#include "adc.h"
 #include <avr/io.h>
 
 #ifndef F_CPU
@@ -111,8 +111,36 @@ void init_adc(adc_reference_t ref) {
     ADCSRB = 0; // auto trigger disabled
 }
 
+/*
 uint16_t analog_read(uint8_t channel) {
     ADMUX = (ADMUX & 0xF0) | (channel & 0x0F); // select ADC channel by clearing low 4 bits, and set new channel
+
+    ADCSRA |= (1 << ADSC); // start conversion by setting ADSC bit
+
+    while (ADCSRA & (1 << ADSC)); // wait for conversion to finish
+
+    return ADC;
+}*/
+
+uint16_t analog_read(uint8_t channel) {
+    #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+        // ATtiny85: Only 4 ADC channels (0-3)
+        // Channel bits: MUX0-MUX2 (bits 0-2)
+        // Temperature sensor: MUX3 (bit 3) - not used here
+        // Keep REFS bits (bits 6-7), clear MUX bits (bits 0-4)
+        if (channel > 3) {
+            // Invalid channel, default to ADC0
+            channel = 0;
+        }
+        ADMUX = (ADMUX & 0xE0) | (channel & 0x07);
+    #else
+        // ATmega328P: 8 ADC channels (0-7)
+        // Channel bits: MUX0-MUX3 (bits 0-3)
+        if (channel > 7) {
+            channel = 0;
+        }
+        ADMUX = (ADMUX & 0xF0) | (channel & 0x0F);
+    #endif
 
     ADCSRA |= (1 << ADSC); // start conversion by setting ADSC bit
 

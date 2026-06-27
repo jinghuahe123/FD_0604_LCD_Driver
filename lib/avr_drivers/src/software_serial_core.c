@@ -1,4 +1,6 @@
 #include "software_serial_core.h"
+#include "software_serial_avr_port_name_compatibility.h"
+#include "core/avr_pins.h"
 #include <avr/wdt.h>
 #include <stddef.h>
 
@@ -10,47 +12,87 @@ SoftwareSerial_t *active_serial_instance = NULL;
 
 static inline volatile uint8_t* get_port_in(SS_Port_t port) {
     switch(port) {
+        #if defined(PORTB)
         case SS_PORT_B: return &PINB;
+        #endif
+        #if defined(PORTC)
         case SS_PORT_C: return &PINC;
+        #endif
+        #if defined(PORTD)
         case SS_PORT_D: return &PIND;
+        #endif
         default: return NULL;
     }
 }
 
 static inline volatile uint8_t* get_port_out(SS_Port_t port) {
     switch(port) {
+        #if defined(PORTB)
         case SS_PORT_B: return &PORTB;
+        #endif
+        #if defined(PORTC)
         case SS_PORT_C: return &PORTC;
+        #endif
+        #if defined(PORTD)
         case SS_PORT_D: return &PORTD;
+        #endif
         default: return NULL;
     }
 }
 
 static inline volatile uint8_t* get_ddr(SS_Port_t port) {
     switch(port) {
+        #if defined(DDRB)
         case SS_PORT_B: return &DDRB;
+        #endif
+        #if defined(DDRC)
         case SS_PORT_C: return &DDRC;
+        #endif
+        #if defined(DDRD)
         case SS_PORT_D: return &DDRD;
+        #endif
         default: return NULL;
     }
 }
 
 static inline volatile uint8_t* get_pcmsk(SS_Port_t port) {
     switch(port) {
-        case SS_PORT_B: return &PCMSK0;
-        case SS_PORT_C: return &PCMSK1;
-        case SS_PORT_D: return &PCMSK2;
+        #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+            // ATtiny uses a single PCMSK register for all pins
+            case SS_PORT_B: return &PCMSK;
+        #else
+            #if defined(PCMSK0)
+            case SS_PORT_B: return &PCMSK0;
+            #endif
+            #if defined(PCMSK1)
+            case SS_PORT_C: return &PCMSK1;
+            #endif
+            #if defined(PCMSK2)
+            case SS_PORT_D: return &PCMSK2;
+            #endif
+        #endif
         default: return NULL;
     }
 }
 
 static inline uint8_t get_pcint_bit(SS_Port_t port) {
+    #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+        // ATtiny uses a single PCIE bit in GIMSK
+        return PCIE; // Return the bit mask for the PCIE bit
+    #else
     switch(port) {
+        #if defined(PCIE0)
         case SS_PORT_B: return PCIE0;
+        #endif
+        #if defined(PCIE1)
         case SS_PORT_C: return PCIE1;
+        #endif
+        #if defined(PCIE2)
         case SS_PORT_D: return PCIE2;
+        #endif
         default: return 0;
     }
+    #endif
 }
 
 //=============================================================================
@@ -72,7 +114,12 @@ static void software_serial_recv(SoftwareSerial_t *ss) {
     if (ss->inverse_logic ? software_serial_rx_pin_read(ss) : !software_serial_rx_pin_read(ss)) {
 
         // Save and disable all timer interrupts
+        #if defined(TIMSK)
+        uint8_t saved_timsk = TIMSK; TIMSK = 0;
+        #endif
+        #if defined(TIMSK0)
         uint8_t saved_timsk0 = TIMSK0; TIMSK0 = 0;
+        #endif
         #if defined(TIMSK1)
         uint8_t saved_timsk1 = TIMSK1; TIMSK1 = 0;
         #endif
@@ -118,7 +165,12 @@ static void software_serial_recv(SoftwareSerial_t *ss) {
         _delay_loop_2(ss->rx_delay_stopbit);
 
         // Restore all timer interrupts
+        #if defined(TIMSK)
+        TIMSK = saved_timsk;
+        #endif
+        #if defined(TIMSK0)
         TIMSK0 = saved_timsk0;
+        #endif
         #if defined(TIMSK1)
         TIMSK1 = saved_timsk1;
         #endif
@@ -174,13 +226,24 @@ ISR(PCINT2_vect) {
 //=============================================================================
 
 void software_serial_init(SoftwareSerial_t *ss,
-                         uint8_t rx_port, uint8_t rx_pin,
-                         uint8_t tx_port, uint8_t tx_pin,
+                         uint8_t digital_pin_rx,
+                         uint8_t digital_pin_tx,
                          bool inverse_logic) {
+    AVR_Port_t rx_port, tx_port;
+    uint8_t rx_pin, tx_pin;
+    SS_Port_t ss_rx_port, ss_tx_port;
+    
+    avr_digital_to_pin(digital_pin_rx, &rx_port, &rx_pin);
+    avr_digital_to_pin(digital_pin_tx, &tx_port, &tx_pin);
+    
+    // Convert AVR_Port_t to SS_Port_t properly
+    ss_rx_port = avr_port_to_ss_port(rx_port);
+    ss_tx_port = avr_port_to_ss_port(tx_port);
+
     ss->rx_pin = rx_pin;
-    ss->rx_port = (SS_Port_t)rx_port;
+    ss->rx_port = ss_rx_port;  // Store SS_Port_t, not AVR_Port_t
     ss->tx_pin = tx_pin;
-    ss->tx_port = (SS_Port_t)tx_port;
+    ss->tx_port = ss_tx_port;  // Store SS_Port_t, not AVR_Port_t
     ss->inverse_logic = inverse_logic;
     ss->buffer_overflow = false;
     ss->is_listening = false;
@@ -189,12 +252,12 @@ void software_serial_init(SoftwareSerial_t *ss,
     ss->rx_buffer_tail = 0;
 
     ss->rx_bit_mask = (1 << rx_pin);
-    ss->rx_port_in = get_port_in((SS_Port_t)rx_port);
+    ss->rx_port_in = get_port_in(ss_rx_port);  // Use SS_Port_t
 
-    volatile uint8_t *rx_ddr = get_ddr((SS_Port_t)rx_port);
+    volatile uint8_t *rx_ddr = get_ddr(ss_rx_port);  // Use SS_Port_t
     *rx_ddr &= ~(ss->rx_bit_mask);
 
-    volatile uint8_t *rx_port_out = get_port_out((SS_Port_t)rx_port);
+    volatile uint8_t *rx_port_out = get_port_out(ss_rx_port);  // Use SS_Port_t
     if (!inverse_logic) {
         *rx_port_out |= ss->rx_bit_mask;   // pull‑up
     } else {
@@ -203,8 +266,8 @@ void software_serial_init(SoftwareSerial_t *ss,
 
     if (tx_pin <= 7) {
         ss->tx_bit_mask = (1 << tx_pin);
-        ss->tx_port_out = get_port_out((SS_Port_t)tx_port);
-        ss->tx_ddr = get_ddr((SS_Port_t)tx_port);
+        ss->tx_port_out = get_port_out(ss_tx_port);  // Use SS_Port_t
+        ss->tx_ddr = get_ddr(ss_tx_port);  // Use SS_Port_t
         *(ss->tx_ddr) |= ss->tx_bit_mask;
         if (!inverse_logic) {
             *(ss->tx_port_out) |= ss->tx_bit_mask;   // idle high
@@ -217,9 +280,9 @@ void software_serial_init(SoftwareSerial_t *ss,
         ss->tx_bit_mask = 0;
     }
 
-    ss->pcint_mask_reg = get_pcmsk((SS_Port_t)rx_port);
+    ss->pcint_mask_reg = get_pcmsk(ss_rx_port);  // Use SS_Port_t
     ss->pcint_mask_value = (1 << rx_pin);
-    ss->pcint_vector = get_pcint_bit((SS_Port_t)rx_port);
+    ss->pcint_vector = get_pcint_bit(ss_rx_port);  // Use SS_Port_t
 }
 
 //=============================================================================
@@ -255,7 +318,15 @@ void software_serial_begin(SoftwareSerial_t *ss, uint32_t baud_rate) {
                                   ? (bit_delay * 3 / 4 - (44 + 17) / 4) : 1;
         #endif
 
-        PCICR |= (1 << ss->pcint_vector);
+        //PCICR |= (1 << ss->pcint_vector);
+        // Enable pin change interrupt - different registers for ATtiny vs ATmega
+        #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+            // ATtiny uses GIMSK with PCIE bit
+            GIMSK |= (1 << PCIE);
+        #else
+            // ATmega uses PCICR with PCIE0, PCIE1, PCIE2 bits
+            PCICR |= (1 << ss->pcint_vector);
+        #endif
         *(ss->pcint_mask_reg) |= ss->pcint_mask_value;
 
         // Establish idle state if TX pin was low

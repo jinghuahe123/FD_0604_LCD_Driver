@@ -7,6 +7,9 @@
 #error F_CPU not defined. 
 #endif
 
+
+#if defined(USE_HW_UART)
+
 volatile uint8_t rx_buf[RX_BUFFER_SIZE];
 volatile uint8_t rx_head = 0;
 volatile uint8_t rx_tail = 0;
@@ -210,3 +213,5 @@ void serial_print_float(float f, uint8_t d) {
         frac -= digit;
     }
 }
+
+#endif // USE_HW_UART

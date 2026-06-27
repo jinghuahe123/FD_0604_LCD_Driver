@@ -18,7 +18,7 @@ extern "C" {
 
 // Configuration
 #ifndef SS_RX_BUFFER_SIZE
-#define SS_RX_BUFFER_SIZE 16
+#define SS_RX_BUFFER_SIZE 8 // max 5 needed for 4chars + null terminator
 #endif
 
 // Pin Change Interrupt vectors
@@ -38,9 +38,15 @@ extern "C" {
 // Port D: pins 0-7 (Arduino D0-D7)
 
 typedef enum {
+    #if defined(PORTB)
     SS_PORT_B = 0,
+    #endif
+    #if defined(PORTC)
     SS_PORT_C = 1,
+    #endif
+    #if defined(PORTD)
     SS_PORT_D = 2
+    #endif
 } SS_Port_t;
 
 typedef struct {
@@ -90,8 +96,8 @@ extern SoftwareSerial_t *active_serial_instance;
 //=============================================================================
 
 void software_serial_init(SoftwareSerial_t *ss, 
-                         uint8_t rx_port, uint8_t rx_pin,
-                         uint8_t tx_port, uint8_t tx_pin,
+                         uint8_t rx_pin,
+                         uint8_t tx_pin,
                          bool inverse_logic);
 
 void software_serial_begin(SoftwareSerial_t *ss, uint32_t baud_rate);

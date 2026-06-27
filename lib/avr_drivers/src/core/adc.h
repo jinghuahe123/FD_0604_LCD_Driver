@@ -1,5 +1,5 @@
-#ifndef IO_HELPER_H
-#define IO_HELPER_H
+#ifndef ADC_H
+#define ADC_H
 
 #include <stdint.h>
 
@@ -25,4 +25,4 @@ uint16_t analog_read(uint8_t channel);
 }
 #endif
 
-#endif // IO_HELPER_H
+#endif // ADC_H

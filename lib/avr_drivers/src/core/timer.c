@@ -7,7 +7,12 @@
 #endif
 
 // automatically calculate prescaler and OCR0A based on F_CPU
-#if F_CPU == 16000000UL
+#if F_CPU == 16500000UL
+    // 16.5MHz: Use prescaler 128, OCR0A = 128
+    // 16,500,000 / 128 / 1000 = 128.90625 - 1 = 127.90625 (round to 128)
+    #define TIMER0_PRESCALER_OPTION (1 << CS02)  // Prescaler 128
+    #define OCR0A_VALUE 64
+#elif F_CPU == 16000000UL
     // 16MHz: Use prescaler 64, OCR0A = 249
     #define TIMER0_PRESCALER_OPTION (1 << CS01) | (1 << CS00)  // Prescaler 64
     #define OCR0A_VALUE 249
@@ -62,7 +67,20 @@ void init_timer0_millis(void) {
 
     TCCR0B = TIMER0_PRESCALER_OPTION; // set prescaler
 
-    TIMSK0 |= (1 << OCIE0A); // enable match a interrupt
+    //TIMSK0 |= (1 << OCIE0A); // enable match a interrupt
+
+    /* Enable Output Compare A interrupt.
+     * ATtiny25/45/85 use TIMSK (all timers share one register).
+     * ATmega328P and most ATmega use TIMSK0 (one per timer).              */
+    #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+        TIMSK |= (1 << OCIE0A);
+    #elif defined(TIMSK0)
+        TIMSK0 |= (1 << OCIE0A);
+    #elif defined(TIMSK)
+        TIMSK  |= (1 << OCIE0A);          /* fallback for other ATtiny/ATmega    */
+    #else
+        #error "Cannot determine timer interrupt mask register (TIMSK0 / TIMSK)."
+    #endif
 }
 
 void __attribute__((weak)) isr_ms_timer(void) {

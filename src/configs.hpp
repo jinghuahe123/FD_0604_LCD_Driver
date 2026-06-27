@@ -16,12 +16,8 @@
 // @ 8MHz 2400 is the maximum working speed (1200 with heartbeat LED)
 // fix? - code issue or just hardware limit
 #define SOFTWARE_SERIAL_BAUD    1200
-// RX: PORTB, pin 3 D11
-#define SOFT_RX_PORT    SS_PORT_B
-#define SOFT_RX_PIN     3
-// TX: PORTB, pin 4 D12
-#define SOFT_TX_PORT    SS_PORT_B
-#define SOFT_TX_PIN     4
+#define SOFT_RX_DIGITAL_PIN    11
+#define SOFT_TX_DIGITAL_PIN    12
 // whether secondary serial output should print initialisation text
 #define SOFT_SERIAL_OUTPUT
 

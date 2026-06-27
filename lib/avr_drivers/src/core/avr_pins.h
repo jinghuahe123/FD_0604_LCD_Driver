@@ -52,9 +52,15 @@ extern "C" {
 
 // Use these with ANY code that needs port/pin representation
 typedef enum {
+    #if defined(PORTB)
     PORT_B = 0,
+    #endif
+    #if defined(PORTC)
     PORT_C = 1,
+    #endif
+    #if defined(PORTD)
     PORT_D = 2
+    #endif
 } AVR_Port_t;
 
 //=============================================================================
@@ -76,9 +82,13 @@ typedef enum {
 static inline uint8_t avr_pin_to_digital(AVR_Port_t port, uint8_t pin)
 {
     switch(port) {
+        #if defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__)
         case PORT_B: return 8 + pin;   // PB0-PB5 = D8-D13
         case PORT_C: return 14 + pin;  // PC0-PC5 = D14-D19 (A0-A5)
         case PORT_D: return pin;       // PD0-PD7 = D0-D7
+        #elif defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+        case PORT_B: return pin;       // PB0-PB5 = D0-D5
+        #endif
         default: return 0xFF;          // Invalid
     }
 }
@@ -98,6 +108,7 @@ static inline uint8_t avr_pin_to_digital(AVR_Port_t port, uint8_t pin)
  */
 static inline bool avr_digital_to_pin(uint8_t digital_pin, AVR_Port_t *port, uint8_t *pin)
 {
+    #if defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__)
     if (digital_pin >= 0 && digital_pin <= 7) {
         // D0-D7 = Port D
         *port = PORT_D;
@@ -116,6 +127,14 @@ static inline bool avr_digital_to_pin(uint8_t digital_pin, AVR_Port_t *port, uin
         *pin = digital_pin - 14;
         return true;
     }
+    #elif defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+    if (digital_pin >= 0 && digital_pin <= 5) {
+        // D0-D5 = Port B
+        *port = PORT_B;
+        *pin = digital_pin;
+        return true;
+    }
+    #endif
     
     return false;  // Invalid pin number
 }
@@ -126,9 +145,13 @@ static inline bool avr_digital_to_pin(uint8_t digital_pin, AVR_Port_t *port, uin
 static inline bool avr_pin_valid(AVR_Port_t port, uint8_t pin)
 {
     switch(port) {
+        #if defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__)
         case PORT_B: return (pin <= 5);  // PB0-PB5
         case PORT_C: return (pin <= 5);  // PC0-PC5
         case PORT_D: return (pin <= 7);  // PD0-PD7
+        #elif defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+        case PORT_B: return (pin <= 5);  // PB0-PB5
+        #endif
         default: return false;
     }
 }
@@ -151,9 +174,15 @@ static inline bool avr_digital_pin_valid(uint8_t digital_pin)
 static inline volatile uint8_t* avr_get_port_reg(AVR_Port_t port)
 {
     switch(port) {
+        #if defined(PORTB)
         case PORT_B: return &PORTB;
+        #endif
+        #if defined(PORTC)
         case PORT_C: return &PORTC;
+        #endif
+        #if defined(PORTD)
         case PORT_D: return &PORTD;
+        #endif
         default: return NULL;
     }
 }
@@ -164,9 +193,15 @@ static inline volatile uint8_t* avr_get_port_reg(AVR_Port_t port)
 static inline volatile uint8_t* avr_get_ddr_reg(AVR_Port_t port)
 {
     switch(port) {
+        #if defined(DDRB)
         case PORT_B: return &DDRB;
+        #endif
+        #if defined(DDRC)
         case PORT_C: return &DDRC;
+        #endif
+        #if defined(DDRD)
         case PORT_D: return &DDRD;
+        #endif
         default: return NULL;
     }
 }
@@ -177,9 +212,15 @@ static inline volatile uint8_t* avr_get_ddr_reg(AVR_Port_t port)
 static inline volatile uint8_t* avr_get_pin_reg(AVR_Port_t port)
 {
     switch(port) {
+        #if defined(PINB)
         case PORT_B: return &PINB;
+        #endif
+        #if defined(PINC)
         case PORT_C: return &PINC;
+        #endif
+        #if defined(PIND)
         case PORT_D: return &PIND;
+        #endif
         default: return NULL;
     }
 }
@@ -278,9 +319,15 @@ static inline void avr_port_name(AVR_Port_t port, char* buffer, size_t buflen)
 {
     const char* name;
     switch(port) {
+        #if defined(PORTB)
         case PORT_B: name = "PORTB"; break;
+        #endif
+        #if defined(PORTC)
         case PORT_C: name = "PORTC"; break;
+        #endif
+        #if defined(PORTD)
         case PORT_D: name = "PORTD"; break;
+        #endif
         default:     name = "INVALID"; break;
     }
     strlcpy(buffer, name, buflen);
@@ -343,6 +390,7 @@ static inline AVR_PinInfo_t avr_get_pin_info(AVR_Port_t port, uint8_t pin)
 //=============================================================================
 
 // Define pins with their port (for easy initialization)
+#if defined(PORTD)
 #define AVR_PIN_D0  { PORT_D, 0 }
 #define AVR_PIN_D1  { PORT_D, 1 }
 #define AVR_PIN_D2  { PORT_D, 2 }
@@ -351,18 +399,23 @@ static inline AVR_PinInfo_t avr_get_pin_info(AVR_Port_t port, uint8_t pin)
 #define AVR_PIN_D5  { PORT_D, 5 }
 #define AVR_PIN_D6  { PORT_D, 6 }
 #define AVR_PIN_D7  { PORT_D, 7 }
+#endif
+#if defined(PORTB)
 #define AVR_PIN_D8  { PORT_B, 0 }
 #define AVR_PIN_D9  { PORT_B, 1 }
 #define AVR_PIN_D10 { PORT_B, 2 }
 #define AVR_PIN_D11 { PORT_B, 3 }
 #define AVR_PIN_D12 { PORT_B, 4 }
 #define AVR_PIN_D13 { PORT_B, 5 }
+#endif
+#if defined(PORTC)
 #define AVR_PIN_A0  { PORT_C, 0 }
 #define AVR_PIN_A1  { PORT_C, 1 }
 #define AVR_PIN_A2  { PORT_C, 2 }
 #define AVR_PIN_A3  { PORT_C, 3 }
 #define AVR_PIN_A4  { PORT_C, 4 }
 #define AVR_PIN_A5  { PORT_C, 5 }
+#endif
 
 #ifdef __cplusplus
 }

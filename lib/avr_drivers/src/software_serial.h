@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 #include "software_serial_core.h"
-#include "avr_pins.h"
+#include "core/avr_pins.h"
 #include <avr/pgmspace.h>
 
 //=============================================================================
