@@ -18,7 +18,7 @@ extern "C" {
 
 // Configuration
 #ifndef SS_RX_BUFFER_SIZE
-#define SS_RX_BUFFER_SIZE 8 // max 5 needed for 4chars + null terminator
+#define SS_RX_BUFFER_SIZE 64 
 #endif
 
 // Pin Change Interrupt vectors

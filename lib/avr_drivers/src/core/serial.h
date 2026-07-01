@@ -21,7 +21,9 @@ extern "C" {
 
 #if defined(USE_HW_UART)
 
-#define RX_BUFFER_SIZE 16
+#ifndef RX_BUFFER_SIZE
+#define RX_BUFFER_SIZE 64
+#endif
 
 void serial_init(uint32_t baud);
 
