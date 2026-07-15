@@ -23,6 +23,8 @@
 class DisplayController_FD0604 {
 public:
     struct DisplayController_FD0604_Parameters {
+        DisplayDriver_FD0604::DriverParameters driverParams;
+
         const uint16_t BASE_ADDR;
         const uint16_t NUM_SLOTS;
 
@@ -52,8 +54,8 @@ public:
     };
 
 
-    DisplayController_FD0604(const DisplayDriver_FD0604::DriverParameters& driverParams, const DisplayController_FD0604_Parameters& params);
-    DisplayDriver_FD0604* getDisplayDriverObject();
+    DisplayController_FD0604(const DisplayController_FD0604_Parameters& params);
+    void multiplexDisplay();
     
     void updateDisplay();
     void processInput(const char* input);

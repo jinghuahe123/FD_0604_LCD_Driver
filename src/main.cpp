@@ -13,8 +13,7 @@
 #include "DisplayDriver_FD0604.hpp"
 #include "DisplayController_FD0604.hpp"
 
-static DisplayController_FD0604 displayController(displayParams, controllerParams);
-static DisplayDriver_FD0604* displayDriver = displayController.getDisplayDriverObject();
+static DisplayController_FD0604 displayController(controllerParams);
 static SoftwareSerial_t secondarySerialInterface;
 
 static void updateVersion(const bool print=0) {
@@ -47,7 +46,7 @@ static void updateStatusLED(const uint16_t overflow = 1000) {
 
 // function of timer.h that runs every ms
 void isr_ms_timer(void) {
-    DisplayDriver_FD0604::isr_multiplex_display_callback(displayDriver);
+    displayController.multiplexDisplay();
     updateStatusLED(32);
 }
 

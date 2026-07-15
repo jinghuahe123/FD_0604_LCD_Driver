@@ -46,27 +46,27 @@
 #define FIRMWARE_VER_SIZE       32
 constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.37";
 
-const DisplayDriver_FD0604::DriverParameters displayParams = {
-    .npn_transistor_enable = 1,
-	
-    // pin D4
-	.DDRx_latchPin = &DDRD,             // latchpin data direction register
-	.PORTx_latchPin = &PORTD,           // latchpin port register
-	.PIN_latchPin = 4,                  // latchpin physical pin (on register)
-	
-    // pin D5
-	.DDRx_clockPin = &DDRD,             // clockpin data direction register   
-	.PORTx_clockPin = &PORTD,           // clockpin port register
-	.PIN_clockPin = 5,                  // clockpin physical pin (on register)
-	
-    // pin D6
-	.DDRx_dataPin = &DDRD,              // datapin data direction register
-	.PORTx_dataPin = &PORTD,            // datapin port register
-	.PIN_dataPin = 6,                   // datapin physical pin (on register)
-};
-
 
 const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
+    .driverParams = {
+        .npn_transistor_enable = 1,
+	
+        // pin D4
+        .DDRx_latchPin = &DDRD,             // latchpin data direction register
+        .PORTx_latchPin = &PORTD,           // latchpin port register
+        .PIN_latchPin = 4,                  // latchpin physical pin (on register)
+        
+        // pin D5
+        .DDRx_clockPin = &DDRD,             // clockpin data direction register   
+        .PORTx_clockPin = &PORTD,           // clockpin port register
+        .PIN_clockPin = 5,                  // clockpin physical pin (on register)
+        
+        // pin D6
+        .DDRx_dataPin = &DDRD,              // datapin data direction register
+        .PORTx_dataPin = &PORTD,            // datapin port register
+        .PIN_dataPin = 6,                   // datapin physical pin (on register)
+    },
+
     .BASE_ADDR = 0x0040,     // EEPROM address to start writing writing from
     .NUM_SLOTS = 160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
 

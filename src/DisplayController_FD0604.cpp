@@ -53,15 +53,18 @@ const uint8_t DisplayController_FD0604::_commandListSize =
  * @param driverParams      DisplayDriver_FD0604 params to pass.
  * @param params            Controller-specific parameters struct to pass.
  */
-DisplayController_FD0604::DisplayController_FD0604(const DisplayDriver_FD0604::DriverParameters& driverParams, const DisplayController_FD0604_Parameters& params) : 
-        _params(params), _display(driverParams), _storageManager(_params.BASE_ADDR, _params.NUM_SLOTS), 
-        transistor_enabled_flag(driverParams.npn_transistor_enable) {
+DisplayController_FD0604::DisplayController_FD0604(const DisplayController_FD0604_Parameters& params) : 
+        _params(params), _display(_params.driverParams), _storageManager(_params.BASE_ADDR, _params.NUM_SLOTS), 
+        transistor_enabled_flag(_params.driverParams.npn_transistor_enable) {
 
     _init();
 }
 
-DisplayDriver_FD0604* DisplayController_FD0604::getDisplayDriverObject() {
-    return &_display;
+/**
+ * @details       ISR handler for multiplexing the display. Should be called in the main loop or timer interrupt.
+ */
+void DisplayController_FD0604::multiplexDisplay() {
+    _display.multiplexDisplay();
 }
 
 /**

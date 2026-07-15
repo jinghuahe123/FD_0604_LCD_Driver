@@ -232,17 +232,9 @@ void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
 */
 
 /**
- * @details       Static multiplex callback for running in ISR routine.
- * @param obj     The corresponding display object to multiplex. 
+ * @details       ISR handler for multiplexing the display. Should be called in the main loop or timer interrupt.
  */
-void DisplayDriver_FD0604::isr_multiplex_display_callback(DisplayDriver_FD0604* obj) {
-  obj->multiplexdisplayHandler();
-}
-
-/**
- * @details       Handles whether normal or minimal display multiplexer is used. 
- */
-void DisplayDriver_FD0604::multiplexdisplayHandler() {
+void DisplayDriver_FD0604::multiplexDisplay() {
   multiplex_display();
 }
 
