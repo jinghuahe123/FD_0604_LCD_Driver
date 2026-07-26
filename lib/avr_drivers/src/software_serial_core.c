@@ -6,6 +6,11 @@
 
 SoftwareSerial_t *active_serial_instance = NULL;
 
+// shared rx_buffer for all instances, given only one can listen at a time
+static volatile uint8_t rx_buffer[SS_RX_BUFFER_SIZE] = { 0 };
+static volatile uint8_t rx_buffer_head = 0;
+static volatile uint8_t rx_buffer_tail = 0;
+
 //=============================================================================
 // Helper: port register access
 //=============================================================================
@@ -154,13 +159,15 @@ static void software_serial_recv(SoftwareSerial_t *ss) {
             d = ~d;
         }
 
-        next_head = (ss->rx_buffer_head + 1) % SS_RX_BUFFER_SIZE;
-        if (next_head != ss->rx_buffer_tail) {
-            ss->rx_buffer[ss->rx_buffer_head] = d;
-            ss->rx_buffer_head = next_head;
+        /*
+        next_head = (rx_buffer_head + 1) % SS_RX_BUFFER_SIZE;
+        if (next_head != rx_buffer_tail) {
+            rx_buffer[rx_buffer_head] = d;
+            rx_buffer_head = next_head;
         } else {
             ss->buffer_overflow = true;
         }
+        */
 
         _delay_loop_2(ss->rx_delay_stopbit);
 
@@ -189,6 +196,14 @@ static void software_serial_recv(SoftwareSerial_t *ss) {
 
         if (ss->pcint_mask_reg) {
             *(ss->pcint_mask_reg) |= ss->pcint_mask_value;
+        }
+
+        next_head = (rx_buffer_head + 1) % SS_RX_BUFFER_SIZE;
+        if (next_head != rx_buffer_tail) {
+            rx_buffer[rx_buffer_head] = d;
+            rx_buffer_head = next_head;
+        } else {
+            ss->buffer_overflow = true;
         }
     }
 }
@@ -248,8 +263,6 @@ void software_serial_init(SoftwareSerial_t *ss,
     ss->buffer_overflow = false;
     ss->is_listening = false;
     ss->initialized = true;
-    ss->rx_buffer_head = 0;
-    ss->rx_buffer_tail = 0;
 
     ss->rx_bit_mask = (1 << rx_pin);
     ss->rx_port_in = get_port_in(ss_rx_port);  // Use SS_Port_t
@@ -347,8 +360,8 @@ bool software_serial_listen(SoftwareSerial_t *ss) {
         if (active_serial_instance != NULL) {
             software_serial_stop_listening(active_serial_instance);
         }
-        ss->rx_buffer_head = 0;
-        ss->rx_buffer_tail = 0;
+        rx_buffer_head = 0;
+        rx_buffer_tail = 0;
         ss->buffer_overflow = false;
         active_serial_instance = ss;
         ss->is_listening = true;
@@ -380,29 +393,31 @@ bool software_serial_is_listening(SoftwareSerial_t *ss) {
 
 void software_serial_end(SoftwareSerial_t *ss) {
     software_serial_stop_listening(ss);
-    ss->rx_buffer_head = 0;
-    ss->rx_buffer_tail = 0;
+    if (active_serial_instance == NULL) {   // ss was the active one and just got cleared
+        rx_buffer_head = 0;
+        rx_buffer_tail = 0;
+    }
     ss->buffer_overflow = false;
     ss->initialized = false;
 }
 
 int software_serial_available(SoftwareSerial_t *ss) {
     if (!software_serial_is_listening(ss)) return 0;
-    return (SS_RX_BUFFER_SIZE + ss->rx_buffer_head - ss->rx_buffer_tail) % SS_RX_BUFFER_SIZE;
+    return (SS_RX_BUFFER_SIZE + rx_buffer_head - rx_buffer_tail) % SS_RX_BUFFER_SIZE;
 }
 
 uint8_t software_serial_read(SoftwareSerial_t *ss) {
     if (!software_serial_is_listening(ss)) return 0;
-    if (ss->rx_buffer_head == ss->rx_buffer_tail) return 0;
-    uint8_t data = ss->rx_buffer[ss->rx_buffer_tail];
-    ss->rx_buffer_tail = (ss->rx_buffer_tail + 1) % SS_RX_BUFFER_SIZE;
+    if (rx_buffer_head == rx_buffer_tail) return 0;
+    uint8_t data = rx_buffer[rx_buffer_tail];
+    rx_buffer_tail = (rx_buffer_tail + 1) % SS_RX_BUFFER_SIZE;
     return data;
 }
 
 int16_t software_serial_peek(SoftwareSerial_t *ss) {
     if (!software_serial_is_listening(ss)) return -1;
-    if (ss->rx_buffer_head == ss->rx_buffer_tail) return -1;
-    return (int16_t)ss->rx_buffer[ss->rx_buffer_tail];
+    if (rx_buffer_head == rx_buffer_tail) return -1;
+    return (int16_t)rx_buffer[rx_buffer_tail];
 }
 
 bool software_serial_overflow(SoftwareSerial_t *ss) {
@@ -412,8 +427,9 @@ bool software_serial_overflow(SoftwareSerial_t *ss) {
 }
 
 void software_serial_flush(SoftwareSerial_t *ss) {
-    ss->rx_buffer_head = 0;
-    ss->rx_buffer_tail = 0;
+    if (!software_serial_is_listening(ss)) return;
+    rx_buffer_head = 0;
+    rx_buffer_tail = 0;
     ss->buffer_overflow = false;
 }
 
@@ -421,6 +437,7 @@ void software_serial_flush(SoftwareSerial_t *ss) {
 // TX – optimized with interrupt management and compensation
 //=============================================================================
 
+/*
 void software_serial_write(SoftwareSerial_t *ss, uint8_t data) {
     if (ss->tx_delay == 0 || ss->tx_port_out == NULL) return;
 
@@ -454,4 +471,41 @@ void software_serial_write(SoftwareSerial_t *ss, uint8_t data) {
 
     SREG = old_sreg;
     _delay_loop_2(delay / 2);  // extra guard
+}*/
+
+void software_serial_write(SoftwareSerial_t *ss, uint8_t data) {
+    if (ss->tx_delay == 0 || ss->tx_port_out == NULL) return;
+
+    volatile uint8_t *port_out = ss->tx_port_out;
+    uint8_t bit_mask = ss->tx_bit_mask;
+    uint8_t inv_bit_mask = ~bit_mask;
+    bool inv = ss->inverse_logic;
+    uint16_t delay = ss->tx_delay;
+
+    if (inv) data = ~data;
+
+    uint8_t old_sreg = SREG;
+    cli();
+
+    // Start bit
+    if (inv) *port_out |= bit_mask;
+    else *port_out &= inv_bit_mask;
+    _delay_loop_2(delay);
+
+    // Data bits - LSB first
+    for (uint8_t i = 0; i < 8; i++) {
+        if (data & 0x01) *port_out |= bit_mask;
+        else *port_out &= inv_bit_mask;
+        _delay_loop_2(delay);
+        data >>= 1;
+    }
+
+    // Stop bit
+    if (inv) *port_out &= inv_bit_mask;
+    else *port_out |= bit_mask;
+
+    SREG = old_sreg;
+    
+    // Add small delay for stop bit
+    _delay_loop_2(delay);
 }

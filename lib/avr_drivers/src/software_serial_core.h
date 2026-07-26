@@ -16,7 +16,8 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-// Configuration
+#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+
 #ifndef SS_RX_BUFFER_SIZE
 #define SS_RX_BUFFER_SIZE 64 
 #endif
@@ -81,11 +82,6 @@ typedef struct {
     bool buffer_overflow:1;
     bool is_listening:1;
     bool initialized:1;
-    
-    // Ring buffer
-    volatile uint8_t rx_buffer[SS_RX_BUFFER_SIZE];
-    volatile uint8_t rx_buffer_head;
-    volatile uint8_t rx_buffer_tail;
 } SoftwareSerial_t;
 
 // Global active instance

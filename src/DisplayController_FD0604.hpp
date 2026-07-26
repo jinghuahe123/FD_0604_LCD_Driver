@@ -74,9 +74,9 @@ private:
     
     // Calculate total RAM (AVR) or use manual define
     #if !defined(TOTAL_RAM) && defined(__AVR__)
-    const uint16_t TOTAL_RAM = RAMEND - RAMSTART + 1;
+    static constexpr uint16_t TOTAL_RAM = RAMEND - RAMSTART + 1;
     #elif !defined(TOTAL_RAM)
-    const unsigned int TOTAL_RAM = 0; // Fallback
+    static constexpr unsigned uint16_t TOTAL_RAM = 0; // Fallback
     #endif
 
     int16_t _number = 0;
@@ -99,7 +99,7 @@ private:
 
     void _updateDisplay();
     void _displayInit(int8_t initTime = 60);
-    static int _freeMemory();
+    static uint16_t _freeMemory();
     static bool _checkIfNumericSigned(const char* str, int16_t& number);
     static bool _checkIfNumericUnsigned(const char* str, uint16_t& number);
     bool _parseAndSetNumber(const char* input);

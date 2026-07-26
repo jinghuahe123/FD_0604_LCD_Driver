@@ -57,7 +57,7 @@ class DisplayDriver_FD0604 {
         static const uint16_t letter_upsidedown[24][2] PROGMEM;
         static const uint16_t special_character_upsidedown[4][2] PROGMEM;
 
-        const DriverParameters* _params;
+        const DriverParameters _params;
 
         volatile bool currentlyDisplayingGND = 0;
         volatile uint16_t displayingDigits[2] = {0};

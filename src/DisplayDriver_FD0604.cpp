@@ -1,10 +1,10 @@
 #include "DisplayDriver_FD0604.hpp"
 #include "Digit_Patterns.hpp"
 
-DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParameters& params) : _params(&params) {
-  *(_params->DDRx_latchPin) |= (1 << _params->PIN_latchPin);
-	*(_params->DDRx_clockPin) |= (1 << _params->PIN_clockPin);
-	*(_params->DDRx_dataPin) |= (1 << _params->PIN_dataPin);
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParameters& params) : _params(params) {
+  *(_params.DDRx_latchPin) |= (1 << _params.PIN_latchPin);
+	*(_params.DDRx_clockPin) |= (1 << _params.PIN_clockPin);
+	*(_params.DDRx_dataPin) |= (1 << _params.PIN_dataPin);
 }
 
 
@@ -216,7 +216,7 @@ void DisplayDriver_FD0604::showNull() {
  */
 void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
     uint16_t mask = (1 << 0) | (1 << 15);
-    uint16_t pattern = _params->npn_transistor_enable ? (1 << 0) : (1 << 15);
+    uint16_t pattern = _params.npn_transistor_enable ? (1 << 0) : (1 << 15);
 
     displayingDigits[0] = (data[0] & ~mask) | pattern;
     displayingDigits[1] = (data[1] & ~mask) | (pattern ^ mask); // Invert pattern (gnd layout)
@@ -245,10 +245,10 @@ void DisplayDriver_FD0604::multiplexDisplay() {
 void DisplayDriver_FD0604::multiplex_display() {
   // gnd pins handled by handlePinConfigurations when called by things like showNumber.
 
-  *(_params->PORTx_latchPin) &= ~(1 << _params->PIN_latchPin);
+  *(_params.PORTx_latchPin) &= ~(1 << _params.PIN_latchPin);
   shiftOutLSBFirst((uint8_t)displayingDigits[currentlyDisplayingGND]);
   shiftOutLSBFirst((uint8_t)(displayingDigits[currentlyDisplayingGND] >> 8));
-  *(_params->PORTx_latchPin) |= (1 << _params->PIN_latchPin);
+  *(_params.PORTx_latchPin) |= (1 << _params.PIN_latchPin);
 
   currentlyDisplayingGND = !currentlyDisplayingGND;
 }
@@ -261,14 +261,14 @@ void DisplayDriver_FD0604::multiplex_display() {
 void DisplayDriver_FD0604::shiftOutLSBFirst(uint8_t val) {
   for (uint8_t i=0; i<8; i++) {
     if (val & 1) {
-      *(_params->PORTx_dataPin) |= (1 << _params->PIN_dataPin);
+      *(_params.PORTx_dataPin) |= (1 << _params.PIN_dataPin);
     } else {
-      *(_params->PORTx_dataPin) &= ~(1 << _params->PIN_dataPin);
+      *(_params.PORTx_dataPin) &= ~(1 << _params.PIN_dataPin);
     }
     val >>= 1;
 
-    *(_params->PORTx_clockPin) |= (1 << _params->PIN_clockPin);
-    *(_params->PORTx_clockPin) &= ~(1 << _params->PIN_clockPin);
+    *(_params.PORTx_clockPin) |= (1 << _params.PIN_clockPin);
+    *(_params.PORTx_clockPin) &= ~(1 << _params.PIN_clockPin);
   }
 }
 

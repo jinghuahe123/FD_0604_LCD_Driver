@@ -35,16 +35,14 @@
 
 #define HARDWARE_SERIAL_BAUD    1000000
 
-// @ 8MHz 2400 is the maximum working speed (1200 with heartbeat LED)
-// fix? - code issue or just hardware limit
-#define SOFTWARE_SERIAL_BAUD    1200
+#define SOFTWARE_SERIAL_BAUD   4800
 #define SOFT_RX_DIGITAL_PIN    11
 #define SOFT_TX_DIGITAL_PIN    12
 // whether secondary serial output should print initialisation text
 #define SOFT_SERIAL_OUTPUT
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.37";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.38";
 
 
 const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {

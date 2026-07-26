@@ -1,6 +1,7 @@
 #include <EEPROM.h>
 #include <avr/wdt.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 #include "configs.hpp"
 #include "avr_pins.h"
@@ -93,6 +94,8 @@ int main(void) {
     software_serial_println_P(&secondarySerialInterface, F("Secondary Serial Interface - INPUT (NUMBERS) ONLY."));
     software_serial_println_P(&secondarySerialInterface, F("Refer to Main Serial Interface for Verbose Output."));
     #endif
+
+    sei(); // enable global interrupts
     
 
     for (;;) {

@@ -130,7 +130,6 @@ void DisplayController_FD0604::processInput(const char* input) {
 
     int8_t cmdIndex = _findCommandIndex(_input);
 
-    // process as a switch statement and then pass to individual functions rather than as a continuous if statement
     if (cmdIndex > maxCommandOptions) {
         serial_println_P(F("Internal issue with command code, this line should never print.\nPlease check command functions align with command key words."));
         return;
@@ -374,10 +373,10 @@ void DisplayController_FD0604::_displayInit(int8_t initTime) {
  * @details         Gets the number of bytes from the stack to the heap.
  * @return          Returns the number of bytes of memory from the stack to the heap. 
  */
-int DisplayController_FD0604::_freeMemory() {
+uint16_t DisplayController_FD0604::_freeMemory() {
     extern int __heap_start, *__brkval;
-    int v;
-    return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+    char v;
+    return (uint16_t) &v - (__brkval == 0 ? (uint16_t) &__heap_start : (uint16_t) __brkval);
 }
 
 /**
@@ -473,6 +472,18 @@ void DisplayController_FD0604::_handleMem() {
     serial_print_P(F(" bytes free. ("));
     serial_print_float(percentFree, 2);
     serial_println_P(F("%)"));
+
+    extern int __heap_start, *__brkval;
+    uint16_t heapSize = (__brkval == 0 ? 0 : (uint16_t)__brkval - (uint16_t)&__heap_start);
+    if (heapSize > 0) {
+        serial_println_P(F("CAUTION: Heap allocations detected. Resolve in release builds."));
+
+        serial_print_P(F("Heap Size: "));
+        serial_print_u16(heapSize);
+        serial_print_P(F(" bytes. ("));
+        serial_print_float(100.0f * static_cast<float>(heapSize) / TOTAL_RAM, 2);
+        serial_println_P(F("%)"));
+    }
 }
 
 /**
@@ -621,8 +632,8 @@ void DisplayController_FD0604::_handleHistory() {
         PersistentStorageManager<int16_t>::StorageEntry entries[numHistory] = {0};
 
         auto print_padded_u32 = [](uint32_t value, uint8_t digits) {
-            char buffer[11]; // max 10 digits + null terminator
-            char* ptr = buffer + 10;
+            char buffer[digits + 1]; // max 10 digits + null terminator
+            char* ptr = buffer + digits; // point to the end of the buffer
             *ptr = '\0';
 
             for (uint8_t i=0; i<digits; i++) {
