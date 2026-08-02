@@ -12,9 +12,9 @@
 #include "timer.h"
 #include "adc.h"
 #include "DisplayDriver_FD0604.hpp"
-#include "DisplayController_FD0604.hpp"
+#include "DisplayController.hpp"
 
-static DisplayController_FD0604 displayController(controllerParams);
+static DisplayController displayController(displayParams);
 static SoftwareSerial_t secondarySerialInterface;
 
 static void updateVersion(const bool print=0) {

@@ -1,4 +1,4 @@
-#include "DisplayController_FD0604.hpp"
+#include "DisplayParameters.hpp"
 
 /*
     ============================= EEPROM Memory Map =============================
@@ -42,10 +42,10 @@
 #define SOFT_SERIAL_OUTPUT
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.38";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.39";
 
 
-const DisplayController_FD0604::DisplayController_FD0604_Parameters controllerParams = {
+const DisplayParameters displayParams = {
     .driverParams = {
         .npn_transistor_enable = 1,
 	

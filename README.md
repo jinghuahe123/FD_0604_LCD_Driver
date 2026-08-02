@@ -23,7 +23,6 @@ Any number for the given ranges can be displayed on the screen:
 | TEMP      | Turns the display into a thermometer using thermosistor attached.         |
 | RAW       | Shows RAW Input from an analog input.                                     |
 | CYCLE     | Cycles continuously from 0-3999 / 0-999.                                  |
-| INIT      | Flashes all possible digits and letters once.                             |
 | NULL      | Shows --:-- on the display.                                               |
 | OFF       | Turns off the display.                                                    |
 
