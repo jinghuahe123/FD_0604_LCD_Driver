@@ -120,7 +120,7 @@ void DisplaySettingsManager::displaySettingsInfo() {
     serial_ln();
 
     if (numHistory == 0 || countingInterval == 0 || temperatureUpdateInterval == 0 || rawInputUpdateInterval == 0
-        || numHistory == 65535 || countingInterval == 65535 || temperatureUpdateInterval == 65535 || rawInputUpdateInterval == 65535) {
+        || numHistory == UINT16_MAX || countingInterval == UINT16_MAX || temperatureUpdateInterval == UINT16_MAX || rawInputUpdateInterval == UINT16_MAX) {
         serial_println_P(F("CAUTION: Board may have been reset. Multiple settings are incorrect."));
         serial_println_P(F("Please run SETTINGS command to set the parameters. Thank you."));
         serial_ln();

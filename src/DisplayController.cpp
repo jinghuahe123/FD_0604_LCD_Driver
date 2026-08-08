@@ -74,11 +74,14 @@ void DisplayController::processInput(const char* input) {
     }
 
     // try to process as command 
-    if (_commandProcessor.processCommand(_input)) {
+    bool isConfigurationCommand = false;
+    if (_commandProcessor.processCommand(_input, isConfigurationCommand)) {
         int16_t number = _modeManager.getMode();
-        if (number != _number) {
-            _number = number;
-            _updateDisplayNumber();
+        if (!isConfigurationCommand) {
+            if (number != _number) {
+                _number = number;
+            }
+            _updateDisplayNumber(); // update EEPROM and show number if not a configuration command
         }
 
         _staticDisplayShown = false; // reset static display flag to allow for new display update
@@ -110,7 +113,8 @@ void DisplayController::processSecondaryInput(const char* input) {
     }
 
     // try to process as command 
-    if (_commandProcessor.processCommand(_input)) {
+    bool isConfigurationCommand = false; // this is redundant for secondary input, but we keep it for consistency
+    if (_commandProcessor.processCommand(_input, isConfigurationCommand)) {
         _staticDisplayShown = false; // reset static display flag to allow for new display update
         return; // command processed successfully
     }

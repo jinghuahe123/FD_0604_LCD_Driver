@@ -35,9 +35,10 @@ public:
     /**
      * @brief Process a command string
      * @param input Command input from serial
+     * @param isConfigurationCommand Output flag indicating if the command was a configuration command
      * @return true if command was processed, false if it was a number
      */
-    bool processCommand(const char* input);
+    bool processCommand(const char* input, bool& isConfigurationCommand);
     
     /**
      * @brief Show available commands
@@ -82,6 +83,7 @@ private:
     using CommandHandler = void(DisplayCommandProcessor::*)();
     static const CommandHandler _commandHandlers[] PROGMEM;
     static const uint8_t _maxCommandOptions;
+    static const uint8_t _configurationCommandEndIndex;
 
     void _handleHelp();
     void _handleInfo();

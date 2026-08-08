@@ -1,212 +1,185 @@
 #include "DisplayDriver_FD0604.hpp"
 #include "Digit_Patterns.hpp"
 
-DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParameters& params) : _params(params) {
-  *(_params.DDRx_latchPin) |= (1 << _params.PIN_latchPin);
-	*(_params.DDRx_clockPin) |= (1 << _params.PIN_clockPin);
-	*(_params.DDRx_dataPin) |= (1 << _params.PIN_dataPin);
+const char DisplayDriver_FD0604::letter_mask[] PROGMEM = "abcdef";
+const uint16_t DisplayDriver_FD0604::gnd_mask = (1 << 0) | (1 << 15);
+
+DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverParameters& params) 
+    : gnd_pattern(params.npn_transistor_enable ? (1 << 0) : (1 << 15)),
+      _params(params) 
+{
+    *(_params.DDRx_latchPin) |= (1 << _params.PIN_latchPin);
+    *(_params.DDRx_clockPin) |= (1 << _params.PIN_clockPin);
+    *(_params.DDRx_dataPin) |= (1 << _params.PIN_dataPin);
+
+    displayingDigits.gnd0Mask = 0;
+    displayingDigits.gnd1Mask = 0;
 }
 
-
 void DisplayDriver_FD0604::setDisplayOrientation(bool orientation) {
-  displayOrientation = orientation;
+    displayOrientation = orientation;
 }
 
 void DisplayDriver_FD0604::flipDisplayOrientation() {
-  displayOrientation = !displayOrientation;
+    displayOrientation = !displayOrientation;
 }
 
 bool DisplayDriver_FD0604::getDisplayOrientation() {
-  return displayOrientation;
+    return displayOrientation;
 }
 
-void DisplayDriver_FD0604::checkClock(bool& clock, uint16_t (&arr)[2]) {
-  if (clock)  {
-    if (displayOrientation == NORMAL_DISPLAY) {
-      getSpecialChar(0, arr);
-    } else {
-      getSpecialCharUpsideDown(0, arr);
+void DisplayDriver_FD0604::checkClock(bool& clock, DisplayMask& arr) {
+    if (clock)  {
+        if (displayOrientation == NORMAL_DISPLAY) {
+            getSpecialChar(0, arr);
+        } else {
+            getSpecialCharUpsideDown(0, arr);
+        }
     }
-  }
 }
 
-/**
- * @details   Clears the display.
- */
 void DisplayDriver_FD0604::clear() {
-  displayingDigits[0] = {0};
-  displayingDigits[1] = {0};
+    displayingDigits.gnd0Mask = 0;
+    displayingDigits.gnd1Mask = 0;
 }
 
-/**
- * @details                 Parses each individual display number together.
- * @param number            The desired display number.
- * @param interval          The time the number should be displayed for.
- * @param leading_zeroes    Toggles whether the display will show leading zeroes.
- * @param clock             Toggle the clock LEDs. 
- */
 void DisplayDriver_FD0604::showNumber(uint16_t number, bool leading_zeroes, bool clock) { 
-  uint16_t each_digit[4] = {0};
-  uint16_t arr[5][2] = {0};
-  uint16_t out[2] = {0};
-  bool leading_digit = true;
-  
-  // Parse the number into the array
-  for (int8_t i = 3; i >= 0; i--) {
-    each_digit[i] = number % 10; // Extract the last digit
-    number /= 10;         // Remove the last digit from the number
-  }  
+    uint8_t each_digit_number[4] = {0};
+    DisplayMask each_digit_mask[5] = {0}; // array to store each digit's display mask, including the clock mask, before it is combined into a single output mask
+    DisplayMask output;
+    bool leading_digit = true;
+    
+    // Parse the number into the array
+    for (int8_t i = 3; i >= 0; i--) {
+        each_digit_number[i] = number % 10; // Extract the last digit
+        number /= 10;         // Remove the last digit from the number
+    }  
 
-  // Addition for confining to digit patterns array layout
-  for (int8_t i=0; i<4; i++) {
-    if (leading_digit && each_digit[i] != 0) {
-      leading_digit = false;
-    } 
-    if (!leading_digit || leading_zeroes) {
-      if (displayOrientation == NORMAL_DISPLAY) {
-        getNumber(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
-      } else {
-        getNumberUpsideDown(each_digit[i] + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
-      }
+    // Addition for confining to digit patterns array layout
+    for (int8_t i=0; i<4; i++) {
+        if (leading_digit && each_digit_number[i] != 0) {
+            leading_digit = false;
+        } 
+        if (!leading_digit || leading_zeroes) {
+            if (displayOrientation == NORMAL_DISPLAY) {
+                getNumber(each_digit_number[i] + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
+            } else {
+                getNumberUpsideDown(each_digit_number[i] + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
+            }
+        }
     }
-  }
 
-  checkClock(clock, arr[4]);
+    checkClock(clock, each_digit_mask[4]);
 
-  for (int8_t i = 0; i < 2; i++) {
-    // Use bitwise OR to combine the values from all four arrays
-    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
-  }
+    output.gnd0Mask = each_digit_mask[0].gnd0Mask | each_digit_mask[1].gnd0Mask | each_digit_mask[2].gnd0Mask | each_digit_mask[3].gnd0Mask | each_digit_mask[4].gnd0Mask;
+    output.gnd1Mask = each_digit_mask[0].gnd1Mask | each_digit_mask[1].gnd1Mask | each_digit_mask[2].gnd1Mask | each_digit_mask[3].gnd1Mask | each_digit_mask[4].gnd1Mask;
 
-  handlePinConfigurations(out);
+    handlePinConfigurations(output);
 }
 
-/**
- * @details                 Parses each individual display number together. 
- *                              MUST PASS A 4-DIGIT ARRAY + NULL TERMINATOR. FOR EMPTY DIGIT FILL WITH ' ' CHAR.
- * @param letters           The desired display letters.
- * @param interval          The time the number should be displayed for.
- * @param clock             Toggle the clock LEDs. 
- * @note                    DEPRECATED, reccomend to use showDisplay
- */
+/*
 void DisplayDriver_FD0604::showLetter(const char letters[5], bool clock) { 
-  // 5 required for a \n terminator
+    // 5 required for a \n terminator
 
-  const char mask[] = "abcdef";
-  uint16_t arr[5][2] = {0};
-  uint16_t out[2] = {0};
+    //const char mask[] = "abcdef"; // TODO: make this progmem
+    DisplayMask each_digit_mask[5] = {0}; // array to store each digit's display mask, including the clock mask, before it is combined into a single output mask
+    DisplayMask output;
 
-  char output_letters[5] = {0};
-  for (uint8_t i=0; i<4; i++) output_letters[i] = tolower(letters[i]);
+    char output_letters[5] = {0};
+    for (uint8_t i=0; i<4; i++) output_letters[i] = tolower(letters[i]);
 
-  for (uint8_t i=0; i<4; i++) {
-    int8_t pos = -1; 
-    char* ptr = strchr(mask, output_letters[i]);
-    if (ptr != nullptr) pos = ptr - mask;
+    for (uint8_t i=0; i<4; i++) {
+        int8_t pos = -1; 
+        const char* ptr = strchr_P(letter_mask, output_letters[i]);
+        if (ptr != nullptr) pos = ptr - letter_mask;
+        //char* ptr = strchr(mask, output_letters[i]);
+        //if (ptr != nullptr) pos = ptr - mask;
 
-    if (pos != -1) {
-      if (displayOrientation == NORMAL_DISPLAY) {
-        getLetter(pos + 6*(3-i), arr[i]);
-      } else {
-        getLetterUpsideDown(pos + 6*(3-i), arr[i]);
-      }
+        if (pos != -1) {
+            if (displayOrientation == NORMAL_DISPLAY) {
+                getLetter(pos + 6*(3-i), each_digit_mask[i]);
+            } else {
+                getLetterUpsideDown(pos + 6*(3-i), each_digit_mask[i]);
+            }
+        }
     }
-  }
 
-  checkClock(clock, arr[4]);
+    checkClock(clock, each_digit_mask[4]);
 
-  for (int8_t i = 0; i < 2; i++) {
-    // Use bitwise OR to combine the values from all arrays
-    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
-  }
+    output.gnd0Mask = each_digit_mask[0].gnd0Mask | each_digit_mask[1].gnd0Mask | each_digit_mask[2].gnd0Mask | each_digit_mask[3].gnd0Mask | each_digit_mask[4].gnd0Mask;
+    output.gnd1Mask = each_digit_mask[0].gnd1Mask | each_digit_mask[1].gnd1Mask | each_digit_mask[2].gnd1Mask | each_digit_mask[3].gnd1Mask | each_digit_mask[4].gnd1Mask;
 
-  handlePinConfigurations(out);
-}
+    handlePinConfigurations(output);
+}*/
 
-/**
- * @details                 Parses each individual display sequence together.
- *                              MUST PASS A 4-DIGIT ARRAY + NULL TERMINATOR. FOR EMPTY DIGIT FILL WITH ' ' CHAR.
- * @param letters           The desired display sequence.
- * @param interval          The time the number should be displayed for.
- * @param clock             Toggle the clock LEDs. 
- */
 void DisplayDriver_FD0604::showDisplay(const char digits[5], bool leading_zeroes, bool clock) {
-  uint16_t arr[5][2] = {0};
-  uint16_t out[2] = {0};
-  const char mask[] = "abcdef";
-  bool leading_digit = true;
+    DisplayMask each_digit_mask[5] = {0};
+    DisplayMask output;
+    //const char mask[] = "abcdef"; // TODO: make this progmem
+    bool leading_digit = true;
 
-  char output_letters[5] = {0};
+    char output_letters[5] = {0};
 
-  for (int i=0; i<4; i++) {
-    if (isdigit(digits[i])) {
-      uint8_t number = digits[i] - '0';
+    for (int i=0; i<4; i++) {
+        if (isdigit(digits[i])) {
+            const uint8_t number = digits[i] - '0';
 
-      if (leading_digit && number != 0) {
-        leading_digit = false;
-      } 
-      if (!leading_digit || leading_zeroes) {
-        if (displayOrientation == NORMAL_DISPLAY) {
-          getNumber(number + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
-        } else {
-          getNumberUpsideDown(number + 10*(3-i), arr[i]); // substitues the previous 4 commands into a loop
+            if (leading_digit && number != 0) {
+                leading_digit = false;
+            } 
+            if (!leading_digit || leading_zeroes) {
+                if (displayOrientation == NORMAL_DISPLAY) {
+                    getNumber(number + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
+                } else {
+                    getNumberUpsideDown(number + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
+                }
+            }
+        } else if (!isdigit(digits[i]) && digits[i] != ' ') {
+            leading_digit = false;
+            output_letters[i] = tolower(digits[i]);
+
+            const char* ptr = strchr_P(letter_mask, output_letters[i]);
+
+            if (ptr != NULL) {
+                const int8_t pos = ptr - letter_mask;
+                if (displayOrientation == NORMAL_DISPLAY) {
+                    getLetter(pos + 6*(3-i), each_digit_mask[i]);
+                } else {
+                    getLetterUpsideDown(pos + 6*(3-i), each_digit_mask[i]);
+                }
+            } else if (digits[i] == 'o' && i == 3) {
+                if (displayOrientation == NORMAL_DISPLAY) {
+                    getSpecialChar(3, each_digit_mask[i]);
+                } else {
+                    getSpecialCharUpsideDown(3, each_digit_mask[i]);
+                }
+            }
         }
-      }
-    } else if (!isdigit(digits[i]) && digits[i] != ' ') {
-      leading_digit = false;
-      output_letters[i] = tolower(digits[i]);
-
-      char* ptr = strchr(mask, output_letters[i]);
-
-      if (ptr != NULL) {
-        int8_t pos = ptr - mask;
-        if (displayOrientation == NORMAL_DISPLAY) {
-          getLetter(pos + 6*(3-i), arr[i]);
-        } else {
-          getLetterUpsideDown(pos + 6*(3-i), arr[i]);
-        }
-      } else if (digits[i] == 'o' && i == 3) {
-        if (displayOrientation == NORMAL_DISPLAY) {
-          getSpecialChar(3, arr[i]);
-        } else {
-          getSpecialCharUpsideDown(3, arr[i]);
-        }
-      }
     }
-  }
 
-  checkClock(clock, arr[4]);
+    checkClock(clock, each_digit_mask[4]);
 
-  for (int8_t i = 0; i < 2; i++) {
-    // Use bitwise OR to combine the values from all four arrays
-    out[i] = arr[0][i] | arr[1][i] | arr[2][i] | arr[3][i] | arr[4][i];
-  }
+    output.gnd0Mask = each_digit_mask[0].gnd0Mask | each_digit_mask[1].gnd0Mask | each_digit_mask[2].gnd0Mask | each_digit_mask[3].gnd0Mask | each_digit_mask[4].gnd0Mask;
+    output.gnd1Mask = each_digit_mask[0].gnd1Mask | each_digit_mask[1].gnd1Mask | each_digit_mask[2].gnd1Mask | each_digit_mask[3].gnd1Mask | each_digit_mask[4].gnd1Mask;
 
-  handlePinConfigurations(out);
+    handlePinConfigurations(output);
 }
 
-/**
- * @details           Parses the null display.
- * @param interval    The time the number should be displayed for.
- * @param clock       Toggle the clock LEDs. 
- */
 void DisplayDriver_FD0604::showNull() {
-
-  uint16_t null_digits[2], clock_digits[2], out[2];
+    DisplayMask null_digits, clock_digits, output;
   
-  if (displayOrientation == NORMAL_DISPLAY) {
-    getSpecialChar(1, null_digits);
-    getSpecialChar(0, clock_digits);
-  } else {
-    getSpecialCharUpsideDown(1, null_digits);
-    getSpecialCharUpsideDown(0, clock_digits);
-  }
+    if (displayOrientation == NORMAL_DISPLAY) {
+        getSpecialChar(1, null_digits);
+        getSpecialChar(0, clock_digits);
+    } else {
+        getSpecialCharUpsideDown(1, null_digits);
+        getSpecialCharUpsideDown(0, clock_digits);
+    }
 
-  for (int8_t i=0; i<2; i++) {
-    out[i] = null_digits[i] | clock_digits[i];
-  }
+    output.gnd0Mask = null_digits.gnd0Mask | clock_digits.gnd0Mask;
+    output.gnd1Mask = null_digits.gnd1Mask | clock_digits.gnd1Mask;
 
-  handlePinConfigurations(out);
+    handlePinConfigurations(output);
 }
 
 
@@ -214,12 +187,9 @@ void DisplayDriver_FD0604::showNull() {
  * @details         Writes the parsed pin data into object's digit store, ready for multiplexing.
  * @param data      The parsed pin data to write. 
  */
-void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
-    uint16_t mask = (1 << 0) | (1 << 15);
-    uint16_t pattern = _params.npn_transistor_enable ? (1 << 0) : (1 << 15);
-
-    displayingDigits[0] = (data[0] & ~mask) | pattern;
-    displayingDigits[1] = (data[1] & ~mask) | (pattern ^ mask); // Invert pattern (gnd layout)
+void DisplayDriver_FD0604::handlePinConfigurations(DisplayMask& data) {
+    displayingDigits.gnd0Mask = (data.gnd0Mask & ~gnd_mask) | gnd_pattern;
+    displayingDigits.gnd1Mask = (data.gnd1Mask & ~gnd_mask) | (gnd_pattern ^ gnd_mask); // Invert pattern (gnd layout)
 }
 
 
@@ -231,26 +201,29 @@ void DisplayDriver_FD0604::handlePinConfigurations(uint16_t (&data)[2]) {
   The following is called on each ISR Routine. 
 */
 
-/**
- * @details       ISR handler for multiplexing the display. Should be called in the main loop or timer interrupt.
- */
 void DisplayDriver_FD0604::multiplexDisplay() {
-  multiplex_display();
+    multiplex_display();
 }
-
 
 /**
  * @details       Multiplexes the display based on minimal display wiring. 
  */
 void DisplayDriver_FD0604::multiplex_display() {
-  // gnd pins handled by handlePinConfigurations when called by things like showNumber.
+    // gnd pins handled by handlePinConfigurations when called by things like showNumber.
 
-  *(_params.PORTx_latchPin) &= ~(1 << _params.PIN_latchPin);
-  shiftOutLSBFirst((uint8_t)displayingDigits[currentlyDisplayingGND]);
-  shiftOutLSBFirst((uint8_t)(displayingDigits[currentlyDisplayingGND] >> 8));
-  *(_params.PORTx_latchPin) |= (1 << _params.PIN_latchPin);
+    *(_params.PORTx_latchPin) &= ~(1 << _params.PIN_latchPin);
 
-  currentlyDisplayingGND = !currentlyDisplayingGND;
+    if (currentlyDisplayingGND == 0) {
+        shiftOutLSBFirst((uint8_t)displayingDigits.gnd0Mask);
+        shiftOutLSBFirst((uint8_t)(displayingDigits.gnd0Mask >> 8));
+        currentlyDisplayingGND = 1;
+    } else {
+        shiftOutLSBFirst((uint8_t)displayingDigits.gnd1Mask);
+        shiftOutLSBFirst((uint8_t)(displayingDigits.gnd1Mask >> 8));
+        currentlyDisplayingGND = 0;
+    }
+
+    *(_params.PORTx_latchPin) |= (1 << _params.PIN_latchPin);
 }
 
 /**
@@ -259,16 +232,16 @@ void DisplayDriver_FD0604::multiplex_display() {
  * @param val     Value to shift out (8-bits at a time).
  */
 void DisplayDriver_FD0604::shiftOutLSBFirst(uint8_t val) {
-  for (uint8_t i=0; i<8; i++) {
-    if (val & 1) {
-      *(_params.PORTx_dataPin) |= (1 << _params.PIN_dataPin);
-    } else {
-      *(_params.PORTx_dataPin) &= ~(1 << _params.PIN_dataPin);
-    }
-    val >>= 1;
+    for (uint8_t i=0; i<8; i++) {
+        if (val & 1) {
+            *(_params.PORTx_dataPin) |= (1 << _params.PIN_dataPin);
+        } else {
+            *(_params.PORTx_dataPin) &= ~(1 << _params.PIN_dataPin);
+        }
+        val >>= 1;
 
-    *(_params.PORTx_clockPin) |= (1 << _params.PIN_clockPin);
-    *(_params.PORTx_clockPin) &= ~(1 << _params.PIN_clockPin);
-  }
+        *(_params.PORTx_clockPin) |= (1 << _params.PIN_clockPin);
+        *(_params.PORTx_clockPin) &= ~(1 << _params.PIN_clockPin);
+    }
 }
 

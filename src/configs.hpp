@@ -42,7 +42,7 @@
 #define SOFT_SERIAL_OUTPUT
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.39";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.40";
 
 
 const DisplayParameters displayParams = {

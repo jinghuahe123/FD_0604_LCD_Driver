@@ -43,6 +43,8 @@ const DisplayCommandProcessor::CommandHandler DisplayCommandProcessor::_commandH
 const uint8_t DisplayCommandProcessor::_maxCommandOptions = 
     sizeof(_commandHandlers) / sizeof(_commandHandlers[0]) - 1;
 
+const uint8_t DisplayCommandProcessor::_configurationCommandEndIndex = 6; // index of last configuration command in _commandList
+
 DisplayCommandProcessor::DisplayCommandProcessor(DisplayDriver_FD0604& display, DisplaySettingsManager& settingsManager, DisplayModeManager& modeManager, const DisplayParameters& params)
     : _display(display), _settingsManager(settingsManager), _modeManager(modeManager), _params(params)
 {
@@ -50,7 +52,7 @@ DisplayCommandProcessor::DisplayCommandProcessor(DisplayDriver_FD0604& display, 
     _rawInputPinAlias = _settingsManager.getRawInputPinAlias();
 }
 
-bool DisplayCommandProcessor::processCommand(const char* input) {
+bool DisplayCommandProcessor::processCommand(const char* input, bool& isConfigurationCommand) {
     if (input == nullptr || input[0] == '\0') return false;
 
     // no need to trim, already trimmed by controller when passed to function
@@ -58,6 +60,12 @@ bool DisplayCommandProcessor::processCommand(const char* input) {
     // find command index
     int8_t cmdIndex = _findCommandIndex(input);
     if (cmdIndex == -1 || cmdIndex > _maxCommandOptions) return false;
+
+    if (cmdIndex <= _configurationCommandEndIndex) {
+        isConfigurationCommand = true;
+    } else {
+        isConfigurationCommand = false;
+    }
 
     // call corresponding handler
     CommandHandler handler;

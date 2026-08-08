@@ -18,7 +18,7 @@ inline bool checkIfNumericUnsigned(const char* str, uint16_t& number) {
     }
 
     unsigned long val = strtoul(str, nullptr, 10);
-    if (val > 65535) return false;
+    if (val > UINT16_MAX) return false;
 
     number = (uint16_t)val;
     return true;

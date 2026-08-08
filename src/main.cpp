@@ -11,7 +11,6 @@
 #include "char_helper.h"
 #include "timer.h"
 #include "adc.h"
-#include "DisplayDriver_FD0604.hpp"
 #include "DisplayController.hpp"
 
 static DisplayController displayController(displayParams);
