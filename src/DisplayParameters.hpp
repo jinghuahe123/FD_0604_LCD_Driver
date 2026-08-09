@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "DisplayDriver_FD0604.hpp"
 
+// const data has no reason to be stored in ram, but for 48 bytes it is not worth it to turn this struct 
+// into a template alongside other necessary changes to classes that include it for flexible PROGMEM access
+
 struct DisplayParameters {
     DisplayDriver_FD0604::DriverParameters driverParams;
 
