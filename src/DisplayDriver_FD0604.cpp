@@ -16,26 +16,25 @@ DisplayDriver_FD0604::DisplayDriver_FD0604(const DisplayDriver_FD0604::DriverPar
     displayingDigits.gnd1Mask = 0;
 }
 
-void DisplayDriver_FD0604::setDisplayOrientation(bool orientation) {
+void DisplayDriver_FD0604::setDisplayOrientation(DisplayDriver_FD0604::DisplayOrientation orientation) {
     displayOrientation = orientation;
 }
 
 void DisplayDriver_FD0604::flipDisplayOrientation() {
-    displayOrientation = !displayOrientation;
+    displayOrientation = (displayOrientation == DisplayOrientation::NORMAL) ? DisplayOrientation::FLIPPED : DisplayOrientation::NORMAL;
 }
 
-bool DisplayDriver_FD0604::getDisplayOrientation() {
+DisplayDriver_FD0604::DisplayOrientation DisplayDriver_FD0604::getDisplayOrientation() {
     return displayOrientation;
 }
 
-void DisplayDriver_FD0604::checkClock(bool& clock, DisplayMask& arr) {
-    if (clock)  {
-        if (displayOrientation == NORMAL_DISPLAY) {
-            getSpecialChar(0, arr);
-        } else {
-            getSpecialCharUpsideDown(0, arr);
-        }
+void DisplayDriver_FD0604::getClockMask(DisplayMask& arr) {
+    if (displayOrientation == DisplayOrientation::NORMAL) {
+        getSpecialChar(0, arr);
+    } else {
+        getSpecialCharUpsideDown(0, arr);
     }
+
 }
 
 void DisplayDriver_FD0604::clear() {
@@ -61,7 +60,7 @@ void DisplayDriver_FD0604::showNumber(uint16_t number, bool leading_zeroes, bool
             leading_digit = false;
         } 
         if (!leading_digit || leading_zeroes) {
-            if (displayOrientation == NORMAL_DISPLAY) {
+            if (displayOrientation == DisplayOrientation::NORMAL) {
                 getNumber(each_digit_number[i] + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
             } else {
                 getNumberUpsideDown(each_digit_number[i] + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
@@ -69,7 +68,7 @@ void DisplayDriver_FD0604::showNumber(uint16_t number, bool leading_zeroes, bool
         }
     }
 
-    checkClock(clock, each_digit_mask[4]);
+    if (clock) getClockMask(each_digit_mask[4]);
 
     output.gnd0Mask = each_digit_mask[0].gnd0Mask | each_digit_mask[1].gnd0Mask | each_digit_mask[2].gnd0Mask | each_digit_mask[3].gnd0Mask | each_digit_mask[4].gnd0Mask;
     output.gnd1Mask = each_digit_mask[0].gnd1Mask | each_digit_mask[1].gnd1Mask | each_digit_mask[2].gnd1Mask | each_digit_mask[3].gnd1Mask | each_digit_mask[4].gnd1Mask;
@@ -77,45 +76,9 @@ void DisplayDriver_FD0604::showNumber(uint16_t number, bool leading_zeroes, bool
     handlePinConfigurations(output);
 }
 
-/*
-void DisplayDriver_FD0604::showLetter(const char letters[5], bool clock) { 
-    // 5 required for a \n terminator
-
-    //const char mask[] = "abcdef"; // TODO: make this progmem
-    DisplayMask each_digit_mask[5] = {0}; // array to store each digit's display mask, including the clock mask, before it is combined into a single output mask
-    DisplayMask output;
-
-    char output_letters[5] = {0};
-    for (uint8_t i=0; i<4; i++) output_letters[i] = tolower(letters[i]);
-
-    for (uint8_t i=0; i<4; i++) {
-        int8_t pos = -1; 
-        const char* ptr = strchr_P(letter_mask, output_letters[i]);
-        if (ptr != nullptr) pos = ptr - letter_mask;
-        //char* ptr = strchr(mask, output_letters[i]);
-        //if (ptr != nullptr) pos = ptr - mask;
-
-        if (pos != -1) {
-            if (displayOrientation == NORMAL_DISPLAY) {
-                getLetter(pos + 6*(3-i), each_digit_mask[i]);
-            } else {
-                getLetterUpsideDown(pos + 6*(3-i), each_digit_mask[i]);
-            }
-        }
-    }
-
-    checkClock(clock, each_digit_mask[4]);
-
-    output.gnd0Mask = each_digit_mask[0].gnd0Mask | each_digit_mask[1].gnd0Mask | each_digit_mask[2].gnd0Mask | each_digit_mask[3].gnd0Mask | each_digit_mask[4].gnd0Mask;
-    output.gnd1Mask = each_digit_mask[0].gnd1Mask | each_digit_mask[1].gnd1Mask | each_digit_mask[2].gnd1Mask | each_digit_mask[3].gnd1Mask | each_digit_mask[4].gnd1Mask;
-
-    handlePinConfigurations(output);
-}*/
-
 void DisplayDriver_FD0604::showDisplay(const char digits[5], bool leading_zeroes, bool clock) {
     DisplayMask each_digit_mask[5] = {0};
     DisplayMask output;
-    //const char mask[] = "abcdef"; // TODO: make this progmem
     bool leading_digit = true;
 
     char output_letters[5] = {0};
@@ -128,7 +91,7 @@ void DisplayDriver_FD0604::showDisplay(const char digits[5], bool leading_zeroes
                 leading_digit = false;
             } 
             if (!leading_digit || leading_zeroes) {
-                if (displayOrientation == NORMAL_DISPLAY) {
+                if (displayOrientation == DisplayOrientation::NORMAL) {
                     getNumber(number + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
                 } else {
                     getNumberUpsideDown(number + 10*(3-i), each_digit_mask[i]); // substitues the previous 4 commands into a loop
@@ -142,13 +105,13 @@ void DisplayDriver_FD0604::showDisplay(const char digits[5], bool leading_zeroes
 
             if (ptr != NULL) {
                 const int8_t pos = ptr - letter_mask;
-                if (displayOrientation == NORMAL_DISPLAY) {
+                if (displayOrientation == DisplayOrientation::NORMAL) {
                     getLetter(pos + 6*(3-i), each_digit_mask[i]);
                 } else {
                     getLetterUpsideDown(pos + 6*(3-i), each_digit_mask[i]);
                 }
             } else if (digits[i] == 'o' && i == 3) {
-                if (displayOrientation == NORMAL_DISPLAY) {
+                if (displayOrientation == DisplayOrientation::NORMAL) {
                     getSpecialChar(3, each_digit_mask[i]);
                 } else {
                     getSpecialCharUpsideDown(3, each_digit_mask[i]);
@@ -157,7 +120,7 @@ void DisplayDriver_FD0604::showDisplay(const char digits[5], bool leading_zeroes
         }
     }
 
-    checkClock(clock, each_digit_mask[4]);
+    if (clock) getClockMask(each_digit_mask[4]);
 
     output.gnd0Mask = each_digit_mask[0].gnd0Mask | each_digit_mask[1].gnd0Mask | each_digit_mask[2].gnd0Mask | each_digit_mask[3].gnd0Mask | each_digit_mask[4].gnd0Mask;
     output.gnd1Mask = each_digit_mask[0].gnd1Mask | each_digit_mask[1].gnd1Mask | each_digit_mask[2].gnd1Mask | each_digit_mask[3].gnd1Mask | each_digit_mask[4].gnd1Mask;
@@ -168,7 +131,7 @@ void DisplayDriver_FD0604::showDisplay(const char digits[5], bool leading_zeroes
 void DisplayDriver_FD0604::showNull() {
     DisplayMask null_digits, clock_digits, output;
   
-    if (displayOrientation == NORMAL_DISPLAY) {
+    if (displayOrientation == DisplayOrientation::NORMAL) {
         getSpecialChar(1, null_digits);
         getSpecialChar(0, clock_digits);
     } else {
@@ -182,11 +145,6 @@ void DisplayDriver_FD0604::showNull() {
     handlePinConfigurations(output);
 }
 
-
-/**
- * @details         Writes the parsed pin data into object's digit store, ready for multiplexing.
- * @param data      The parsed pin data to write. 
- */
 void DisplayDriver_FD0604::handlePinConfigurations(DisplayMask& data) {
     displayingDigits.gnd0Mask = (data.gnd0Mask & ~gnd_mask) | gnd_pattern;
     displayingDigits.gnd1Mask = (data.gnd1Mask & ~gnd_mask) | (gnd_pattern ^ gnd_mask); // Invert pattern (gnd layout)
@@ -202,13 +160,6 @@ void DisplayDriver_FD0604::handlePinConfigurations(DisplayMask& data) {
 */
 
 void DisplayDriver_FD0604::multiplexDisplay() {
-    multiplex_display();
-}
-
-/**
- * @details       Multiplexes the display based on minimal display wiring. 
- */
-void DisplayDriver_FD0604::multiplex_display() {
     // gnd pins handled by handlePinConfigurations when called by things like showNumber.
 
     *(_params.PORTx_latchPin) &= ~(1 << _params.PIN_latchPin);
@@ -226,11 +177,6 @@ void DisplayDriver_FD0604::multiplex_display() {
     *(_params.PORTx_latchPin) |= (1 << _params.PIN_latchPin);
 }
 
-/**
- * @details       Shift register function based on LSB, with minimal display port configuration. 
- *                    Separates from normal display configuration for speed, sacrificing code size. 
- * @param val     Value to shift out (8-bits at a time).
- */
 void DisplayDriver_FD0604::shiftOutLSBFirst(uint8_t val) {
     for (uint8_t i=0; i<8; i++) {
         if (val & 1) {

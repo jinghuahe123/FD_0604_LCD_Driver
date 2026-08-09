@@ -93,7 +93,7 @@ void DisplaySettingsManager::displaySettingsInfo() {
     serial_println_P(F("=========================== FD-0604 LED Display SETTINGS INFO ==========================="));
     
     // == Basic Configs ==
-    serial_print_P(F("Display Orientation:                            ")); serial_println_P(readDisplayOrientation() ? F("Inverted Display") : F("Normal Display"));
+    serial_print_P(F("Display Orientation:                            ")); serial_println_P(readDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? F("Inverted Display") : F("Normal Display"));
     serial_print_P(F("History recall depth:                           ")); serial_print_u16(numHistory); serial_ln();
     serial_print_P(F("Cycle Function Interval Time:                   ")); serial_print_u16(countingInterval); serial_println_P(F("ms"));
     serial_ln();
@@ -167,12 +167,12 @@ void DisplaySettingsManager::factoryReset() {
 
 // ================================ EEPROM READ/WRITE API (HELPERS) ==================================
 
-bool DisplaySettingsManager::readDisplayOrientation() {
-    return EEPROM.read(_params.displayOrientationAddress);
+DisplayDriver_FD0604::DisplayOrientation DisplaySettingsManager::readDisplayOrientation() {
+    return static_cast<DisplayDriver_FD0604::DisplayOrientation>(EEPROM.read(_params.displayOrientationAddress));
 }
 
-void DisplaySettingsManager::writeDisplayOrientation(bool inverted) {
-    EEPROM.update(_params.displayOrientationAddress, inverted);
+void DisplaySettingsManager::writeDisplayOrientation(DisplayDriver_FD0604::DisplayOrientation orientation) {
+    EEPROM.update(_params.displayOrientationAddress, static_cast<uint8_t>(orientation));
 }
 
 uint16_t DisplaySettingsManager::readHistoryDepth() {
@@ -339,11 +339,11 @@ void DisplaySettingsManager::_updateRawInputSerialOutput() {
 void DisplaySettingsManager::_updateDisplayOrientation() {
     _display.flipDisplayOrientation();
 
-    bool orientation = _display.getDisplayOrientation(); 
+    DisplayDriver_FD0604::DisplayOrientation orientation = _display.getDisplayOrientation(); 
     writeDisplayOrientation(orientation);
 
     serial_print_P(F("Display Orientation set to: "));
-    serial_println_P((orientation) ? F("INVERTED.") : F("NORMAL."));
+    serial_println_P((orientation == DisplayDriver_FD0604::DisplayOrientation::FLIPPED) ? F("INVERTED.") : F("NORMAL."));
 
     _delay_ms(20);
     _exitSettings();

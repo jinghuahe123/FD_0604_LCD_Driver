@@ -55,7 +55,7 @@ void DisplayController::updateDisplay() {
         _modeManager.updateDisplay();
     } else if (!_staticDisplayShown) {
         // show static number
-        _display.showNumber(_display.getDisplayOrientation() ? _number * 10 : _number);
+        _display.showNumber(_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? _number * 10 : _number);
         _staticDisplayShown = true;
     }
 }
@@ -158,10 +158,10 @@ bool DisplayController::_parseAndSetNumber(const char* input) {
     if (!checkIfNumericUnsigned(input, number) || number < 0) {
         return false;
     }
-    if (!_display.getDisplayOrientation() && number > 3999) {
+    if (_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED && number > 3999) {
         return false;
     }
-    if (_display.getDisplayOrientation() && number > 999) {
+    if (_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::NORMAL && number > 999) {
         return false;
     }
 

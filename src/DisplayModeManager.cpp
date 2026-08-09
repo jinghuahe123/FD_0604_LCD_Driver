@@ -74,9 +74,9 @@ void DisplayModeManager::_displayCycle() {
 
     if (currentMillis - _previousMillis > static_cast<unsigned long>(countingInterval)) {
         _previousMillis = currentMillis;
-        _cycleNumber = (_display.getDisplayOrientation() ? ((_cycleNumber + 1) % 1000) : (_cycleNumber + 1) % 4000);
+        _cycleNumber = (_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? ((_cycleNumber + 1) % 1000) : (_cycleNumber + 1) % 4000);
 
-        if (_display.getDisplayOrientation() == FLIPPED_DISPLAY) {
+        if (_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED) {
             _display.showNumber(_cycleNumber*10);
         } else {
             _display.showNumber(_cycleNumber);
@@ -120,9 +120,9 @@ void DisplayModeManager::_displayTemp() {
         //snprintf(output, sizeof(output), "%u", displayTemp);
         output[3] = 'o'; // rewrites 4th digit as 'o'
 
-        if ((rawDisplayTemp < 4000 && _display.getDisplayOrientation() == NORMAL_DISPLAY)) {
+        if ((rawDisplayTemp < 4000 && _display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::NORMAL)) {
             _display.showDisplay(output);
-        } else if (_display.getDisplayOrientation() == FLIPPED_DISPLAY) {
+        } else if (_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED) {
             _display.showDisplay(output);
         } 
     }

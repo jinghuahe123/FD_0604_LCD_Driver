@@ -43,20 +43,28 @@ class DisplayDriver_FD0604 {
 
         DisplayDriver_FD0604(const DriverParameters& params);
 
-        void setDisplayOrientation(bool orientation);
-        void flipDisplayOrientation();
-        bool getDisplayOrientation();
+        // display orientation enum
+        enum class DisplayOrientation : uint8_t {
+            NORMAL,
+            FLIPPED
+        };
 
-        // 5 required for a \n terminator
         /**
-         * @details                 Parses each individual display number together. 
-         *                              MUST PASS A 4-DIGIT ARRAY + NULL TERMINATOR. FOR EMPTY DIGIT FILL WITH ' ' CHAR.
-         * @param letters           The desired display letters.
-         * @param interval          The time the number should be displayed for.
-         * @param clock             Toggle the clock LEDs. 
-         * @note                    DEPRECATED, reccomend to use showDisplay
+         * @brief Sets the display orientation.
+         * @param orientation The desired orientation.
          */
-        //void showLetter(const char letters[5], bool clock = false); 
+        void setDisplayOrientation(DisplayOrientation orientation);
+
+        /**
+         * @brief Flips the display orientation.
+         */
+        void flipDisplayOrientation();
+
+        /**
+         * @brief Gets the current display orientation.
+         * @return The current display orientation.
+         */
+        DisplayOrientation getDisplayOrientation();
 
         /**
          * @details                 Parses each individual display sequence together.
@@ -64,6 +72,8 @@ class DisplayDriver_FD0604 {
          * @param letters           The desired display sequence.
          * @param interval          The time the number should be displayed for.
          * @param clock             Toggle the clock LEDs. 
+         * 
+         * @note The input string must be 4 characters long, with a null terminator totalling 5 characters. Use spaces for empty digits.
          */
         void showDisplay(const char digits[5], bool leading_zeroes = false, bool clock = false);
 
@@ -95,10 +105,10 @@ class DisplayDriver_FD0604 {
         
 
     private:
-        typedef struct {
+        struct DisplayMask{
             uint16_t gnd0Mask;
             uint16_t gnd1Mask;
-        } DisplayMask;
+        };
 
         static const DisplayMask number[40] PROGMEM;
         static const DisplayMask special_character[4] PROGMEM;
@@ -122,12 +132,24 @@ class DisplayDriver_FD0604 {
 
         volatile uint8_t currentlyDisplayingGND = 0;
         volatile DisplayMask displayingDigits;
-        bool displayOrientation = NORMAL_DISPLAY;
+        DisplayOrientation displayOrientation = DisplayOrientation::NORMAL;
 
-        void checkClock(bool &clock, DisplayMask& arr);
+        /**
+         * @details       Retrieves the clock mask based on the current display orientation.
+         * @param arr     Reference to a DisplayMask object where the clock mask will be stored
+         */
+        void getClockMask(DisplayMask& arr);
 
+        /**
+         * @details         Writes the parsed pin data into object's digit store, ready for multiplexing.
+         * @param data      The parsed pin data to write. 
+         */
         void handlePinConfigurations(DisplayMask& data);
-        void multiplex_display();
+
+        /**
+         * @details       Shift register function based on LSB, with direct port configuration. 
+         * @param val     Value to shift out (8-bits at a time).
+         */
         void shiftOutLSBFirst(uint8_t val);
 
 };

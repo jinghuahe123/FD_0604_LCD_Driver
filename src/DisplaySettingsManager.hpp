@@ -42,15 +42,15 @@ public:
     
     /**
      * @brief Read display orientation from EEPROM
-     * @return true if inverted display
+     * @return The current display orientation
      */
-    bool readDisplayOrientation();
+    DisplayDriver_FD0604::DisplayOrientation readDisplayOrientation();
     
     /**
      * @brief Write display orientation to EEPROM
-     * @param inverted true for inverted display
+     * @param orientation The desired display orientation
      */
-    void writeDisplayOrientation(bool inverted);
+    void writeDisplayOrientation(DisplayDriver_FD0604::DisplayOrientation orientation);
     
     /**
      * @brief Read history depth from EEPROM
@@ -76,20 +76,65 @@ public:
      */
     void writeCycleInterval(uint16_t interval);
 
+    /**
+     * @brief Read temperature update interval from EEPROM
+     * @return Temperature update interval in milliseconds
+     */
     uint16_t readTemperatureInterval();
+
+    /**
+     * @brief Write temperature update interval to EEPROM
+     * @param interval Temperature update interval in milliseconds
+     */
     void writeTemperatureInterval(uint16_t interval);
 
+    /**
+     * @brief Read temperature serial output enabled state from EEPROM
+     * @return True if enabled, false otherwise
+     */
     bool readTemperatureSerialEnabled();
+
+    /**
+     * @brief Write temperature serial output enabled state to EEPROM
+     * @param enabled True to enable, false to disable
+     */
     void writeTemperatureSerialEnabled(uint8_t enabled);
 
+    /**
+     * @brief Read raw input update interval from EEPROM
+     * @return Raw input update interval in milliseconds
+     */
     uint16_t readRawInputInterval();
+    
+    /**
+     * @brief Write raw input update interval to EEPROM
+     * @param interval Raw input update interval in milliseconds
+     */
     void writeRawInputInterval(uint16_t interval);
 
+    /**
+     * @brief Read raw input serial output enabled state from EEPROM
+     * @return True if enabled, false otherwise
+     */
     bool readRawInputSerialEnabled();
+
+    /**
+     * @brief Write raw input serial output enabled state to EEPROM
+     * @param enabled True to enable, false to disable
+     */
     void writeRawInputSerialEnabled(uint8_t enabled);
 
 
+    /**
+     * @brief Get the alias for the temperature pin
+     * @return Pointer to the temperature pin alias
+     */
     const char* getTemperaturePinAlias() const { return _temperaturePinAlias; }
+
+    /**
+     * @brief Get the alias for the raw input pin
+     * @return Pointer to the raw input pin alias
+     */
     const char* getRawInputPinAlias() const { return _rawInputPinAlias; }
 
 

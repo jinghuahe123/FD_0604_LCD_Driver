@@ -225,7 +225,7 @@ void DisplayCommandProcessor::_handleHistory() {
         serial_print_P(F("Total Slots: "));
         serial_print_u16(_params.NUM_SLOTS); serial_ln();
         serial_print_P(F("Display Orientation: "));
-        serial_println_P(_settingsManager.readDisplayOrientation() ? F("Inverted Display") : F("Normal Display"));
+        serial_println_P(_settingsManager.readDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? F("Inverted Display") : F("Normal Display"));
         _handleMem();
         serial_println_P(F("--------------------------------------------------------------"));
         PersistentStorageManager<int16_t> _storageManager(_params.BASE_ADDR, _params.NUM_SLOTS);
@@ -271,7 +271,7 @@ void DisplayCommandProcessor::_handleTemp() {
 
 void DisplayCommandProcessor::_handleRawInput() {
     _modeManager.setMode(MODE_RAWINPUT);
-    if (_display.getDisplayOrientation() == INVERTED_DISPLAY) {
+    if (_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED) {
         serial_println_P(F("CAUTION: Inverted display does not support last digit output."));
         serial_println_P(F("Output will be one order of magnitude smaller than real value, and truncated."));
     }
