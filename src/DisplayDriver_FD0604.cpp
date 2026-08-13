@@ -1,5 +1,6 @@
 #include "DisplayDriver_FD0604.hpp"
 #include "Digit_Patterns.hpp"
+#include <avr/interrupt.h>
 
 const char DisplayDriver_FD0604::letter_mask[] PROGMEM = "abcdef";
 const uint16_t DisplayDriver_FD0604::gnd_mask = (1 << 0) | (1 << 15);
@@ -146,8 +147,14 @@ void DisplayDriver_FD0604::showNull() {
 }
 
 void DisplayDriver_FD0604::handlePinConfigurations(DisplayMask& data) {
+    // disable interrupts while updating display data
+    uint8_t oldSREG = SREG;
+    cli();
+
     displayingDigits.gnd0Mask = (data.gnd0Mask & ~gnd_mask) | gnd_pattern;
     displayingDigits.gnd1Mask = (data.gnd1Mask & ~gnd_mask) | (gnd_pattern ^ gnd_mask); // Invert pattern (gnd layout)
+
+    SREG = oldSREG; // restore interrupts
 }
 
 

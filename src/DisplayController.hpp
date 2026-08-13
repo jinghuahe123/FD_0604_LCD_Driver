@@ -8,6 +8,10 @@
 #include "DisplaySettingsManager.hpp"
 #include "DisplayCommandProcessor.hpp"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+
 /**
  * @class DisplayController_FD0604
  * @brief Main controller class that orchestrates all display components
@@ -26,8 +30,9 @@ public:
 
     // core display functions
     void multiplexDisplay();
-    void updateDisplay();
     void clear();
+    void startDisplayUpdateTask();
+    void stopDisplayUpdateTask();
 
     // input processing
     void processInput(const char* input);
@@ -58,12 +63,25 @@ private:
     bool _staticDisplayShown = false;
     const bool _transistorEnabled;
 
+    StaticSemaphore_t xDisplayControllerSemaphoreBuffer;
+    SemaphoreHandle_t xDisplayControllerSemaphore;
+
+    // display update task
+    static constexpr configSTACK_DEPTH_TYPE taskStackSize = 196; // stack size for display update task
+    static constexpr UBaseType_t taskPriority = 3; // priority for display update task
+    TaskHandle_t _displayUpdateTask;
+    StaticTask_t _displayUpdateTaskBuffer;
+    StackType_t _displayUpdateTaskStack[taskStackSize];
+    static void startTaskCallback(void* pvParameters);
+    void updateDisplay();
+    
 
     // initialization
     void _init();
     void _initPins();
 
     // number handling
+    // WARNING: ASSUMES NUTEX IS ALREADY HELD BY CALLER
     void _updateDisplayNumber();
     bool _parseAndSetNumber(const char* input);
     

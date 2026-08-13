@@ -4,6 +4,7 @@
 #include "char_helper.h"
 #include "software_serial.h"
 #include "DisplayUtils.hpp"
+#include "StackHighWatermarkUsage.hpp"
 
 
 DisplayController::DisplayController(const DisplayParameters& params)
@@ -13,8 +14,10 @@ DisplayController::DisplayController(const DisplayParameters& params)
       _settingsManager(_display, params),
       _modeManager(_display, _settingsManager, params),
       _commandProcessor(_display, _settingsManager, _modeManager, params),
-      _transistorEnabled(params.driverParams.npn_transistor_enable) 
+      _transistorEnabled(params.driverParams.npn_transistor_enable)
 {
+    xDisplayControllerSemaphore = xSemaphoreCreateMutexStatic(&xDisplayControllerSemaphoreBuffer);
+
     _init();
 }
 
@@ -49,14 +52,52 @@ void DisplayController::multiplexDisplay() {
     _display.multiplexDisplay();
 }
 
+void DisplayController::startDisplayUpdateTask() {
+    if (_displayUpdateTask == nullptr) {
+        _displayUpdateTask = xTaskCreateStatic(
+            startTaskCallback,
+            "DisplayUpdate",
+            taskStackSize,
+            this,
+            taskPriority,
+            _displayUpdateTaskStack,
+            &_displayUpdateTaskBuffer
+        );
+    }
+    StackHighWatermarkUsage& stackUsage = StackHighWatermarkUsage::getInstance();
+    stackUsage.addTaskHandle(_displayUpdateTask);
+}
+
+void DisplayController::stopDisplayUpdateTask() {
+    if (_displayUpdateTask != nullptr) {
+        vTaskDelete(_displayUpdateTask);
+        vTaskDelay(pdMS_TO_TICKS(100)); // give time for the task to clean up
+        _displayUpdateTask = nullptr;
+
+    }
+}
+
+void DisplayController::startTaskCallback(void* pvParameters) {
+    DisplayController* controller = static_cast<DisplayController*>(pvParameters);
+    if (controller) {
+        controller->updateDisplay();
+    }
+}
+
 void DisplayController::updateDisplay() {
-    if (_number < 0) {
-        // let mode manager special mode handle
-        _modeManager.updateDisplay();
-    } else if (!_staticDisplayShown) {
-        // show static number
-        _display.showNumber(_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? _number * 10 : _number);
-        _staticDisplayShown = true;
+    for (;;) {
+        if (xSemaphoreTake(xDisplayControllerSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+            if (_number < 0) {
+                // let mode manager special mode handle
+                _modeManager.updateDisplay();
+            } else if (!_staticDisplayShown) {
+                // show static number
+                _display.showNumber(_display.getDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? _number * 10 : _number);
+                _staticDisplayShown = true;
+            }
+            xSemaphoreGive(xDisplayControllerSemaphore);    
+        }
+        vTaskDelay(pdMS_TO_TICKS(5)); // small delay to prevent task hogging CPU
     }
 }
 
@@ -65,15 +106,21 @@ void DisplayController::processInput(const char* input) {
         return;
     }
 
-    strncpy(_input, input, MAX_INPUT_SIZE - 1);
-    _input[MAX_INPUT_SIZE - 1] = '\0'; // Ensure null
-    trim(_input); // remove quotes and trim whitespace
-
-    if (_input[0] == '\0') {
-        return; // empty input after trimming
+    // Take mutex for the entire operation
+    if (xSemaphoreTake(xDisplayControllerSemaphore, pdMS_TO_TICKS(100)) != pdTRUE) {
+        serial_println_P(F("ERROR: Display mutex timeout in processInput"));
+        return;
     }
 
-    // try to process as command 
+    strncpy(_input, input, MAX_INPUT_SIZE - 1);
+    _input[MAX_INPUT_SIZE - 1] = '\0';
+    trim(_input);
+
+    if (_input[0] == '\0') {
+        xSemaphoreGive(xDisplayControllerSemaphore);
+        return;
+    }
+
     bool isConfigurationCommand = false;
     if (_commandProcessor.processCommand(_input, isConfigurationCommand)) {
         int16_t number = _modeManager.getMode();
@@ -81,19 +128,22 @@ void DisplayController::processInput(const char* input) {
             if (number != _number) {
                 _number = number;
             }
-            _updateDisplayNumber(); // update EEPROM and show number if not a configuration command
+            _updateDisplayNumber(); // safe - mutex is held
         }
-
-        _staticDisplayShown = false; // reset static display flag to allow for new display update
-        return; // command processed successfully
+        _staticDisplayShown = false;
+        xSemaphoreGive(xDisplayControllerSemaphore);
+        return;
     }
 
-    // try as number
     if (_parseAndSetNumber(_input)) {
-        _staticDisplayShown = false; // reset static display flag to allow for new display update
-        return; // number processed successfully
+        _staticDisplayShown = false;
+        xSemaphoreGive(xDisplayControllerSemaphore);
+        return;
     }
 
+    xSemaphoreGive(xDisplayControllerSemaphore);
+    
+    // error message outside mutex
     serial_print_P(F("Error parsing '"));
     serial_print(input);
     serial_println_P(F("'. Please enter a valid command or number."));
@@ -104,30 +154,44 @@ void DisplayController::processSecondaryInput(const char* input) {
         return;
     }
 
-    strncpy(_input, input, MAX_INPUT_SIZE - 1);
-    _input[MAX_INPUT_SIZE - 1] = '\0'; // Ensure null
-    trim(_input); // remove quotes and trim whitespace
-
-    if (_input[0] == '\0') {
-        return; // empty input after trimming
+    if (xSemaphoreTake(xDisplayControllerSemaphore, pdMS_TO_TICKS(100)) != pdTRUE) {
+        serial_println_P(F("ERROR: Display mutex timeout in processSecondaryInput"));
+        return;
     }
 
-    // try to process as command 
-    bool isConfigurationCommand = false; // this is redundant for secondary input, but we keep it for consistency
+    strncpy(_input, input, MAX_INPUT_SIZE - 1);
+    _input[MAX_INPUT_SIZE - 1] = '\0';
+    trim(_input);
+
+    if (_input[0] == '\0') {
+        xSemaphoreGive(xDisplayControllerSemaphore);
+        return;
+    }
+
+    bool isConfigurationCommand = false;
     if (_commandProcessor.processCommand(_input, isConfigurationCommand)) {
-        _staticDisplayShown = false; // reset static display flag to allow for new display update
-        return; // command processed successfully
+        _staticDisplayShown = false;
+        xSemaphoreGive(xDisplayControllerSemaphore);
+        return;
     }
 
     if (!_parseAndSetNumber(_input)) {
+        xSemaphoreGive(xDisplayControllerSemaphore);
         serial_print_P(F("Error parsing '"));
         serial_print(input);
         serial_println_P(F("'. Secondary input accepts numbers only."));
+        return;
     }
+
+    _staticDisplayShown = false;
+    xSemaphoreGive(xDisplayControllerSemaphore);
 }
 
 void DisplayController::clear() {
-    _display.clear();
+    if (xSemaphoreTake(xDisplayControllerSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _display.clear();
+        xSemaphoreGive(xDisplayControllerSemaphore);
+    }
 }
 
 void DisplayController::showAvailableCommands() {
@@ -139,8 +203,11 @@ void DisplayController::showInfo() {
 }
 
 void DisplayController::setNumber(int16_t number) {
-    _number = number;
-    _updateDisplayNumber();
+    if (xSemaphoreTake(xDisplayControllerSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+        _number = number;
+        _updateDisplayNumber();
+        xSemaphoreGive(xDisplayControllerSemaphore);
+    }
 }
 
 void DisplayController::_updateDisplayNumber() {

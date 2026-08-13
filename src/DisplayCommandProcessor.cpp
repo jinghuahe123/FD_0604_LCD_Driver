@@ -2,7 +2,10 @@
 
 #include <avr/wdt.h>
 #include "char_helper.h"
+#include "StackHighWatermarkUsage.hpp"
 #include "PersistentStorageManager.hpp"
+#include "FreeRTOS.h"
+#include "semphr.h"
 
 // command list in PROGMEM
 const char DisplayCommandProcessor::_commandList[][MAX_INPUT_SIZE] PROGMEM = {
@@ -115,8 +118,7 @@ void DisplayCommandProcessor::showMemory() {
     float percentFree;
     uint16_t freeMem = _freeMemory();
     percentFree = 100.0f * static_cast<float>(freeMem) / TOTAL_RAM;
-
-    serial_print_P(F("MEMORY: "));
+    serial_print_P(F("TOTAL MEMORY: "));
     serial_print_u16(freeMem);
     serial_print_P(F(" of "));
     serial_print_u16(TOTAL_RAM);
@@ -124,17 +126,8 @@ void DisplayCommandProcessor::showMemory() {
     serial_print_float(percentFree, 2);
     serial_println_P(F("%)"));
 
-    extern int __heap_start, *__brkval;
-    uint16_t heapSize = (__brkval == 0 ? 0 : (uint16_t)__brkval - (uint16_t)&__heap_start);
-    if (heapSize > 0) {
-        serial_println_P(F("CAUTION: Heap allocations detected. Resolve in release builds."));
-
-        serial_print_P(F("Heap Size: "));
-        serial_print_u16(heapSize);
-        serial_print_P(F(" bytes. ("));
-        serial_print_float(100.0f * static_cast<float>(heapSize) / TOTAL_RAM, 2);
-        serial_println_P(F("%)"));
-    }
+    StackHighWatermarkUsage stackUsage = StackHighWatermarkUsage::getInstance();
+    stackUsage.printAllHighWatermarks();
 }
 
 void DisplayCommandProcessor::reboot() {
@@ -174,82 +167,20 @@ void DisplayCommandProcessor::_handleReset() {
 }
 
 void DisplayCommandProcessor::_handleHistory() {
-    uint16_t numHistory = _settingsManager.readHistoryDepth();
-
-    // check if free memory is enough to create the array for storing number history
-    const uint16_t total_ram = RAMEND - RAMSTART + 1;
-    const uint16_t min_allowed_ram = total_ram * 0.1; // leave 10% buffer room
-    const uint16_t mem_required = numHistory * sizeof(PersistentStorageManager<int16_t>::StorageEntry);
-    int free_memory = _freeMemory();
-    
-    if (free_memory < 0) free_memory = 0;
-
-    bool enough_memory_available = (min_allowed_ram + mem_required >= (unsigned int)free_memory) ? true : false;
-
-    if (enough_memory_available) {
-        serial_print_P(F("MCU does not have enough free memory to display "));
-        serial_print_u16(numHistory);
-        serial_println_P(F(" number histories."));
-    } else {
-        PersistentStorageManager<int16_t>::StorageEntry entries[numHistory] = {0};
-
-        auto print_padded_u32 = [](uint32_t value, uint8_t digits) {
-            char buffer[digits + 1]; // max 10 digits + null terminator
-            char* ptr = buffer + digits; // point to the end of the buffer
-            *ptr = '\0';
-
-            for (uint8_t i=0; i<digits; i++) {
-                ptr--;
-                *ptr = '0' + (value % 10);
-                value /= 10;
-            }
-
-            serial_print(ptr);
-        };
-
-        auto parse_and_print_value = [](int16_t val) {
-            switch (val) {
-                case MODE_OFF:           serial_print_P(F("OFF"));           break;
-                case MODE_CYCLE:         serial_print_P(F("CYCLE"));         break;
-                case MODE_NULL:          serial_print_P(F("NULL_DISP"));     break;
-                case MODE_TEMP:          serial_print_P(F("TEMP"));          break;
-                case MODE_RAWINPUT:      serial_print_P(F("RAW"));           break;
-                default:                 serial_print_i16(val);              break;
-            }
-        };
-
-        serial_println_P(F("=============================================================="));
-        serial_println_P(F("                     EEPROM STORAGE HISTORY"));
-        serial_println_P(F("=============================================================="));
-        serial_print_P(F("Base Address: 0x")); serial_print_hex16(_params.BASE_ADDR); serial_ln();
-        serial_print_P(F("Total Slots: "));
-        serial_print_u16(_params.NUM_SLOTS); serial_ln();
-        serial_print_P(F("Display Orientation: "));
-        serial_println_P(_settingsManager.readDisplayOrientation() == DisplayDriver_FD0604::DisplayOrientation::FLIPPED ? F("Inverted Display") : F("Normal Display"));
-        _handleMem();
-        serial_println_P(F("--------------------------------------------------------------"));
-        PersistentStorageManager<int16_t> _storageManager(_params.BASE_ADDR, _params.NUM_SLOTS);
-        uint16_t uninitialised = _storageManager.readHistory(numHistory, entries);
-
-        if (uninitialised != 0xFFFF) {
-            for (uint16_t i = 0; i < numHistory - uninitialised; i++) {
-                serial_print_P(F("[")); print_padded_u32(i, 4);
-                serial_print_P(F("] Address: 0x")); serial_print_hex16(entries[i].address);
-                serial_print_P(F(" | Sequence: ")); print_padded_u32(entries[i].sequence, 10);
-                serial_print_P(F(" | Value: ")); parse_and_print_value(entries[i].value);
-                serial_ln();
-            }
-            serial_println_P(F("--------------------------------------------------------------"));
-            serial_print_P(F("Total entries searched: ")); serial_print_u16(numHistory - uninitialised);
-            serial_ln();
-            serial_print_P(F("Empty entries searched: ")); serial_print_u16(uninitialised);
-            serial_ln();
-        } else {
-            serial_println_P(F("No data found in storage."));
+    auto parse_and_print_value = [](int16_t val) {
+        switch (val) {
+            case MODE_OFF:           serial_print_P(F("OFF"));           break;
+            case MODE_CYCLE:         serial_print_P(F("CYCLE"));         break;
+            case MODE_NULL:          serial_print_P(F("NULL_DISP"));     break;
+            case MODE_TEMP:          serial_print_P(F("TEMP"));          break;
+            case MODE_RAWINPUT:      serial_print_P(F("RAW"));           break;
+            default:                 serial_print_i16(val);              break;
         }
+    };
 
-        serial_println_P(F("=============================================================="));
-    }
+    uint16_t numHistory = _settingsManager.readHistoryDepth();
+    PersistentStorageManager<int16_t> _storageManager(_params.BASE_ADDR, _params.NUM_SLOTS);
+    _storageManager.printHistory(numHistory, parse_and_print_value);
 }
 
 void DisplayCommandProcessor::_handleOff() {
@@ -301,7 +232,21 @@ void DisplayCommandProcessor::_getCommandFromFlash(uint8_t index, char* buffer, 
 }
 
 uint16_t DisplayCommandProcessor::_freeMemory() {
-    extern int __heap_start, *__brkval;
-    uint8_t v;
-    return (uint16_t)(&v - (__brkval == 0 ? (uint16_t)&__heap_start : (uint16_t)__brkval));
+    //extern int __heap_start, *__brkval;
+    //uint8_t v;
+    //return (uint16_t)(&v - (__brkval == 0 ? (uint16_t)&__heap_start : (uint16_t)__brkval));
+
+    // TODO: check if this is accurate, above default implementation does not work with freertos
+    extern char __heap_start;
+    extern char __stack;
+    extern int *__brkval;
+    
+    size_t free_ram;
+    if (__brkval == 0) {
+        free_ram = (size_t)(&__stack - &__heap_start);
+    } else {
+        free_ram = (size_t)(&__stack - (char*)__brkval);
+    }
+    
+    return (uint16_t)free_ram;
 }

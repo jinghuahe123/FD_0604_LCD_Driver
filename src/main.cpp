@@ -2,6 +2,8 @@
 #include <avr/wdt.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include "configs.hpp"
 #include "avr_pins.h"
@@ -12,6 +14,7 @@
 #include "timer.h"
 #include "adc.h"
 #include "DisplayController.hpp"
+#include "StackHighWatermarkUsage.hpp"
 
 static DisplayController displayController(displayParams);
 static SoftwareSerial_t secondarySerialInterface;
@@ -29,31 +32,43 @@ static void updateVersion(const bool print=0) {
     if (print) serial_ln();
 }
 
-static void initStatusLED() {
-    DDRB |= (1 << PB5);
-    PORTB &= ~(1 << PB5);
-}
-
-static void updateStatusLED(const uint16_t overflow = 1000) {
-    static uint16_t counter = 0;
-
-    if (counter == 0) {
-        PINB |= (1 << PB5);
-    }
-
-    counter = (counter + 1) % overflow;
-}
-
 // function of timer.h that runs every ms
 void isr_ms_timer(void) {
     displayController.multiplexDisplay();
-    updateStatusLED(32);
+}
+
+TaskHandle_t getInputTask;
+StaticTask_t getInputTaskBuffer;
+StackType_t getInputTaskStack[256];
+void xGetInputTask(void* pvParameters) {
+    (void)pvParameters; // unused parameter
+
+    for (;;) {
+        wdt_reset();
+
+        // main input handler
+        if (serial_available() > 0) {
+            char input[RX_BUFFER_SIZE] = {0};
+            serial_read_string_until('\n', input, sizeof(input));
+            trim(input);
+            displayController.processInput(input);
+        }
+
+        // secondary input handler
+        if (software_serial_available(&secondarySerialInterface) > 0) {
+            char input[SS_RX_BUFFER_SIZE] = {0};
+            software_serial_read_string_until(&secondarySerialInterface, '\n', input, sizeof(input));
+            trim(input);
+            displayController.processSecondaryInput(input);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(10)); // delay to prevent busy waiting
+    }
 }
 
 
 int main(void) {
     // ======= initialisation of basic system functions =======
-    initStatusLED();
     init_timer0_millis();
     init_adc(ADC_REF_AREF);
     serial_init(HARDWARE_SERIAL_BAUD);
@@ -95,30 +110,24 @@ int main(void) {
     #endif
 
     sei(); // enable global interrupts
-    
 
-    for (;;) {
-        wdt_reset();
+    displayController.startDisplayUpdateTask();
 
-        // main input handler
-        if (serial_available() > 0) {
-            char input[RX_BUFFER_SIZE] = {0};
-            serial_read_string_until('\n', input, sizeof(input));
-            trim(input);
-            displayController.processInput(input);
-        }
+    TaskHandle_t getInputTaskHandle = xTaskCreateStatic(
+        xGetInputTask,          // Task function
+        "GetInputTask",         // Name of the task (for debugging)
+        sizeof(getInputTaskStack) / sizeof(getInputTaskStack[0]), // Stack size in words
+        NULL,                   // Task input parameter
+        2,                      // Priority of the task
+        getInputTaskStack,      // Stack array
+        &getInputTaskBuffer     // Task buffer
+    );
+    StackHighWatermarkUsage& stackUsage = StackHighWatermarkUsage::getInstance();
+    stackUsage.addTaskHandle(getInputTaskHandle);
 
-        // secondary input handler
-        if (software_serial_available(&secondarySerialInterface) > 0) {
-            char input[SS_RX_BUFFER_SIZE] = {0};
-            software_serial_read_string_until(&secondarySerialInterface, '\n', input, sizeof(input));
-            trim(input);
-            displayController.processSecondaryInput(input);
-        }
+    vTaskStartScheduler(); // start FreeRTOS scheduler
 
-        displayController.updateDisplay();
-    }
-
+    for (;;); // should never reach here
     return 0;
 }
 

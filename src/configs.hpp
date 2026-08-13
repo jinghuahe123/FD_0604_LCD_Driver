@@ -42,7 +42,7 @@
 #define SOFT_SERIAL_OUTPUT
 
 #define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.40";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.41";
 
 
 const DisplayParameters displayParams = {
@@ -77,7 +77,7 @@ const DisplayParameters displayParams = {
         // for analog channel 6/7, as there it is input pin only, MUST SET DDRx and PORTx as nullptr!
         .DDRx_temperaturePin = nullptr,       // data direction register for temp sensor
         .PORTx_temperaturePin = nullptr,     // port register for temp sensor
-        .PIN_temperaturePin = 7,            // pin on port of temp sensor
+        .PIN_temperaturePin = 6,            // pin on port of temp sensor
 
         .resistorValue = 10000.0,                       // temperature sensor accompanying resistor
         .temperatureUpdateIntervalAddress = 0x0030,     // EEPROM address that stores the delay between the temperature reading updating
@@ -88,7 +88,7 @@ const DisplayParameters displayParams = {
         // for analog channel 6/7, as there it is input pin only, MUST SET DDRx and PORTx as nullptr!
         .DDRx_rawInputPin = nullptr,        // data direction register for raw input
         .PORTx_rawInputPin = nullptr,       // port register for raw input
-        .PIN_rawInputPin = 6,               // pin on port of raw input
+        .PIN_rawInputPin = 7,               // pin on port of raw input
 
         .rawInputUpdateIntervalAddress = 0x0038,        // EEPROM address that stores the delay between the raw input reading updating 
         .rawInputSerialEnabledAddress = 0x003A,         // EEPROM address for enable serial output for raw input
