@@ -35,6 +35,7 @@
 
 
 constexpr uint32_t HARDWARE_SERIAL_BAUD = 1000000;
+constexpr uint32_t SERIAL_TIMEOUT = 4000; // ms
 
 constexpr uint32_t SOFTWARE_SERIAL_BAUD = 4800;
 constexpr uint8_t SOFT_RX_DIGITAL_PIN = 11;

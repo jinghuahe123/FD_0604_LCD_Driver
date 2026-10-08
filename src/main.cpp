@@ -53,12 +53,12 @@ int main(void) {
 
     // ======= initialisation of main (hardware) serial interface =======
     Serial.begin(HARDWARE_SERIAL_BAUD);
-    Serial.setTimeout(4000); // 4s timeout for user input
+    Serial.setTimeout(SERIAL_TIMEOUT); // 4s timeout for user input
     
 
     // ======= initialisation of secondary (software) serial interface =======
     secondarySerialInterface.begin(SOFTWARE_SERIAL_BAUD);
-    secondarySerialInterface.setTimeout(4000); // 4s timeout for user input
+    secondarySerialInterface.setTimeout(SERIAL_TIMEOUT); // 4s timeout for user input
 
 
     // ======= initialisation of EEPROM storage =======

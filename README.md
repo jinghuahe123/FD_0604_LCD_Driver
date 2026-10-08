@@ -8,13 +8,15 @@ NOTE: Whilst the code should work on all AVR boards, only the NANO (ATMEGA328P) 
 
 ## Usage
 
-Upload program to arduino, and wire according to wiring diagram.
+Upload program to AVR chip, and wire according to wiring diagram.
 
-Connect Serial interface to PC to send commands:
+Connect hardware serial interface to PC to send commands:
 
 Any number for the given ranges can be displayed on the screen:
 - 0000~3999 for normal orientation
 - 000~999 for inverted orientation
+
+(Serial input will time out in four seconds.)
 
 **Alternative Available Commands**
 
