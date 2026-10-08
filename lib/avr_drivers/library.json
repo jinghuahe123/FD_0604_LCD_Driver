@@ -1,7 +1,0 @@
-{
-    "name": "avr_drivers",
-    "version": "1.0.0",
-    "build": {
-        "includeDir": "src"
-    }
-}

@@ -1,0 +1,44 @@
+#ifndef DISPLAY_PARAMETERS_HPP
+#define DISPLAY_PARAMETERS_HPP
+
+#include "drivers/HardwarePin/HardwarePin.hpp"
+
+// const data has no reason to be stored in ram, but for 48 bytes it is not worth it to turn this struct 
+// into a template alongside other necessary changes to classes that include it for flexible PROGMEM access
+
+struct DisplayParameters {
+    struct {
+        const uint8_t latchPin;
+        const uint8_t clockPin;
+        const uint8_t dataPin;
+
+        const bool npn_transistor_enable;
+    } driverParams;
+
+    struct {
+        const uint16_t BASE_ADDR;
+        const uint16_t NUM_SLOTS;
+    } persistentStorage;
+
+    const uint16_t countingIntervalAddress; // EEPROM address for storing counting interval data 
+
+    const uint16_t displayOrientationAddress; // EEPROM address for storing display orientation data
+    const uint16_t numHistoryAddress; // EEPROM address for storing how number history count to recall
+
+    struct {
+        HardwarePin temperaturePin;
+
+        const float resistorValue;                          // accompanying resistor value for temperature probe
+        const uint16_t temperatureUpdateIntervalAddress;    // EEPROM address for storing temperature update interval data 
+        const uint16_t temperatureSerialEnabledAddress;     // EEPROM address for storing serial enabled data for temperature probe
+    } tempSensor;
+    
+    struct {
+        HardwarePin rawInputPin;
+
+        const uint16_t rawInputUpdateIntervalAddress;       // EEPROM address for storing raw input update interval data  
+        const uint16_t rawInputSerialEnabledAddress;        // EEPROM address for storing serial enabled data for raw input
+    } rawInput;
+};
+
+#endif

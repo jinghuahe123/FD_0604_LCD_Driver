@@ -1,4 +1,5 @@
-#include "DisplayParameters.hpp"
+#include "DisplayController/DisplayParameters.hpp"
+#include <avr/pgmspace.h>
 
 /*
     ============================= EEPROM Memory Map =============================
@@ -33,40 +34,35 @@
 */
 
 
-#define HARDWARE_SERIAL_BAUD    1000000
+constexpr uint32_t HARDWARE_SERIAL_BAUD = 1000000;
 
-#define SOFTWARE_SERIAL_BAUD   4800
-#define SOFT_RX_DIGITAL_PIN    11
-#define SOFT_TX_DIGITAL_PIN    12
+constexpr uint32_t SOFTWARE_SERIAL_BAUD = 4800;
+constexpr uint8_t SOFT_RX_DIGITAL_PIN = 11;
+constexpr uint8_t SOFT_TX_DIGITAL_PIN = 12;
+
 // whether secondary serial output should print initialisation text
-#define SOFT_SERIAL_OUTPUT
+#define SOFT_SERIAL_OUTPUT     1
 
-#define FIRMWARE_VER_SIZE       32
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.40";
+constexpr uint8_t FIRMWARE_VER_SIZE = 32;
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.41";
+
+constexpr uint16_t statusLEDBlinkInterval = 32; // ms
+constexpr uint8_t statusLEDPin = 13; // D13 pin for status LED
 
 
-const DisplayParameters displayParams = {
+DisplayParameters displayParams = {
     .driverParams = {
-        .npn_transistor_enable = 1,
-	
-        // pin D4
-        .DDRx_latchPin = &DDRD,             // latchpin data direction register
-        .PORTx_latchPin = &PORTD,           // latchpin port register
-        .PIN_latchPin = 4,                  // latchpin physical pin (on register)
-        
-        // pin D5
-        .DDRx_clockPin = &DDRD,             // clockpin data direction register   
-        .PORTx_clockPin = &PORTD,           // clockpin port register
-        .PIN_clockPin = 5,                  // clockpin physical pin (on register)
-        
-        // pin D6
-        .DDRx_dataPin = &DDRD,              // datapin data direction register
-        .PORTx_dataPin = &PORTD,            // datapin port register
-        .PIN_dataPin = 6,                   // datapin physical pin (on register)
+        .latchPin = 4,
+        .clockPin = 5,
+        .dataPin = 6,
+
+        .npn_transistor_enable = 1
     },
 
-    .BASE_ADDR = 0x0040,     // EEPROM address to start writing writing from
-    .NUM_SLOTS = 160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+    .persistentStorage = {
+        .BASE_ADDR = 0x0040,     // EEPROM address to start writing writing from
+        .NUM_SLOTS = 160,        // maximum number of slots to use for wear levelling (SLOT_SIZE*NUM_SLOTS must < EEPROM.size())
+    },
 
     .countingIntervalAddress = 0x0020,     // EEPROM Address that stores the delay between counting intervals 
 
@@ -74,10 +70,7 @@ const DisplayParameters displayParams = {
     .numHistoryAddress = 0x0024,             // EEPROM address for history recall depth
 
     .tempSensor = {
-        // for analog channel 6/7, as there it is input pin only, MUST SET DDRx and PORTx as nullptr!
-        .DDRx_temperaturePin = nullptr,       // data direction register for temp sensor
-        .PORTx_temperaturePin = nullptr,     // port register for temp sensor
-        .PIN_temperaturePin = 6,            // pin on port of temp sensor
+        .temperaturePin = HardwarePin(20),              // A6 pin for temperature sensor
 
         .resistorValue = 10000.0,                       // temperature sensor accompanying resistor
         .temperatureUpdateIntervalAddress = 0x0030,     // EEPROM address that stores the delay between the temperature reading updating
@@ -85,10 +78,7 @@ const DisplayParameters displayParams = {
     },
 
     .rawInput = {
-        // for analog channel 6/7, as there it is input pin only, MUST SET DDRx and PORTx as nullptr!
-        .DDRx_rawInputPin = nullptr,        // data direction register for raw input
-        .PORTx_rawInputPin = nullptr,       // port register for raw input
-        .PIN_rawInputPin = 7,               // pin on port of raw input
+        .rawInputPin = HardwarePin(21),                    // A7 pin for raw input
 
         .rawInputUpdateIntervalAddress = 0x0038,        // EEPROM address that stores the delay between the raw input reading updating 
         .rawInputSerialEnabledAddress = 0x003A,         // EEPROM address for enable serial output for raw input
