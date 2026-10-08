@@ -1,6 +1,6 @@
 #include "DisplayModeManager.hpp"
 
-#include "drivers/Timer0/Timer0.h"
+#include "drivers/Timer0/timer0.h"
 #include "drivers/HardwareSerial/HardwareSerial.hpp"
 #include "drivers/HardwarePin/HardwarePin.hpp"
 //#include "adc.h"
