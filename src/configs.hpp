@@ -44,7 +44,7 @@ constexpr uint8_t SOFT_TX_DIGITAL_PIN = 12;
 #define SOFT_SERIAL_OUTPUT     1
 
 constexpr uint8_t FIRMWARE_VER_SIZE = 32;
-constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.41";
+constexpr char version[] PROGMEM =  "FD_0604 LED Display v0.1.42";
 
 constexpr uint16_t statusLEDBlinkInterval = 32; // ms
 constexpr uint8_t statusLEDPin = 13; // D13 pin for status LED
